@@ -3,7 +3,7 @@
         "children": [
             "group1",
             "ungrouped"
-        ],
+        ]
     },
     "group1": {
         "hosts": {
@@ -11,20 +11,20 @@
             "host2.example.com": null
         },
         "vars": {
-             "some_variable": "value_for_group1"
+            "some_variable": "value_for_group1"
         }
     },
     "ungrouped": {
         "hosts": {
-              " host3.example.com": null
+            "host3.example.com": null
         }
     },
     "_meta": {
         "hostvars": {
             "host3.example.com": {
-                "some_variable" : "value_for_host3"
+                "some_variable": "value_for_host3"
             }
         }
-    },
+    }
 }
 
