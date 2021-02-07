@@ -2,6 +2,16 @@
 
 An example collection of Ansible inventory scripts.
 
+## usage
+
+```
+ANSIBLE_INVENTORY_ENABLED=script ansible-inventory -i scripts/inventory/remote_http/remote_http.sh --graph
+ANSIBLE_INVENTORY_ENABLED=script ansible-inventory -i scripts/inventory/remote_http/remote_http.sh --list
+ANSIBLE_INVENTORY_ENABLED=script ansible-inventory -i scripts/inventory/remote_http/remote_http.sh --list --yaml
+
+ANSIBLE_INVENTORY_ENABLED=auto ansible-inventory -i tower_inventory.yml --list
+```
+
 ## default inventory script locations
 
 ```
@@ -13,8 +23,8 @@ An example collection of Ansible inventory scripts.
 ## list groups and hosts in an inventory
 
 ```
-ansible-inventory -i <inventory> [--vars] --graph 
-ansible-inventory -i <inventory> [--yaml|--toml] --list 
+ansible-inventory -i <inventory> [--vars] --graph
+ansible-inventory -i <inventory> [--yaml|--toml] --list
 ansible-inventory -i <inventory> [--yaml|--toml] --host <host>
 ```
 
