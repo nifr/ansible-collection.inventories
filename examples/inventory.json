@@ -6,18 +6,18 @@
         ]
     },
     "group1": {
-        "hosts": {
-            "host1.example.com": null,
-            "host2.example.com": null
-        },
+        "hosts": [
+            "host1.example.com",
+            "host2.example.com"
+        ],
         "vars": {
             "some_variable": "value_for_group1"
         }
     },
     "ungrouped": {
-        "hosts": {
-            "host3.example.com": null
-        }
+        "hosts": [
+            "host3.example.com"
+        ]
     },
     "_meta": {
         "hostvars": {
