@@ -1,0 +1,17 @@
+namespace: nifr
+name: inventory_scripts
+version: 0.0.1
+readme: README.md
+authors:
+- Nicolai Fröhlich <ansible@nifr.de> https://nifr.de @nifr:irc/chat.freenode.net#nifr
+description: A collection of ansible inventory scripts.
+license_file: 'LICENSE'
+tags:
+- inventory
+dependencies: {}
+repository: https://github.com/nifr/ansible-collections/nifr/inventory_scripts/
+documentation: https://nifr.github.io/ansible-collections/nifr/inventory_scripts/
+homepage: https://github.com/nifr/ansible-collections/inventory/inventory_scripts/
+issues: https://github.com/nifr/ansible-collections/issues
+build_ignore: []
+
