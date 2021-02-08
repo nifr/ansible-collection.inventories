@@ -47,9 +47,10 @@ ansible-doc -t inventory <plugin name>
 
 ### inventory resources
 
-* General Help & Issues
-  * https://groups.google.com/g/awx-project
-  * https://github.com/ansible/awx/issues?q=is%3Aissue+is%3Aopen+inventory
+* awx - General Help & Issues
+  * IRC - `#ansible-awx` channel on irc.freenode.net
+  * Mailing List - https://groups.google.com/g/awx-project
+  * Open Issues containing "inventory" - https://github.com/ansible/awx/issues?q=is%3Aissue+is%3Aopen+inventory
 * Documentation
   * https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#
   * https://docs.ansible.com/ansible/latest/plugins/inventory.html#inventory-plugins
@@ -60,9 +61,10 @@ ansible-doc -t inventory <plugin name>
   * https://docs.ansible.com/ansible/devel/plugins/inventory.html#inventory-plugins
   * https://www.ansible.com/hubfs//AnsibleFest%20ATL%20Slide%20Decks/AnsibleFest%202019%20-%20Managing%20Meaningful%20Inventories.pdf
 * Example Scripts & Plugins
-  * https://github.com/ansible-collections/community.general/tree/main/scripts/inventory
+  * Official Inventory Scripts (Legacy) - https://github.com/ansible-collections/community.general/tree/main/scripts/inventory
   * https://github.com/AlanCoding/Ansible-inventory-file-examples/tree/master/plugins
-* Collection Search on GitHub
-  * https://github.com/topics/ansible-collection
+* Search Collections & Inventory Plugins
+  * GitHub repositories tagged with: "ansible-collection" - https://github.com/topics/ansible-collection
+  * Ansible Galaxy collections with keyword "inventory" - https://galaxy.ansible.com/search?keywords=inventory&order_by=-download_count&deprecated=false&type=collection&page=1&page_size=100
 * Example Commits
   * https://github.com/ansible/awx/pull/8650/files
