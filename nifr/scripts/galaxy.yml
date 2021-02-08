@@ -10,8 +10,8 @@ tags:
 - inventory
 dependencies: {}
 repository: https://github.com/nifr/ansible-collections/nifr/inventory_scripts/
-documentation: https://nifr.github.io/ansible-collections/nifr/inventory_scripts/
-homepage: https://github.com/nifr/ansible-collections/inventory/inventory_scripts/
+documentation: https://nifr.github.io/ansible-collections/documentation/inventory_scripts
+homepage: https://nifr.github.io/ansible-collections/
 issues: https://github.com/nifr/ansible-collections/issues
 build_ignore: []
 
