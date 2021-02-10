@@ -31,8 +31,8 @@ ansible-galaxy install -r requirements.yml
 
 ```
 pipx install [--suffix '@2.10-python3.7'] --python python3.7 --include-deps --force 'ansible >= 2.10.0, == 2.10.*, < 2.11'
-git clone git@github.com:nifr/ansible_collections.git
-cd ansible_collections/nifr/inventory_scripts/
+git clone git@github.com:nifr/ansible-collections.git
+cd ansible-collections/nifr/inventory_scripts/
 ansible-test --sanity --list
 ansible-test --sanity --docker default -v
 ```
@@ -51,6 +51,6 @@ The `ansible-test [..]` command only works in very concrete directory structures
 
 > ERROR: The current working directory must be at or below:
 >
-> - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/
+> - an Ansible collection: {...}/ansible-collections/{namespace}/{collection}/
 >
 > Current working directory: /mnt/c/Users/nifr/code/ansible_collections/nifr
