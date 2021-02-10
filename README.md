@@ -1,1 +1,1 @@
-* https://nifr.github.io/ansible-collection.inventory_scripts/examples/inventory.json
+* https://nifr.github.io/ansible-collections/examples/inventory.json
