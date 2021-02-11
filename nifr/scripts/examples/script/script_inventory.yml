@@ -1,0 +1,3 @@
+# this is NOT working
+plugin: ansible.builtin.yaml
+path: ../../scripts/inventory_yaml.yml
