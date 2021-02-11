@@ -1,27 +1,24 @@
 #!/usr/bin/env sh
 
-inventory_endpoint='https://nifr.github.io/ansible-collection.inventory_scripts/examples/inventory.json'
-hostvars_endpoint='https://nifr.github.io/ansible-collection.inventory_scripts/examples/host_vars/%s.json'
+# Example Usage:
+#
+# export HTTP_ENDPOINT_INVENTORY='https://nifr.github.io/ansible-collections/examples/inventory.json'
+# export HTTP_ENDPOINT_HOST_VARS='https://nifr.github.io/ansible-collections/examples/host_vars/%s.json'
+#
+# ./remote_http.sh --list
+# ./remote_http.sh --host 'host1.example.com'
+#
+# ansible-inventory --inventory ./remote_http.sh --graph
+# ansible-inventory --inventory ./remote_http.sh --list [--yaml]
 
-# https://nifr.github.io/ansible-collection.inventory_scripts/examples/inventory.json
-# https://nifr.github.io/ansible-collection.inventory_scripts/examples/host_vars/host1.example.com.json
-
-http_user='user'
-http_password='password'
-http_endpoint="${inventory_endpoint}"
+http_user=''
+http_password=''
+http_endpoint=''
 
 output_stdout=
 validation_error=
 exit_code=1
 debug=0
-
-if [ ! -z "${DEBUG}" ]
-then
-  debug=1
-  echo '$# is' $#
-  echo '$1 is' $1
-  echo '$2 is' $2
-fi
 
 if ! command -v 'curl' >/dev/null 2>&1
 then
@@ -48,15 +45,25 @@ then
   validation_error='Missing argument for --host parameter!'
 fi
 
-if [ "$1" = '--host' ]
+if [ "$1" = '--list' ] && [ ! -z "${HTTP_ENDPOINT_INVENTORY}" ]
 then
-  http_endpoint=$(printf '..%s..' "${hostvars_endpoint}" "$2")
+  http_endpoint="${HTTP_ENDPOINT_INVENTORY}"
+fi
+
+if [ "$1" = '--host' ] && [ ! -z "${HTTP_ENDPOINT_HOST_VARS}" ]
+then
+  http_endpoint=$(printf '..%s..' "${HTTP_ENDPOINT_HOST_VARS}" "$2")
+fi
+
+if [ -z "${http_endpoint}" ]
+then
+  validation_error="Missing or empty HTTP_ENDPOINT_* variable for $1."
 fi
 
 if [ ! -z "${validation_error}" ]
 then
   echo "${validation_error}" >&2
-else 
+else
   output_stdout=$(curl --silent --fail --header 'Accept: application/json' --user "${http_user}:${http_password}" "${http_endpoint}")
   exit_code="$?"
 fi
