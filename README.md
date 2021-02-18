@@ -6,6 +6,19 @@
     * https://galaxy.ansible.com/ansible
     * https://galaxy.ansible.com/community
 
+## Overview 
+
+```
+mkdir ansible_collections
+cd ansible_collections
+curl -sSL https://api.github.com/repos/nifr/ansible-collections/tarball/main | tar xzf - --strip-components=1
+ansible-galaxy collection list --collection-path '.'
+```
+
+> Collection             Version
+> ---------------------- -------
+> nifr.inventory_scripts 0.0.1
+
 ## Installation from git
 
 Add a `requirements.yml` to your playbook directory.
@@ -36,21 +49,3 @@ cd ansible-collections/nifr/inventory_scripts/
 ansible-test --sanity --list
 ansible-test --sanity --docker default -v
 ```
-
-## Issues
-
-YAML linting is skipped during sanity testing.
-
-> WARNING: Skipping sanity test 'yamllint' due to missing libyaml support in PyYAML.
-
-The `pipx --suffix [..]` installation doesn't work with ansible commands.
-
-> ERROR! Unknown Ansible alias: ansible@2.10-python3.7
-
-The `ansible-test [..]` command only works in very concrete directory structures.
-
-> ERROR: The current working directory must be at or below:
->
-> - an Ansible collection: {...}/ansible-collections/{namespace}/{collection}/
->
-> Current working directory: /mnt/c/Users/nifr/code/ansible_collections/nifr
