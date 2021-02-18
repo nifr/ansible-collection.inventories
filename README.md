@@ -12,7 +12,10 @@
 mkdir ansible_collections
 cd ansible_collections
 curl -sSL https://api.github.com/repos/nifr/ansible-collections/tarball/main | tar xzf - --strip-components=1
-ANSIBLE_COLLECTIONS_PATH='.' ansible-galaxy collection list | tail -n +5
+ANSIBLE_COLLECTIONS_PATH='.' ansible-galaxy collection list \
+  | tail -n +5 \
+  | awk -v OFS='\t' '{print $1, $2}' \
+  | jq -R '[ split("\t") | {name: .[0], version: .[1]} ]'
 ```
 
 > nifr.inventory_scripts 0.0.1
