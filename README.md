@@ -12,11 +12,9 @@
 mkdir ansible_collections
 cd ansible_collections
 curl -sSL https://api.github.com/repos/nifr/ansible-collections/tarball/main | tar xzf - --strip-components=1
-ansible-galaxy collection list --collection-path '.'
+ANSIBLE_COLLECTIONS_PATH='.' ansible-galaxy collection list | tail -n +5
 ```
 
-> Collection             Version
-> ---------------------- -------
 > nifr.inventory_scripts 0.0.1
 
 ## Installation from git
