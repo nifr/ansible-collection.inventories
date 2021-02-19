@@ -36,7 +36,19 @@ Example Output:
 ]
 ```
 
+## Installation from Ansible Galaxy
+
+```
+ansible-galaxy collection install nifr.inventory_scripts
+```
+
 ## Installation from git
+
+```
+ansible-galaxy collection install git+https://github.com/nifr/ansible-collections.git#/nifr/inventory_scripts,main
+```
+
+## Installation from git with requirements.yml
 
 Add a `requirements.yml` to your playbook directory.
 
@@ -59,10 +71,12 @@ ansible-galaxy install -r requirements.yml
 
 ## Testing a collection
 
+Ansible's official test tool `ansible-test` was released with ansible 2.9. (See: [tests directory](https://docs.ansible.com/ansible/latest/dev_guide/developing_collections.html#tests-directory), [Testing Collections](https://docs.ansible.com/ansible/latest/dev_guide/developing_collections.html#testing-collections))
+
 ```
 pipx install --python=python3.9 --include-deps --force --pip-args='--pre' 'ansible >= 3.0.0, == 3.0.*, < 3.1'
-git clone git@github.com:nifr/ansible-collections.git
-cd ansible-collections/nifr/inventory_scripts/
+git clone git@github.com:nifr/ansible-collections.git ansible_collections
+cd ansible_collections/nifr/inventory_scripts/
 ansible-test --sanity --list
 ansible-test --sanity --docker default -v
 ```
