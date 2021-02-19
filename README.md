@@ -11,11 +11,16 @@
 ```
 mkdir ansible_collections
 cd ansible_collections
-curl -sSL https://api.github.com/repos/nifr/ansible-collections/tarball/main | tar xzf - --strip-components=1
-ANSIBLE_COLLECTIONS_PATH='.' ansible-galaxy collection list \
-  | tail -n +5 \
-  | awk -v OFS='\t' '{print $1, $2}' \
-  | jq -R '[ split("\t") | {name: .[0], version: .[1]} ]'
+
+curl -sSL https://api.github.com/repos/nifr/ansible-collections/tarball/main \
+  | tar xzf - --strip-components=1
+
+ANSIBLE_COLLECTIONS_PATH='.' \
+ANSIBLE_COLLECTIONS_SCAN_SYS_PATH=0 \
+  ansible-galaxy collection list \
+    | tail -n +5 \
+    | awk -v OFS='\t' '{print $1, $2}' \
+    | jq -R '[ split("\t") | {name: .[0], version: .[1]} ]'
 ```
 
 > nifr.inventory_scripts 0.0.1
@@ -44,7 +49,7 @@ ansible-galaxy install -r requirements.yml
 ## Testing a collection
 
 ```
-pipx install [--suffix '@2.10-python3.7'] --python python3.7 --include-deps --force 'ansible >= 2.10.0, == 2.10.*, < 2.11'
+pipx install --python=python3.9 --include-deps --force --pip-args='--pre' 'ansible >= 3.0.0, == 3.0.*, < 3.1'
 git clone git@github.com:nifr/ansible-collections.git
 cd ansible-collections/nifr/inventory_scripts/
 ansible-test --sanity --list
