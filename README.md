@@ -42,6 +42,17 @@ Example Output:
 ansible-galaxy collection install nifr.inventory_scripts
 ```
 
+The installation path is the first existing directory in Ansible's [collections path](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths) (added in v2.10).
+
+The collections path is configured using the environment variable `ANSIBLE_COLLECTIONS_PATH` or in `ansible.cfg`:
+
+```
+[defaults]
+collections_path = ~/.ansible/collections:/usr/share/ansible/collections
+```
+
+The default path is `~/.ansible/collections/ansible_collections/nifr/inventory_scripts/`.
+
 ## Installation from git
 
 ```
