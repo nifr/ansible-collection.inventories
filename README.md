@@ -8,6 +8,8 @@
 
 ## Overview 
 
+Create a JSON array of collections and corresponding versions from this repository.
+
 ```
 mkdir ansible_collections
 cd ansible_collections
@@ -23,7 +25,16 @@ ANSIBLE_COLLECTIONS_SCAN_SYS_PATH=0 \
     | jq -R '[ split("\t") | {name: .[0], version: .[1]} ]'
 ```
 
-> nifr.inventory_scripts 0.0.1
+Example Output:
+
+```
+[
+  {
+    "name": "nifr.inventory_scripts",
+    "version": "0.0.1"
+  }
+]
+```
 
 ## Installation from git
 
