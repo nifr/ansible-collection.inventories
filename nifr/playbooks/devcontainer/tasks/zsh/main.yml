@@ -1,0 +1,53 @@
+---
+- name: "zsh:package:install"
+  tags:
+    - zsh[package]
+  become: true
+  package:
+    name: "zsh"
+    state: "present"
+
+- name: "zsh:file:directory:~/.local/[usr/]/share/zsh/{functions,history,plugins,completions}"
+  file:
+    path: "{{ item }}"
+    mode: "0700"
+    state: "directory"
+  loop:
+    - "~/.local/share/zsh/history"
+    - "~/.local/share/zsh/completions"
+    - "~/.local/share/zsh/functions"
+    - "~/.local/usr/share/zsh/functions"
+    - "~/.local/usr/share/zsh/completions"
+  tags:
+    - config[*]
+    - zsh[config]
+    - zsh[directory-structure]
+
+- name: "zsh:file:copy:~/.zshrc"
+  template:
+    src: "zsh/.zshrc"
+    dest: "~/.zshrc"
+    mode: "0700"
+  tags:
+    - config[*]
+    - zsh[config]
+
+- name: "zsh[global-zshenv]"
+  tags:
+    - zsh[global-zshenv]
+  block:
+    - name: "zsh:stat:/etc/zsh/zshenv"
+      stat:
+        path: "/etc/zsh/zshenv"
+      register: "zsh_global_zshenv"
+    - name: "zsh:file:touch:/etc/zsh/zshenv"
+      when: "not zsh_global_zshenv.stat.exists"
+      file:
+        path: "/etc/zsh/zshenv"
+        state: "touch"
+    - name: "zsh:lineinfile:/etc/zsh/zshenv"
+      become: true
+      lineinfile:
+        path: "/etc/zsh/zshenv"
+        line: "zsh-newuser-install() { :; }"
+        state: "present"

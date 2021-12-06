@@ -1,0 +1,94 @@
+filetype plugin indent on
+" On pressing tab, insert 2 spaces
+set expandtab
+" show existing tab with 2 spaces width
+set tabstop=2
+set softtabstop=2
+" when indenting with '>', use 2 spaces width
+set shiftwidth=2
+" show line numbers
+set number
+
+" enable mouse
+set mouse=a
+
+" highlight search matches
+set hlsearch
+" ignore case when searching
+set ignorecase
+" except when search string contains uppercase
+set smartcase
+" jump to first match while entering search string
+set noincsearch
+
+" enable python plugin support in nvim by installing the `pynvim` package.
+" the package was formerly called `neovim` (deprecated)
+" * pip3 install --user pynvim
+"if has('nvim')
+"  let g:python3_host_prog = '/full/path/to/neovim3/bin/python'
+"endif
+
+" toggle relative number in insert mode, number in normal mode
+augroup numbertoggle
+  autocmd!
+  autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+  autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+augroup END
+
+" show additional information in statusline (required for lightline)
+set laststatus=2
+" hide mode (i.e. --INSERT--) as the statusline plugin that shows it
+set noshowmode
+
+" plugin: https://github.com/junegunn/fzf.vim
+" effect: open fzf fuzzy searches in native (neo)vim native popup
+"let g:fzf_layout = {
+"\   'window': {
+"\     'width': 0.9,
+"\     'height': 0.6
+"\   }
+"\ }
+
+" plugin: https://github.com/junegunn/fzf.vim
+" effect:
+"   * open fuzzy file search with ctrl+p
+"   * find strings in files with `rg` (grep-like) with ctrl+g
+map <silent> <C-p> :Files<Cr>
+map <silent> <C-F> :Rg<Cr>
+
+if !exists('g:fzf_layout')
+  autocmd! FileType fzf
+  autocmd  FileType fzf set laststatus=0 noshowmode noruler
+    \| autocmd BufLeave <buffer> set laststatus=2 showmode ruler
+endif
+
+" plugin: https://github.com/itchyny/lightline.vim
+" effect: "wombat" colorschema & git brach in statusline
+" see:    https://github.com/junegunn/fzf.vim/issues/821#issuecomment-581481211
+let g:lightline = {
+\   'colorscheme': 'wombat',
+\   'active': {
+\     'left': [
+\       [ 'mode', 'paste' ],
+\       [ 'gitbranch', 'readonly', 'filename', 'modified' ]
+\     ]
+\   },
+\   'component_function': {
+\     'gitbranch': 'FugitiveHead',
+\   },
+\ }
+
+" plugin:
+let g:coc_disable_startup_warning = 1
+
+" theme the line numbers
+highlight LineNr
+\  cterm=NONE
+\  ctermfg=DarkGrey
+\  ctermbg=NONE
+
+" theme the CURRENT line number
+highlight CursorLineNr
+\  cterm=bold
+\  ctermfg=Green
+\  ctermbg=NONE

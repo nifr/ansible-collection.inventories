@@ -1,0 +1,21 @@
+---
+- name: "spaceman-diff:apt:install-dependencies"
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "jp2a"
+    - "imagemagick"
+
+- name: "spaceman-diff:get_url:dowload-script"
+  become: false
+  get_url:
+    url: "https://raw.githubusercontent.com/{{ spaceman_diff.github.user}}/{{ spaceman_diff.github.repo}}/master/spaceman-diff"
+    dest: "~/.local/bin/spaceman-diff"
+    mode: "750"
+    force: true
+  register: "spaceman_diff_download"
+  until: "spaceman_diff_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

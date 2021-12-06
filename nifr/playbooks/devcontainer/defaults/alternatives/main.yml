@@ -1,0 +1,7 @@
+---
+alternatives:
+  - name: "gnome-text-editor"
+    priority: "80"
+    link: "/usr/bin/gnome-text-editor"
+    source: "/snap/code/current/usr/share/code/bin/code"
+    state: "present"

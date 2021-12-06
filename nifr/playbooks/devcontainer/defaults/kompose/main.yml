@@ -1,0 +1,17 @@
+---
+kompose:
+  install_method: "deb"
+  github:
+    user: "kubernetes"
+    repo: "kompose"
+    tag: "v1.20.0"
+  release:
+    type:
+      deb: "kompose_#{version}_#{architecture}.deb"
+      binary: "kompose-#{system}-#{architecture}"
+    facts:
+      system:
+        Linux: "linux"
+        Darwin: "darwin"
+      architecture:
+        x86_64: "amd64"

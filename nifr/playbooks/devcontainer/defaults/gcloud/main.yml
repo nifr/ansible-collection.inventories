@@ -1,0 +1,9 @@
+---
+gcloud:
+  state: "present"
+  configure_docker: true
+  service_account:
+    file: ~
+    content: ~
+  active_configuration: ~
+  configurations: {}

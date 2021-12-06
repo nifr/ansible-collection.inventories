@@ -1,0 +1,138 @@
+---
+# TODO: test if gcloud_executable='gcloud' works
+- name: "gcloud:set_facts"
+  tags:
+    - config[*]
+    - config[gcloud]
+    - gcloud[config]
+  block:
+    - name: "gcloud:package_facts:get"
+      package_facts:
+        manager: "auto"
+    - name: "gcloud:set_fact:install_method:apt|snap"
+      when: "(ansible_pkg_mgr == 'apt') and (gcloud_install_method | default(true))"
+      block:
+        - name: "ansible:set_fact:install_method:apt"
+          set_fact:
+            gcloud_install_method: "apt"
+            gcloud_executable: "/usr/bin/gcloud"
+        - name: "ansible:set_fact:install_method:snap"
+          when: "'snapd' in ansible_facts.packages"
+          set_fact:
+            gcloud_install_method: "snap"
+            gcloud_executable: "/snap/google-cloud-sdk/current/bin/gcloud"
+    - name: "gcloud:set_fact:install_method:homebrew"
+      when: "ansible_pkg_mgr == 'homebrew'"
+      set_fact:
+        gcloud_install_method: "homebrew"
+        gcloud_executable: "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/gcloud"
+
+- name: "gcloud:install:apt"
+  when: "gcloud_install_method == 'apt'"
+  become: true
+  block:
+    - name: "gcloud:apt_key:state"
+      apt_key:
+        url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+        state: "{{ gcloud.state }}"
+    - name: "gcloud:apt_repository"
+      apt_repository:
+        repo: "deb https://packages.cloud.google.com/apt cloud-sdk-{{ ansible_distribution_release }} main"
+        state: "{{ gcloud.state }}"
+        filename: "google-cloud-sdk"
+        update_cache: false
+      register: "gcloud_apt_repository"
+    - name: "gcloud:apt:update_cache"
+      when: "gcloud_apt_repository.changed"
+      apt:
+        update_cache: true
+    - name: "gcloud:apt:pkg"
+      apt:
+        state: "{{ gcloud.state }}"
+        pkg: "google-cloud-sdk"
+- name: "gcloud:install:snap"
+  when: "gcloud_install_method == 'snap'"
+  become: true
+  snap:
+    name: "google-cloud-sdk"
+    classic: true
+    state: "{{ gcloud.state }}"
+- name: "gcloud:install:homebrew"
+  when: "gcloud_install_method == 'homebrew'"
+  homebrew_cask:
+    name: "google-cloud-sdk"
+    state: "{{ gcloud.state }}"
+
+- name: "gcloud:configurations"
+  tags:
+    - config[*]
+    - config[gcloud]
+    - gcloud[config]
+  block:
+    - name: "gcloud:file:directory:~/.config/gcloud/configurations/"
+      file:
+        path: "~/.config/gcloud/configurations"
+        state: "directory"
+        mode: "0700"
+    - name: "gcloud:ini_file:~/.config/gcloud/configurations/config_*"
+      become: false
+      template:
+        src: "gcloud/configuration.ini.j2"
+        dest: "~/.config/gcloud/configurations/config_{{ item.key }}"
+        mode: "0700"
+      loop: "{{ gcloud.configurations | dict2items }}"
+    - name: "gcloud:file:state:absent:~/.config/gcloud/configurations/config_default"
+      file:
+        path: "~/.config/gcloud/configurations/config_default"
+        state: "absent"
+    - name: "gcloud:command:config:configurations:activate:{{ gcloud.active_configuration }}"
+      when: "gcloud.active_configuration"
+      become: false
+      command:
+        argv:
+          - "{{ gcloud_executable }}"
+          - "config"
+          - "configurations"
+          - "activate"
+          - "{{ gcloud.active_configuration }}"
+          - "--quiet"
+
+- when: "(gcloud.service_account.content.private_key | default(false)) and (gcloud.service_account.content.client_email | default(false))"
+  tags:
+    - credentials[*]
+    - credentials[gcloud]
+  block:
+    - name: "gcloud:mktemp:file:service_account"
+      tempfile:
+        state: "file"
+        suffix: "gcloud"
+      register: "gcloud_service_account_tmp_file"
+    - name: "gcloud:template:service_account"
+      no_log: true
+      template:
+        src: "gcloud/gserviceaccount.key.json.j2"
+        dest: "{{ gcloud_service_account_tmp_file.path }}.json"
+    - name: "gcloud:command:import:service_account"
+      command:
+        argv:
+          - "{{ gcloud_executable }}"
+          - "auth"
+          - "activate-service-account"
+          - "{{ gcloud.service_account.content.client_email }}"
+          - "--key-file={{ gcloud_service_account_tmp_file.path }}.json"
+          - "--configuration={{ gcloud.active_configuration }}"
+          - "--quiet"
+
+- name: "gcloud:command:auth:configure-docker"
+  tags:
+    - gcloud[configure-docker]
+  when: "gcloud.configure_docker|bool"
+  become: false
+  environment:
+    PATH: "{{ (gcloud_install_method == 'snap') | ternary('/snap/google-cloud-sdk/current/bin:','') + ansible_env.PATH }}"
+  command:
+    argv:
+      - "{{ gcloud_executable }}"
+      - "auth"
+      - "configure-docker"
+      - "--quiet"

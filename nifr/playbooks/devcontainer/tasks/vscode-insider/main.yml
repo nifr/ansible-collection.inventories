@@ -1,0 +1,16 @@
+---
+
+- name: 'vscode-insider:apt:deb:install'
+  when: 'vscode_insider.install_method is equalto "deb"'
+  become: true
+  apt:
+    deb: 'https://update.code.visualstudio.com/latest/linux-deb-x64/insider'
+    state: '{{ vscode_insider.state }}'
+
+- name: 'vscode-insider:apt:deb:install'
+  when: 'vscode_insider.install_method is equalto "snap"'
+  become: true
+  snap:
+    name: 'code-insiders'
+    state: '{{ vscode_insider.state }}'
+    classic: true

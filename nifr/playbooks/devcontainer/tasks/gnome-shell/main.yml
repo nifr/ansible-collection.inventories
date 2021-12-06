@@ -1,0 +1,47 @@
+---
+- name: "gnome-shell:dconf/set:favorite-apps "
+  dconf:
+    key: "/org/gnome/shell/favorite-apps"
+    value: "{{ '[%s]'|format(gnome_shell.favorites|string) }}"
+
+- name: "gnome-shell:dconf/set:input-sources"
+  dconf:
+    key: "/org/gnome/desktop/input-sources/sources"
+    value: "{{ '[%s]'|format(gnome_shell.input_sources|string) }}"
+
+- name: "gnome-shell:git/clone:gnome-shell-extensions"
+  git:
+    repo: "{{ item.value }}"
+    dest: "~/.local/share/gnome-shell/extensions/{{ item.key }}"
+    depth: 1
+    umask: "0077"
+  loop: "{{ gnome_shell.extensions.installed | dict2items }}"
+
+- name: "gnome-shell:dconf/enable:gnome-shell-extensions "
+  dconf:
+    key: "/org/gnome/shell/enabled-extensions"
+    value: "{{ '[%s]'|format(gnome_shell.extensions.enabled|string) }}"
+
+- name: "gnome-shell:dconf/set:gnome_shell.dconf"
+  dconf:
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop: "{{ gnome_shell.dconf | default({}) | dict2items }}"
+
+- name: "gnome-shell:lineinfile:/etc/gdm3/custom.conf"
+  become: true
+  lineinfile:
+    path: /etc/gdm3/custom.conf
+    insertafter: '^\[daemon\]'
+    regexp: "^AutomaticLoginEnable"
+    line: "AutomaticLoginEnable = true"
+    state: "present"
+
+- name: "gnome-shell:lineinfile:/etc/gdm3/custom.conf"
+  become: true
+  lineinfile:
+    path: /etc/gdm3/custom.conf
+    insertafter: '^\[daemon\]'
+    regexp: "^AutomaticLogin"
+    line: "AutomaticLogin = {{ user.name }}"
+    state: "present"

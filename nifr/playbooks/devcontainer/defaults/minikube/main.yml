@@ -1,0 +1,5 @@
+minikube:
+  github:
+    user: "kubernetes"
+    repo: "minikube"
+    tag: "v1.6.2"

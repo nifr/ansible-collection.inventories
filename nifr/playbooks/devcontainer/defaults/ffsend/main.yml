@@ -1,0 +1,5 @@
+ffsend:
+  github:
+    user: "timvisee"
+    repo: "ffsend"
+    tag: "v0.2.58"

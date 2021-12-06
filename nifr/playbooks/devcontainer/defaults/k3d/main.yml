@@ -1,0 +1,7 @@
+---
+k3d:
+  install_method: "binary"
+  github:
+    user: "rancher"
+    repo: "k3d"
+    tag: "v1.4.0"

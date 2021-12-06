@@ -1,0 +1,6 @@
+---
+hub:
+  github:
+    tag: "v2.14.2"
+    repo: "hub"
+    user: "github"

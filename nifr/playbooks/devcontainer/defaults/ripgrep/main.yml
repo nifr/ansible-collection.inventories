@@ -1,0 +1,6 @@
+---
+ripgrep:
+  github:
+    user: "burntsushi"
+    repo: "ripgrep"
+    tag: "11.0.2"

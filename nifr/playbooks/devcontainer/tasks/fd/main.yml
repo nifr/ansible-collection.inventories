@@ -1,0 +1,98 @@
+---
+- name: "fd:set_fact:fd_release"
+  block:
+    - name: "fd:sect_fact:fd_release:from:github"
+      when: "fd_release is not defined"
+      block:
+        - name: "fd:get/latest-release"
+          github_release:
+            user: "{{ fd.github.user }}"
+            repo: "{{ fd.github.repo }}"
+            action: "latest_release"
+          register: "fd_release"
+          until: "fd_release is succeeded"
+          changed_when: "fd_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not fd_release.tag"
+        - name: "fd:cache_fact:fd_release.tag"
+          set_fact:
+            fd_release: '{"tag": "{{ fd_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "fd:set_fact:fd_release:from:defaults"
+      set_fact:
+        fd_release: '{"tag": "{{ fd.github.tag }}"}'
+        cacheable: false
+
+- name: "fd:set_fact:download:filename"
+  set_fact:
+    fd_download_filename: >-
+      {{
+        'fd_'
+        + fd_release.tag[1:]
+        + '_amd64.deb'
+      }}
+- name: "fd:set_fact:download:url|cache_path"
+  set_fact:
+    fd_download_url: >-
+      {{
+        'https://github.com/'
+        + fd.github.user
+        + '/'
+        + fd.github.repo
+        + '/releases/download/'
+        + fd_release.tag
+        + '/'
+        + fd_download_filename
+      }}
+
+- name: "fd:cache"
+  when: "( ansible_use_download_cache | bool )"
+  block:
+    - name: "fd:set_fact:cache:path"
+      set_fact:
+        fd_download_cache_path: >-
+          {{
+            ansible_download_cache_path
+            + '/'
+            + fd_download_filename
+          }}
+    - name: "fd:stat:cache:path"
+      stat:
+        path: "{{ fd_download_cache_path }}"
+      register: "fd_download_cache_file"
+    - name: "fd:cache:update"
+      when: "not fd_download_cache_file.stat.exists"
+      block:
+        - name: "fd:file:cache:directory"
+          file:
+            state: "directory"
+            path: "{{ ansible_download_cache_path }}"
+            mode: "750"
+        - name: "fd:get_url:cache:download"
+          get_url:
+            url: "{{ fd_download_url }}"
+            dest: "{{ fd_download_cache_path }}"
+            mode: "750"
+          register: "fd_download_result"
+          failed_when: "(fd_download_result is failed)"
+          until: "(fd_download_result is succeeded)"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+- name: "fd:apt:deb:install"
+  become: true
+  apt:
+    deb: >-
+      {{
+        (ansible_use_download_cache | bool)
+        | ternary(
+            fd_download_cache_path,
+            fd_download_url
+          )
+      }}
+  register: "fd_apt_result"
+  failed_when: "(fd_apt_result is failed) and (not (fd_apt_result.msg.find('already installed') > -1))"
+  until: "(fd_apt_result is succeeded)"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

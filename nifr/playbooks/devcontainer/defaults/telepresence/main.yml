@@ -1,0 +1,5 @@
+telepresence:
+  github:
+    user: "telepresenceio"
+    repo: "telepresence"
+  state: "present"

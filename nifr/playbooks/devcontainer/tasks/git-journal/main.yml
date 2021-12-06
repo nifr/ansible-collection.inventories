@@ -1,0 +1,7 @@
+---
+
+- name: "git-journal:command:~/.cargo/bin"
+  command: "cargo install git-journal"
+  register: "git_journal_installation"
+  failed_when: false
+  changed_when: false

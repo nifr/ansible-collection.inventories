@@ -1,0 +1,6 @@
+---
+docker_machine:
+  github:
+    user: "docker"
+    repo: "machine"
+    tag: "v0.16.2"

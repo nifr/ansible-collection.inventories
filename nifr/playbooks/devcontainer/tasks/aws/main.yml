@@ -1,0 +1,70 @@
+---
+- name: "aws:commmand:get:aws_version"
+  command: "{{ ansible_env.HOME }}/.local/bin/aws --version"
+  register: "aws_version"
+  failed_when: false
+  changed_when: false
+  tags:
+    - aws[cli]
+
+- name: "aws:install:cli"
+  tags:
+    - aws[cli]
+  when: "(aws_version.rc != 0)"
+  block:
+    - name: "aws:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "aws"
+      register: "aws_tmp_dir"
+
+    - name: "aws:unarchive:{{ aws_tmp_dir.path }}"
+      unarchive:
+        dest: "{{ aws_tmp_dir.path }}"
+        remote_src: true
+        src: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+      register: "aws_archive_download"
+      until: "aws_archive_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "aws:command:install"
+      become: true
+      command:
+        argv:
+          - "{{ aws_tmp_dir.path }}/aws/install"
+          - "--update"
+          - "--install-dir"
+          - "{{ ansible_env.HOME }}/.local/lib/aws-cli"
+          - "--bin-dir"
+          - "{{ ansible_env.HOME }}/.local/bin"
+      register: "aws_install"
+
+- name: "aws:file:~/.aws/"
+  file:
+    path: "~/.aws/"
+    state: "directory"
+    mode: "750"
+  tags:
+    - config[*]
+    - aws[config]
+    - credentials[*]
+    - aws[credentials]
+
+- name: "aws:template:~/.aws/config"
+  template:
+    src: "aws/aws_config.j2"
+    dest: "~/.aws/config"
+    mode: "640"
+  tags:
+    - config[*]
+    - aws[config]
+
+- name: "aws:template:~/.aws/credentials"
+  template:
+    src: "aws/aws_credentials.j2"
+    dest: "~/.aws/credentials"
+    mode: "640"
+  tags:
+    - credentials[*]
+    - aws[credentials]

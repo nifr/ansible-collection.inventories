@@ -1,0 +1,38 @@
+---
+- name: "microk8s:snap:install"
+  become: true
+  snap:
+    name: "microk8s"
+    state: "present"
+    classic: true
+
+- name: "microk8s:user:group:microk8s"
+  become: true
+  user:
+    name: "{{ ansible_ssh_user }}"
+    groups: "microk8s"
+    append: true
+    force: true
+
+- name: "microk8s:command:state:get"
+  become: true
+  command: "microk8s.status --wait-ready --timeout 60"
+  changed_when: false
+  failed_when: false
+  register: "microk8s_status"
+
+- name: "microk8s:command:start"
+  when: >-
+    (microk8s_status.stdout.find('microk8s is not running') != -1)
+    and
+    (microk8s.state == "started")
+  become: true
+  command: "microk8s.start"
+
+- name: "microk8s:command:stop"
+  when: >-
+    (microk8s_status.stdout.find('microk8s is running'))
+    and
+    (microk8s.state == "stopped")
+  become: true
+  command: "microk8s.stop"

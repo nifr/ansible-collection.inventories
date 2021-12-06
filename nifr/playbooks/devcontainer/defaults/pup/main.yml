@@ -1,0 +1,6 @@
+---
+pup:
+  github:
+    user: "ericchiang"
+    repo: "pup"
+    tag: "v0.4.0"

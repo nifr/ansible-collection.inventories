@@ -1,0 +1,42 @@
+---
+neovim:
+  prefer_unstable: false
+  state: "latest"
+  plugins:
+    "https://github.com/editorconfig/editorconfig-vim.git": editorconfig
+  packs:
+    # --- git integration
+    "https://github.com/airblade/vim-gitgutter": gitgutter
+    "https://github.com/tpope/vim-fugitive": fugitive
+
+    # --- statusline
+    "https://github.com/itchyny/lightline.vim": lightline
+    # Alternative: https://github.com/vim-airline/vim-airline
+
+    # --- ctrl+p
+    # required for fzf.vim
+    "https://github.com/junegunn/fzf": fzf
+    "https://github.com/junegunn/fzf.vim": fzf.vim
+    # Alternative: https://github.com/liuchengxu/vim-clap
+
+    # --- asynchronuos completion
+    "https://github.com/Shougo/deoplete.nvim": deoplete
+    # Alternative: https://github.com/ncm2/ncm2
+    # Alternative: https://github.com/ycm-core/YouCompleteMe (synchronous)
+
+    # --- linting integration
+    "https://github.com/dense-analysis/ale": ale
+    # Alternative: https://github.com/neomake/neomake
+    # --- languageserver integration
+    # TODO: re-enable once nvm/nodejs are installed in the devcontainer
+    # "https://github.com/neoclide/coc.nvim": coc
+    # Alternative: https://github.com/autozimu/LanguageClient-neovim
+    # --- themes
+    # see: https://gist.github.com/christalib/97bbe55e6ceb708d268eb27cd53fd266#file-init-vim-L183
+    # for a theme switcher example
+    # https://github.com/ayu-theme/ayu-vim
+    # https://github.com/arcticicestudio/nord-vim
+    # --- visual helpers
+    # https://github.com/Yggdroot/indentLine
+    # --- learn vim
+    # https://github.com/takac/vim-hardtime

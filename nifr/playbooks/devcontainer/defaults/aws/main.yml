@@ -1,0 +1,6 @@
+---
+aws:
+  credentials: {}
+  config:
+    default:
+      region: "eu-central-1"

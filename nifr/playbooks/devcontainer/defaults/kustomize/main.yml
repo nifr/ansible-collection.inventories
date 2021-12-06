@@ -1,0 +1,7 @@
+---
+kustomize:
+  install_method: binary
+  github:
+    tag: "kustomize/v3.5.4"
+    user: kubernetes-sigs
+    repo: kustomize

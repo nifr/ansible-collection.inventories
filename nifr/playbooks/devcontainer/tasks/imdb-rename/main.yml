@@ -1,0 +1,57 @@
+---
+- name: "imdb-rename:set_fact:imdb_rename_release"
+  block:
+    - name: "imdb-rename:sect_fact:imdb_rename_release:from:github"
+      when: "imdb_rename_release is not defined"
+      block:
+        - name: "imdb-rename:get/latest-release"
+          github_release:
+            user: "{{ imdb_rename.github.user }}"
+            repo: "{{ imdb_rename.github.repo }}"
+            action: "latest_release"
+          register: "imdb_rename_release"
+          until: "imdb_rename_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "imdb_rename_release.tag"
+          failed_when: "not imdb_rename_release.tag"
+        - name: "imdb-rename:cache_fact:imdb_rename_release.tag"
+          set_fact:
+            imdb_rename_release: '{"tag": "{{ imdb_rename_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "imdb-rename:set_fact:imdb_rename_release:from:defaults"
+      set_fact:
+        imdb_rename_release: '{"tag": "{{ imdb_rename.github.tag }}"}'
+        cacheable: false
+
+- name: "imdb_rename:version:local"
+  command: "~/.local/bin/imdb-rename --version"
+  register: "imdb_rename_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(imdb_rename_version.rc != 0) or (imdb_rename_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( imdb_rename_release.tag, operator='lt', strict=true))"
+  block:
+    - name: "imdb_rename:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "imdb_rename"
+      register: "imdb_rename_tmp_dir"
+
+    - name: "imdb_rename:unarchive"
+      unarchive:
+        src: "https://github.com/{{ imdb_rename.github.user }}/{{ imdb_rename.github.repo }}/releases/download/{{ imdb_rename_release.tag }}/imdb-rename-{{ imdb_rename_release.tag }}-x86_64-unknown-linux-gnu.tar.gz"
+        remote_src: true
+        dest: "{{ imdb_rename_tmp_dir.path }}"
+      register: "imdb_rename_download"
+      until: "imdb_rename_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "imdb_rename:copy"
+      copy:
+        remote_src: true
+        src: "{{ imdb_rename_tmp_dir.path }}/imdb-rename-{{ imdb_rename_release.tag }}-x86_64-unknown-linux-gnu/imdb-rename"
+        dest: "~/.local/bin/imdb-rename"
+        mode: "750"

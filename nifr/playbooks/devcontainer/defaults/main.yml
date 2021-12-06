@@ -1,0 +1,20 @@
+---
+ansible_ignore_errors: false
+ansible_ignore_include_errors: false
+ansible_retry_count: 5
+ansible_retry_delay: 60
+
+ansible_include_vars_os_family: true
+ansible_include_vars_distribution: true
+ansible_include_vars_environment: true
+ansible_include_vars_user: true
+
+ansible_environment: ""
+
+ansible_download_cache_path: "~/.cache/ansible/downloads"
+ansible_use_download_cache: false
+
+apt_cache_valid_time: 3600
+
+git_repositories:
+  projects: {}

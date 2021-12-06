@@ -1,0 +1,89 @@
+---
+- name: "docker[runtime]"
+  become: true
+  tags:
+    - docker[daemon]
+  block:
+    - name: "docker:include_role:geerlingguy.docker"
+      include_role:
+        name: "geerlingguy.docker"
+        apply:
+          become: true
+      vars:
+        docker_install_compose: false
+        docker_users:
+          - "{{ ansible_user }}"
+    - name: "docker:dir:/etc/docker"
+      file:
+        path: "/etc/docker"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+    - name: "docker:copy/file:docker/daemon.json"
+      copy:
+        content: "{{ docker.daemon | to_nice_json }}"
+        dest: "/etc/docker/daemon.json"
+
+- name: "docker-compose:set_fact:docker_compose_release"
+  tags:
+    - docker[docker-compose]
+  block:
+    - name: "docker-compose:sect_fact:docker_compose_release:from:github"
+      when: "docker_compose_release is not defined"
+      block:
+        - name: "docker-compose:get/latest-release"
+          github_release:
+            user: "{{ docker_compose.github.user }}"
+            repo: "{{ docker_compose.github.repo }}"
+            action: "latest_release"
+          register: "docker_compose_release"
+          until: "docker_compose_release is succeeded"
+          changed_when: "docker_compose_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not docker_compose_release.tag"
+        - name: "docker-compose:cache_fact:docker_compose_release.tag"
+          set_fact:
+            docker_compose_release: '{"tag": "{{ docker_compose_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "docker-compose:set_fact:docker_compose_release:from:defaults"
+      set_fact:
+        docker_compose_release: '{"tag": "{{ docker_compose.github.tag }}"}'
+        cacheable: false
+
+- name: "docker[docker-compose]"
+  become: true
+  tags:
+    - docker[docker-compose]
+  block:
+    - name: "docker-compose:download/binary"
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/{{ docker_compose_release.tag }}/docker-compose-Linux-x86_64"
+        dest: "/usr/local/bin/docker-compose"
+        mode: 0755
+      register: "docker_compose_binary_download"
+      until: "docker_compose_binary_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "docker-compose:download/completions/zsh"
+      get_url:
+        url: "https://raw.githubusercontent.com/docker/compose/{{ docker_compose_release.tag }}/contrib/completion/zsh/_docker-compose"
+        dest: "/usr/share/zsh/vendor-completions/_docker-compose"
+        mode: 0644
+      register: "docker_compose_completions_zsh_download"
+      until: "docker_compose_completions_zsh_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "docker-compose:download/completions/bash"
+      get_url:
+        url: "https://raw.githubusercontent.com/docker/compose/{{ docker_compose_release.tag }}/contrib/completion/bash/docker-compose"
+        dest: "/usr/share/bash-completion/completions/docker-compose"
+        mode: 0644
+      register: "docker_compose_completions_bash_download"
+      until: "docker_compose_completions_bash_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

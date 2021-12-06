@@ -1,0 +1,5 @@
+kitematic:
+  github:
+    user: "docker"
+    repo: "kitematic"
+    tag: "v0.17.10"

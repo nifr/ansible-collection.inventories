@@ -1,0 +1,57 @@
+---
+- name: "skim:set_fact:skim_release"
+  block:
+    - name: "skim:sect_fact:skim_release:from:github"
+      when: "skim_release is not defined"
+      block:
+        - name: "skim:get/latest-release"
+          github_release:
+            user: "{{ skim.github.user }}"
+            repo: "{{ skim.github.repo }}"
+            action: "latest_release"
+          register: "skim_release"
+          until: "skim_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "skim_release.tag"
+          failed_when: "not skim_release.tag"
+        - name: "skim:cache_fact:skim_release.tag"
+          set_fact:
+            skim_release: '{"tag": "{{ skim_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "skim:set_fact:skim_release:from:defaults"
+      set_fact:
+        skim_release: '{"tag": "{{ skim.github.tag }}"}'
+        cacheable: false
+
+- name: "skim:version:local"
+  command: "~/.local/bin/sk --version"
+  register: "skim_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(skim.version|default(false)) or (skim_version.rc != 0) or (skim_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( skim_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "skim:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "skim"
+      register: "skim_tmp_dir"
+
+    - name: "skim:unarchive"
+      unarchive:
+        src: "https://github.com/{{ skim.github.user }}/{{ skim.github.repo }}/releases/download/{{ skim.version|default(skim_release.tag) }}/skim-{{ skim.version|default(skim_release.tag) }}-x86_64-unknown-linux-gnu.tar.gz"
+        remote_src: true
+        dest: "{{ skim_tmp_dir.path }}"
+      register: "skim_download"
+      until: "skim_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "skim:copy"
+      copy:
+        remote_src: true
+        src: "{{ skim_tmp_dir.path }}/sk"
+        dest: "~/.local/bin/sk"
+        mode: "750"

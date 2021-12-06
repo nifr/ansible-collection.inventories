@@ -1,0 +1,29 @@
+---
+- name: "git:command:git-version"
+  command: "git --version"
+  register: "installed_git_version"
+  failed_when: false
+  changed_when: false
+  tags:
+    - git[completion]
+
+- name: "git:completion"
+  when: "(installed_git_version.rc == 0)"
+  block:
+    - name: "git:mktemp:directory:git-completion"
+      tempfile:
+        state: "directory"
+        suffix: "git-completion"
+      register: "git_completion_tmp_dir"
+    - name: "git:file:directory:zsh-completions"
+      file:
+        path: "~/.local/share/zsh/completions"
+        state: "directory"
+        mode: "770"
+    - name: "git:get_url:git_completions_tmp_dir"
+      get_url:
+        url: "https://github.com/git/git/raw/v{{ installed_git_version.stdout|regex_search('\\d+\\.\\d+\\.\\d+') }}/contrib/completion/git-completion.zsh"
+        dest: "~/.local/share/zsh/completions/_git"
+        mode: "750"
+  tags:
+    - git[completion]

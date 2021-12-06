@@ -1,0 +1,54 @@
+---
+- name: "hadolint:set_fact:hadolint_release"
+  block:
+    - name: "hadolint:sect_fact:hadolint_release:from:github"
+      when: "hadolint_release is not defined"
+      block:
+        - name: "hadolint:get/latest-release"
+          github_release:
+            user: "{{ hadolint.github.user }}"
+            repo: "{{ hadolint.github.repo }}"
+            action: "latest_release"
+          register: "hadolint_release"
+          until: "hadolint_release is succeeded"
+          changed_when: "hadolint_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not hadolint_release.tag"
+        - name: "hadolint:cache_fact:hadolint_release.tag"
+          set_fact:
+            hadolint_release: '{"tag": "{{ hadolint_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "hadolint:set_fact:hadolint_release:from:defaults"
+      set_fact:
+        hadolint_release: '{"tag": "{{ hadolint.github.tag }}"}'
+        cacheable: false
+
+- name: "hadolint:version:local"
+  command: "~/.local/bin/hadolint --version"
+  register: "hadolint_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(hadolint_version.rc != 0) or (hadolint_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version(hadolint_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "hadolint:download"
+      get_url:
+        dest: "~/.local/bin/hadolint"
+        force: true
+        mode: "750"
+        url: >-
+          {{
+            'https://github.com/' ~
+            hadolint.github.user ~
+            '/' ~
+            hadolint.github.repo ~
+            '/releases/download/' ~
+            hadolint_release.tag ~
+            '/hadolint-Linux-x86_64'
+          }}
+      register: "hadolint_download"
+      until: "hadolint_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

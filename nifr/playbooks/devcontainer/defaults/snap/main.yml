@@ -1,0 +1,16 @@
+---
+snap:
+  automatic_upgrades: false
+  packages:
+    - { name: "vscode", state: "absent" }
+    - { name: "aws-cli", state: "absent"}
+    - "code"
+    - "go"
+    - "kubectl"
+    - "ruby"
+    - { name: "google-cloud-sdk", channel: "latest/stable" }
+    - { name: "node", channel: "11/stable" }
+    - { name: "jo", classic: false }
+    - { name: "jq", channel: "latest/edge", classic: false }
+    - { name: "postman", channel: "latest/edge", classic: false }
+    - { name: "dbeaver-ce", channel: "latest/edge", classic: false }

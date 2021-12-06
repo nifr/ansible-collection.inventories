@@ -1,0 +1,6 @@
+---
+kubectx:
+  github:
+    user: "ahmetb"
+    repo: "kubectx"
+    tag: "v0.7.1"

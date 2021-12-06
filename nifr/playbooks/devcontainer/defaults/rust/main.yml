@@ -1,0 +1,9 @@
+---
+
+rust:
+  rustup:
+    profile: "default"
+  toolchain:
+    default: "stable"
+    additional:
+      - "beta"

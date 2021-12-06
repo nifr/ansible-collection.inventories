@@ -1,0 +1,69 @@
+---
+- name: "nordvpn:install"
+  when: 'nordvpn["state"] in ["present", "latest"]'
+  block:
+    - name: "nordvpn:deb:install"
+      become: true
+      apt:
+        deb: '{{ nordvpn["deb"] }}'
+      register: "nordvpn_repository"
+
+    # - name: 'nordvpn:apt_key:add'
+    #   become: true
+    #   apt_key:
+    #     url: 'https://repo.nordvpn.com/gpg/nordvpn_public.asc'
+    #     state: 'present'
+
+    - name: "nordvpn:package:install"
+      become: true
+      apt:
+        update_cache: >-
+          {{
+            (nordvpn_repository.changed | bool)
+            or
+            (nordvpn["state"] == "latest")
+          }}
+        name: "nordvpn"
+        state: '{{ nordvpn["state"] }}'
+
+    - name: "nordvpn:account:status"
+      shell: "nordvpn account"
+      register: "nordvpn_account"
+      changed_when: false
+      failed_when: false
+      no_log: true
+
+    - name: "nordvpn:account:show"
+      when: 'nordvpn["email"] in nordvpn_account.stdout'
+      debug:
+        var: "nordvpn_account"
+        verbosity: 1
+
+    - name: "nordvpn:account:login"
+      when: 'nordvpn["email"] not in nordvpn_account.stdout|default("")'
+      shell: >-
+        {{
+          "nordvpn login"
+          ~ " --username '" ~ nordvpn["email"] ~ "'"
+          ~ " --password '" ~ nordvpn["password"] ~ "'"
+        }}
+      no_log: true
+      # args:
+      #   creates: '~/.config/nordvpn/nordvpn.conf'
+
+- name: "nordvpn:uninstall"
+  when: 'nordvpn["state"] == "absent"'
+  block:
+    - name: "nordvpn:packages:remove"
+      become: true
+      apt:
+        name: '{{ ["nordvpn", "nordvpn-release"] }}'
+        state: "absent"
+    - name: "nordvpn:artifacts:remove"
+      become: true
+      file:
+        path: "{{ item }}"
+        state: "absent"
+      loop:
+        - "/var/log/nordvpn/"
+        - "~/.config/nordvpn/"

@@ -1,0 +1,85 @@
+---
+- name: "fzf:set_fact:fzf_release"
+  block:
+    - name: "fzf:sect_fact:fzf_release:from:github"
+      when: "fzf_release is not defined"
+      block:
+        - name: "fzf:get/latest-release"
+          github_release:
+            user: "{{ fzf.github.user }}"
+            repo: "{{ fzf.github.repo }}"
+            action: "latest_release"
+          register: "fzf_release"
+          until: "fzf_release is succeeded"
+          changed_when: "fzf_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not fzf_release.tag"
+        - name: "fzf:cache_fact:fzf_release.tag"
+          set_fact:
+            fzf_release: '{"tag": "{{ fzf_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "fzf:set_fact:fzf_release:from:defaults"
+      set_fact:
+        fzf_release: '{"tag": "{{ fzf.github.tag }}"}'
+        cacheable: false
+
+- name: "fzf:version:local"
+  command: "~/.local/bin/fzf --version"
+  register: "fzf_version"
+  failed_when: false
+  changed_when: false
+
+- when: '(fzf_version.rc != 0) or (fzf_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(fzf_release.tag, operator="lt", strict=true))'
+  block:
+    - name: "fzf:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "fzf"
+      register: "fzf_tmp_dir"
+
+    - name: "fzf:unarchive"
+      unarchive:
+        src: "https://github.com/{{ fzf.github.user }}/{{ fzf.github.repo }}/releases/download/{{ fzf_release.tag }}/fzf-{{ fzf_release.tag }}-linux_amd64.tgz"
+        remote_src: true
+        dest: "{{ fzf_tmp_dir.path }}"
+      register: "fzf_unarchive"
+      until: "fzf_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "fzf:copy"
+      copy:
+        remote_src: true
+        src: "{{ fzf_tmp_dir.path }}/fzf"
+        dest: "~/.local/bin/fzf"
+        mode: "750"
+
+    - name: "fzf:download:fzf-tmux"
+      get_url:
+        url: "https://raw.githubusercontent.com/{{ fzf.github.user }}/fzf/{{ fzf_release.tag }}/bin/fzf-tmux"
+        dest: "~/.local/bin/fzf-tmux"
+        mode: "750"
+
+- name: "fzf:file:directory:zsh-autosource"
+  file:
+    path: "~/.local/share/zsh/plugins"
+    state: "directory"
+    mode: "750"
+
+- name: "fzf:stat:check:~/.local/share/zsh/plugins/fzf.key-bindings.plugin.zsh"
+  stat:
+    path: "~/.local/share/zsh/plugins/fzf.key-bindings.plugin.zsh"
+  register: "fzf_keybindings"
+
+- name: "fzf:get_url:download:~/.local/share/zsh/plugins/fzf.key-bindings.plugin.zsh"
+  when: "not (fzf_keybindings.stat.exists and fzf_keybindings.stat.isreg and fzf_keybindings.stat.readable)"
+  get_url:
+    url: "https://raw.githubusercontent.com/junegunn/fzf/master/shell/key-bindings.zsh"
+    dest: "~/.local/share/zsh/plugins/fzf.key-bindings.plugin.zsh"
+    mode: "750"
+  register: "fzf_download_keybindings"
+  until: "fzf_download_keybindings is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

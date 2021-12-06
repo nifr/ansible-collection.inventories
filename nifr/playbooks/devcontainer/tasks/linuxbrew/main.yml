@@ -1,0 +1,146 @@
+---
+- name: "linuxbrew:apt:install-dependencies"
+  become: true
+  apt:
+    pkg:
+      - "build-essential"
+      - "sudo"
+      - "procps"
+      - "file"
+      - "git"
+      - "curl"
+    update_cache: true
+    cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
+    state: "{{ linuxbrew.state }}"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:user-linuxbrew"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    state: "present"
+    regexp: "linuxbrew ALL="
+    line: "linuxbrew ALL=(ALL) NOPASSWD:ALL"
+    owner: "root"
+    group: "root"
+    mode: "440"
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:disable-requiretty-for-root-user"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    owner: "root"
+    group: "root"
+    mode: "440"
+    regexp: "^Defaults:linuxbrew !?requiretty"
+    line: "Defaults:linuxbrew !requiretty"
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "linuxbrew:user:create"
+  become: true
+  user:
+    name: "linuxbrew"
+    create_home: true
+    system: true
+    uid: 200
+    shell: "/bin/false"
+    password: "!"
+    password_lock: true
+
+- name: "linuxbrew:file:directory:permissions"
+  become: true
+  file:
+    path: "{{ item }}"
+    state: "directory"
+    owner: "linuxbrew"
+    group: "linuxbrew"
+    mode: "750"
+  loop:
+    - "~linuxbrew"
+    - "~linuxbrew/.linuxbrew"
+    - "~linuxbrew/.cache"
+
+- name: "linuxbrew:command:get-version"
+  command: "brew --version"
+  environment:
+    PATH: "~linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
+  changed_when: false
+  failed_when: false
+  register: "linuxbrew_local_version"
+
+- name: "linuxbrew:download&install"
+  become: true
+  when: "linuxbrew_local_version.rc != 0"
+  block:
+    - name: "linuxbrew:mktemp"
+      become_user: "linuxbrew"
+      tempfile:
+        state: "directory"
+        suffix: "linuxbrew"
+      register: "linuxbrew_tmp_dir"
+    - name: "linuxbrew:get_url:download"
+      get_url:
+        url: "https://raw.githubusercontent.com/Homebrew/install/master/install.sh"
+        dest: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
+        owner: "linuxbrew"
+        group: "linuxbrew"
+        mode: "555"
+    - name: "linuxbrew:command:install"
+      become_user: "linuxbrew"
+      command: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
+      environment:
+        CI: 1
+
+# prevent zsh completion warnings:
+# "zsh compinit: insecure directories"
+# -> chmod go-w '/home/linuxbrew/.linuxbrew/share'
+- name: "linuxbrew:file:directory:permissions"
+  become: true
+  file:
+    path: "~linuxbrew/.linuxbrew/share"
+    state: "directory"
+    owner: "linuxbrew"
+    group: "linuxbrew"
+    mode: "750"
+    recurse: true
+
+- name: "linuxbrew:template:~linuxbrew/.Brewfile"
+  become: true
+  template:
+    src: "linuxbrew/Brewfile.j2"
+    dest: "~linuxbrew/.Brewfile"
+    owner: "linuxbrew"
+    group: "linuxbrew"
+
+- name: "linuxbrew[packages]"
+  become: true
+  become_user: "linuxbrew"
+  environment:
+    PATH: "~linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
+  block:
+    - name: "linuxbrew:command:brew bundle install ~linuxbrew/.Brewfile"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle install --global"
+
+    - name: "linuxbrew:command:brew bundle cleanup --global --force"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle cleanup --global --force"
+
+    - name: "linuxbrew:command:brew bundle dump --global --force"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle dump --global --force"
+
+    - name: "linuxbrew:command:brew bundle --global"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle --global"
+# eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+
+- name: "linuxbrew:file:absent:~linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-{core,bundle}"
+  # the taps homebrew/homebrew-{core,bundle} are re-downloaded on the fly if absent
+  # in order to save ~600M space in a devcontainer these can be removed after installation
+  when: "linuxbrew.remove_taps | bool"
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: "absent"
+  loop:
+    - "~linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core"
+    - "~linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-bundle"

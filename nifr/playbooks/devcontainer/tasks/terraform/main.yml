@@ -1,0 +1,57 @@
+---
+- name: "terraform:set_fact:terraform_release"
+  block:
+    - name: "terraform:sect_fact:terraform_release:from:github"
+      when: "terraform_release is not defined"
+      block:
+        - name: "terraform:get/latest-release"
+          github_release:
+            user: "{{ terraform.github.user }}"
+            repo: "{{ terraform.github.repo }}"
+            action: "latest_release"
+          register: "terraform_release"
+          until: "terraform_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "terraform_release.tag"
+          failed_when: "not terraform_release.tag"
+        - name: "terraform:cache_fact:terraform_release.tag"
+          set_fact:
+            terraform_release: '{"tag": "{{ terraform_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "terraform:set_fact:terraform_release:from:defaults"
+      set_fact:
+        terraform_release: '{"tag": "{{ terraform.github.tag }}"}'
+        cacheable: false
+
+- name: "terraform:version:local"
+  command: "~/.local/bin/terraform --version"
+  register: "terraform_version"
+  failed_when: false
+  changed_when: false
+
+- when: '(terraform_version.rc != 0) or (terraform_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(terraform_release.tag[1:], operator="lt", strict=true))'
+  block:
+    - name: "terraform:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "terraform"
+      register: "terraform_tmp_dir"
+
+    - name: "terraform:unarchive"
+      unarchive:
+        src: "https://releases.hashicorp.com/terraform/{{ terraform_release.tag[1:] }}/terraform_{{ terraform_release.tag[1:] }}_linux_amd64.zip"
+        remote_src: true
+        dest: "{{ terraform_tmp_dir.path }}"
+      register: "terraform_unarchive"
+      until: "terraform_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "terraform:copy"
+      copy:
+        remote_src: true
+        src: "{{ terraform_tmp_dir.path }}/terraform"
+        dest: "~/.local/bin/terraform"
+        mode: "750"

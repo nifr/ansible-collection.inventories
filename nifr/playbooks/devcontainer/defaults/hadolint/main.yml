@@ -1,0 +1,6 @@
+---
+hadolint:
+  github:
+    user: "hadolint"
+    repo: "hadolint"
+    tag: "v1.17.4"

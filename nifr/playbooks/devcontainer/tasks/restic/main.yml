@@ -1,0 +1,56 @@
+---
+- name: "restic:set_fact:restic_release"
+  block:
+    - name: "restic:sect_fact:restic_release:from:github"
+      when: "restic_release is not defined"
+      block:
+        - name: "restic:get/latest-release"
+          github_release:
+            user: "{{ restic.github.user }}"
+            repo: "{{ restic.github.repo }}"
+            action: "latest_release"
+          register: "restic_release"
+          until: "restic_release is succeeded"
+          changed_when: "restic_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not restic_release.tag"
+        - name: "restic:cache_fact:restic_release.tag"
+          set_fact:
+            restic_release: '{"tag": "{{ restic_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "restic:set_fact:restic_release:from:defaults"
+      set_fact:
+        restic_release: '{"tag": "{{ restic.github.tag }}"}'
+        cacheable: false
+
+- name: "restic:version:binary"
+  command: "~/.local/bin/restic version"
+  register: "restic_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(restic_version.rc == 2) or (restic_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version(restic_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "restic:archive:tempdir"
+      tempfile:
+        state: "directory"
+        suffix: "restic"
+      register: "restic_download_tempdir"
+    - name: "restic:archive:download"
+      get_url:
+        dest: "{{ restic_download_tempdir.path }}/"
+        url: "https://github.com/{{ restic.github.user }}/{{ restic.github.repo }}/releases/download/{{ restic_release.tag }}/restic_{{ restic_release.tag[1:] }}_linux_amd64.bz2"
+      register: "restic_download"
+      until: "restic_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: "restic:archive:extract"
+      command: "bunzip2 --force {{ restic_download_tempdir.path }}/restic_{{ restic_release.tag[1:] }}_linux_amd64.bz2"
+    - name: "restic:cp:binary"
+      copy:
+        dest: "~/.local/bin/restic"
+        src: "{{ restic_download_tempdir.path }}/restic_{{ restic_release.tag[1:] }}_linux_amd64"
+        remote_src: true
+        mode: "750"

@@ -1,0 +1,34 @@
+---
+
+- name: "telepresence:apt"
+  when: " ansible_pkg_mgr == 'apt'"
+  become: true
+  block:
+    - name: "telepresence:apt_key:packagecloud.io"
+      apt_key:
+        url: "https://packagecloud.io/datawireio/telepresence/gpgkey"
+        state: "{{ telepresence.state }}"
+      register: "apt_keys"
+      until: "apt_keys is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: "telepresence:apt_repository:packagecloud"
+      apt_repository:
+        repo: "deb https://packagecloud.io/datawireio/telepresence/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release | lower }} main"
+        filename: "/etc/apt/sources.list.d/packagecloud.telepresence"
+        state: "{{ telepresence.state }}"
+        update_cache: true
+      register: "telepresence_apt_repository"
+      until: "telepresence_apt_repository is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+- name: "telepresence:package:state"
+  become: true
+  package:
+    name: "telepresence"
+    state: "{{ telepresence.state }}"
+  register: "telepresence_package"
+  until: "telepresence_package is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

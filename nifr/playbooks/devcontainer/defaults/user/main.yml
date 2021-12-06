@@ -1,0 +1,16 @@
+---
+user:
+  name: "vagrant"
+  shell: "/usr/bin/zsh"
+  groups:
+    - "sudo"
+    - "docker"
+    # TODO: move to wireshark role
+    # - "wireshark"
+    - "adm"
+    # TODO: `systemd-journal` must be a system group!
+    # installation of `systemd` package in containers fails otherwise
+    #- "systemd-journal"
+  editor: vim
+  pager: less
+  visual: code

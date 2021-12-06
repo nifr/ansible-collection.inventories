@@ -1,0 +1,6 @@
+---
+
+- name: 'teamviewer:apt/install'
+  become: true
+  apt:
+    deb: 'https://download.teamviewer.com/download/linux/teamviewer_amd64.deb'

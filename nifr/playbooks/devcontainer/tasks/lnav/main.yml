@@ -1,0 +1,123 @@
+---
+- name: "lnav:set_fact:lnav_release"
+  block:
+    - name: "lnav:sect_fact:lnav_release:from:github"
+      when: "lnav_release is not defined"
+      block:
+        - name: "lnav:get/latest-release"
+          github_release:
+            user: "{{ lnav.github.user }}"
+            repo: "{{ lnav.github.repo }}"
+            action: "latest_release"
+          register: "lnav_release"
+          until: "lnav_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "lnav_release.tag"
+          failed_when: "not lnav_release.tag"
+        - name: "lnav:cache_fact:lnav_release.tag"
+          set_fact:
+            lnav_release: '{"tag": "{{ lnav_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "lnav:set_fact:lnav_release:from:defaults"
+      set_fact:
+        lnav_release: '{"tag": "{{ lnav.github.tag }}"}'
+        cacheable: false
+
+- name: "lnav:version:local"
+  command: "~/.local/bin/lnav -V"
+  register: "lnav_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (lnav_version.rc != 0)
+    or
+    (
+      lnav_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(lnav_release.tag[1:], operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (lnav.install_method is equalto "binary")
+      block:
+        - name: "lnav:mktemp"
+          tempfile:
+            state: "directory"
+            suffix: "lnav"
+          register: "lnav_tmp_dir"
+        - name: "lnav:unarchive"
+          unarchive:
+            src: >-
+              {{
+                "https://github.com" ~
+                "/" ~ lnav.github.user ~
+                "/" ~ lnav.github.repo ~
+                "/releases/download" ~
+                "/" ~ lnav_release.tag ~
+                "/lnav-" ~ lnav_release.tag ~ "-linux-64bit.zip"
+              }}
+            remote_src: true
+            dest: "{{ lnav_tmp_dir.path }}"
+          register: "lnav_archive"
+          until: "lnav_archive is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+        - name: "lnav:copy"
+          copy:
+            remote_src: true
+            src: "{{ lnav_tmp_dir.path }}/lnav"
+            dest: "~/.local/bin/lnav"
+            mode: "750"
+
+    - when: >-
+        (
+          (ansible_os_family is equalto "Debian")
+          and
+          (lnav.install_method is not equalto "binary")
+        )
+        or
+        (lnav.install_method is equalto "deb")
+      block:
+        - name: "lnav:apt:deb:install"
+          become: true
+          apt:
+            deb: >-
+              {{
+                "https://github.com" ~
+                "/" ~ lnav.github.user ~
+                "/" ~ lnav.github.repo ~
+                "/releases/download" ~
+                "/" ~ lnav_release.tag ~
+                "/lnav_" ~ lnav_release.tag[1:] ~ "_amd64.deb"
+              }}
+          register: "lnav_download"
+          until: "lnav_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+
+    - when: >-
+        (
+          (ansible_os_family is equalto "RedHat")
+          and
+          (lnav.install_method is not equalto "binary")
+        )
+        or
+        (lnav.install_method is equalto "rpm")
+      block:
+        - name: "lnav:yum:rpm:install"
+          become: true
+          yum:
+            pkg: >-
+              {{
+                "https://github.com" ~
+                "/" ~ lnav.github.user ~
+                "/" ~ lnav.github.repo ~
+                "/releases/download" ~
+                "/" ~ lnav_release.tag ~
+                "/lnav-" ~ lnav_release.tag[1:] ~ "-1.x86_64.rpm"
+              }}

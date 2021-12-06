@@ -1,0 +1,7 @@
+---
+tealdeer:
+  github:
+    user: "dbrgn"
+    repo: "tealdeer"
+    tag: "v1.2.0"
+  force_update: false

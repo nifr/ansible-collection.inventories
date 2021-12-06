@@ -1,0 +1,28 @@
+---
+# see: https://help.ubuntu.com/community/Sudoers
+# TODO: Create "sudo" group and manage members
+# TODO: Use template for sudoers file(s)
+- name: "[sudoers]"
+  become: true
+  block:
+    - name: "sudoers:lineinfile:/etc/sudoers.d/*:sudo-group"
+      lineinfile:
+        path: "/etc/sudoers.d/20-ansible-managed"
+        create: true
+        state: "present"
+        regexp: "%sudo ALL="
+        line: "%sudo ALL=(ALL) NOPASSWD:ALL"
+        owner: "root"
+        group: "root"
+        mode: "440"
+        validate: "/usr/sbin/visudo -cf %s"
+    - name: "sudoers:lineinfile:/etc/sudoers.d/*:disable-requiretty-for-vagrant-user"
+      lineinfile:
+        path: "/etc/sudoers.d/no-requiretty"
+        create: true
+        owner: "root"
+        group: "root"
+        mode: "440"
+        regexp: "^Defaults:{{ user.name }} !?requiretty"
+        line: "Defaults:{{ user.name }} !requiretty"
+        validate: "/usr/sbin/visudo -cf %s"

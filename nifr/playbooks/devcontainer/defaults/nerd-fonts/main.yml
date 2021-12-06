@@ -1,0 +1,50 @@
+---
+nerd_fonts:
+  default:
+    target: "user"
+    type: "otf"
+    variant: "Complete"
+  target:
+    user:
+      dir:
+        path: "~/.local/share/fonts"
+        mode: "0700"
+      file:
+        mode: "0600"
+    global:
+      dir:
+        path: "/usr/share/fonts"
+        mode: "0755"
+      file:
+        mode: "0644"
+  type_dir:
+    otf: "opentype"
+    ttf: "truetype"
+  github:
+    user: "ryanoasis"
+    repo: "nerd-fonts"
+  fonts:
+    - name: "Fira Code"
+      styles:
+        - "Bold"
+        - "Light"
+        - "Medium"
+        - "Regular"
+        - "Retina"
+    - name: "Fira Code"
+      styles:
+        - "Bold"
+        - "Light"
+        - "Medium"
+        - "Regular"
+        - "Retina"
+      variant: "Complete Mono"
+    - name: "Hack"
+      styles:
+        - "Bold"
+        - "Bold Italic"
+        - "Italic"
+        - "Regular"
+      type: "ttf"
+    - name: "Droid Sans Mono"
+

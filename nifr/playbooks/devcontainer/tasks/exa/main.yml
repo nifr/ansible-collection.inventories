@@ -1,0 +1,56 @@
+---
+- name: "exa:set_fact:exa_release"
+  block:
+    - name: "exa:sect_fact:exa_release:from:github"
+      when: "exa_release is not defined"
+      block:
+        - name: "exa:get/latest-release"
+          github_release:
+            user: "{{ exa.github.user }}"
+            repo: "{{ exa.github.repo }}"
+            action: "latest_release"
+          register: "exa_release"
+          until: "exa_release is succeeded"
+          changed_when: "exa_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not exa_release.tag"
+        - name: "exa:cache_fact:exa_release.tag"
+          set_fact:
+            exa_release: '{"tag": "{{ exa_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "exa:set_fact:exa_release:from:defaults"
+      set_fact:
+        exa_release: '{"tag": "{{ exa.github.tag }}"}'
+        cacheable: false
+
+- name: "exa:version:local"
+  command: "~/.local/bin/exa --version"
+  register: "exa_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(exa_version.rc != 0) or (exa_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( exa_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "exa:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "exa"
+
+    - name: "exa:unarchive"
+      unarchive:
+        src: "https://github.com/{{ exa.github.user }}/{{ exa.github.repo }}/releases/download/{{ exa_release.tag }}/exa-linux-x86_64-{{ exa_release.tag[1:] }}.zip"
+        remote_src: true
+        dest: "{{ exa_tmp_dir.path }}"
+      register: "exa_download_archive"
+      until: "exa_download_archive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "exa:copy"
+      copy:
+        remote_src: true
+        src: "{{ exa_tmp_dir.path }}/exa-linux-x86_64"
+        dest: "~/.local/bin/exa"
+        mode: "750"

@@ -1,0 +1,5 @@
+---
+codimd_cli:
+  github:
+    repo: cli
+    user: codimd

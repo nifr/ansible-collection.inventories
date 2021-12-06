@@ -1,0 +1,9 @@
+---
+docker_ls:
+  github:
+    tag: "v0.3.2"
+    user: "mayflower"
+    repo: "docker-ls"
+  config:
+    json: true
+    progress-indicator: false

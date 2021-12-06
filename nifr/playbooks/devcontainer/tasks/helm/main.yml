@@ -1,0 +1,190 @@
+---
+- block:
+    - when: >-
+        helm.prerelease == false
+      block:
+        - name: "helm:set_fact:helm_release"
+          block:
+            - name: "helm:sect_fact:helm_release:from:github"
+              when: "helm_release is not defined"
+              block:
+                - name: "helm:get/latest-release"
+                  github_release:
+                    user: "{{ helm.github.user }}"
+                    repo: "{{ helm.github.repo }}"
+                    action: "latest_release"
+                  register: "helm_release"
+                  until: "helm_release is succeeded"
+                  retries: "{{ ansible_retry_count | int }}"
+                  delay: "{{ ansible_retry_delay | int }}"
+                  changed_when: "helm_release.tag"
+                  failed_when: "not helm_release.tag"
+                - name: "helm:cache_fact:helm_release.tag"
+                  set_fact:
+                    helm_release: '{"tag": "{{ helm_release.tag }}"}'
+                    cacheable: true
+          rescue:
+            - name: "helm:set_fact:helm_release:from:defaults"
+              set_fact:
+                helm_release: '{"tag": "{{ helm.github.tag }}"}'
+                cacheable: false
+        - name: "helm:set_fact:latest_version/extract"
+          set_fact:
+            helm_latest_version: "{{ helm_release.tag[1:] }}"
+          no_log: true
+    - when: >-
+        helm.prerelease == true
+      block:
+        - name: "helm:uri:github/tags"
+          no_log: true
+          uri:
+            url: >-
+              {{
+                "https://api.github.com/repos"
+                ~ "/" ~ helm.github.user
+                ~ "/" ~ helm.github.repo
+                ~ "/git/refs/tags"
+              }}
+            return_content: true
+          register: "helm_tags"
+        - name: "helm:set_fact:helm_latest_version"
+          set_fact:
+            helm_latest_version: >-
+              {{
+                helm_tags.json
+                  | to_json
+                  | from_json
+                  | json_query("[?starts_with(ref, 'refs/tags/v')].ref")
+                  | last
+                  | replace("refs/tags/v", "")
+              }}
+  always:
+    - name: "helm:debug:helm_latest_version"
+      debug:
+        var: "helm_latest_version"
+        verbosity: 2
+      failed_when: "not helm_latest_version"
+
+- when: >-
+    helm.install_method is equalto("binary")
+  block:
+    - name: "helm:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "helm"
+      register: "helm_tmp_dir"
+    - set_fact:
+        helm_release_url: >-
+          {{
+            (
+              helm.release.base_url
+                | default(
+                  "https://github.com"
+                  ~ "/#{github_user}"
+                  ~ "/#{github_repo}"
+                  ~ "/releases/download"
+                  ~ "/#{tag}"
+                )
+            )
+            ~ "/" ~ (
+              helm.release.type.binary.archive
+                | default(helm.release.type.binary)
+            )
+            | replace(
+                "#{tag}",
+                helm_latest_release.tag | default('')
+            )
+            | replace(
+                "#{github_user}",
+                helm.github.user | default('')
+              )
+            | replace(
+                "#{github_repo}",
+                helm.github.repo | default('')
+              )
+            | replace(
+                "#{version}",
+                helm_latest_version
+              )
+            | replace(
+                "#{system}",
+                (
+                  helm.release.facts.system[ansible_system]
+                  | default('')
+                )
+              )
+            | replace(
+                "#{architecture}",
+                (
+                  helm.release.facts.architecture[ansible_architecture]
+                  | default('')
+                )
+              )
+            | replace(
+                "#{distribution}",
+                (
+                  helm.release.facts.distribution[ansible_distribution]
+                  | default('')
+                )
+              )
+          }}
+    - name: "helm:unarchive"
+      unarchive:
+        src: "{{ helm_release_url }}"
+        remote_src: true
+        dest: "{{ helm_tmp_dir.path }}"
+      register: "helm_download"
+      until: "helm_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: "helm:copy"
+      copy:
+        remote_src: true
+        src: >-
+          {{
+              helm_tmp_dir.path
+              ~ "/"
+              ~ (
+                item.path
+                | replace(
+                    "#{tag}",
+                    helm_latest_release.tag | default('')
+                )
+                | replace(
+                    "#{github_user}",
+                    helm.github.user | default('')
+                  )
+                | replace(
+                    "#{github_repo}",
+                    helm.github.repo | default('')
+                  )
+                | replace(
+                    "#{version}",
+                    helm_latest_version
+                  )
+                | replace(
+                    "#{system}",
+                    (
+                      helm.release.facts.system[ansible_system]
+                      | default('')
+                    )
+                  )
+                | replace(
+                    "#{architecture}",
+                    (
+                      helm.release.facts.architecture[ansible_architecture]
+                      | default('')
+                    )
+                  )
+                | replace(
+                    "#{distribution}",
+                    (
+                      helm.release.facts.distribution[ansible_distribution]
+                      | default('')
+                    )
+                  )
+              )
+          }}
+        dest: "~/.local/bin/{{ item.name }}"
+        mode: "750"
+      loop: "{{ helm.release.type.binary.files }}"

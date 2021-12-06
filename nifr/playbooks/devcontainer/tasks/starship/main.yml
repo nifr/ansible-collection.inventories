@@ -1,0 +1,80 @@
+---
+- name: "starship:set_fact:starship_release"
+  block:
+    - name: "starship:sect_fact:starship_release:from:github"
+      when: "starship_release is not defined"
+      block:
+        - name: "starship:get/latest-release"
+          github_release:
+            user: "{{ starship.github.user }}"
+            repo: "{{ starship.github.repo }}"
+            action: "latest_release"
+          register: "starship_release"
+          until: "starship_release is succeeded"
+          changed_when: "starship_release.latest_release"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not starship_release.latest_release"
+        - name: "starship:cache_fact:starship_release.tag"
+          set_fact:
+            starship_release: '{"tag": "{{ starship_release.latest_release }}"}'
+            cacheable: true
+  rescue:
+    - name: "starship:set_fact:starship_release:from:defaults"
+      set_fact:
+        starship_release: '{"tag": "{{ starship.github.tag }}"}'
+        cacheable: false
+
+- name: "starship:version:"
+  command: "~/.local/bin/starship --version"
+  register: "starship_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(starship_version.rc != 0) or (starship_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( starship_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "starship:file:directory:~/.local/bin"
+      file:
+        path: "~/.local/bin"
+        state: "directory"
+        mode: "770"
+
+    - name: "starship:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "starship"
+      register: "starship_tmp_dir"
+
+    - name: "starship:unarchive"
+      unarchive:
+        src: "https://github.com/starship/starship/releases/download/{{ starship_release.tag }}/starship-x86_64-unknown-linux-gnu.tar.gz"
+        remote_src: true
+        dest: "{{ starship_tmp_dir.path }}"
+      register: "starship_download"
+      until: "starship_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "starship:copy"
+      copy:
+        remote_src: true
+        src: "{{ starship_tmp_dir.path }}/starship"
+        dest: "~/.local/bin/starship"
+        mode: "750"
+
+- name: "starship:file:directory:~/.config"
+  file:
+    path: "~/.config"
+    state: "directory"
+  tags:
+    - config[*]
+    - starship[config]
+
+- name: "starship:template:~/.config/starship.toml"
+  template:
+    src: "starship/starship.toml.j2"
+    dest: "~/.config/starship.toml"
+    mode: "0700"
+  tags:
+    - config[*]
+    - starship[config]

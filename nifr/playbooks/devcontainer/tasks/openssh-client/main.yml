@@ -1,0 +1,108 @@
+---
+- name: "openssh-client:apt:package"
+  apt:
+    name: "openssh-client"
+    state: "{{ openssh_client.state }}"
+    update_cache: >-
+      {{
+          (
+            openssh_client.state
+            in
+              [
+                'present',
+                'latest'
+              ]
+          )
+        | ternary(
+            true,
+            false
+          )
+      }}
+    cache_valid_time: "{{ apt_cache_valid_time | int }}"
+
+- name: "openssh-client:file:{{ openssh_client.config_file.user }}.d"
+  become: false
+  file:
+    path: "{{ openssh_client.config_file.user }}.d"
+    state: directory
+    mode: "0700"
+
+- name: "openssh-client:file:{{ openssh_client.config_file.user }}"
+  file:
+    path: "{{ openssh_client.config_file.user }}"
+    state: "touch"
+    access_time: "now"
+    modification_time: "preserve"
+
+- name: "openssh-client:lineinfile:Include {{ openssh_client.config_file.user + '.d/*' + openssh_client.config_file.extension }}"
+  become: false
+  lineinfile:
+    path: "{{ openssh_client.config_file.user }}"
+    line: "Include {{ openssh_client.config_file.user + '.d/*' + openssh_client.config_file.extension }}"
+    insertafter: "EOF"
+    mode: "0700"
+    create: true
+
+- name: "openssh-client:file:{{ openssh_client.known_hosts.user.path }}"
+  become: false
+  file:
+    path: "{{ openssh_client.known_hosts.user.path }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    mode: "0700"
+
+- name: "openssh-client:known_hosts:{{ openssh_client.known_hosts.user.path }}"
+  become: "{{ openssh_client.known_hosts.user.become }}"
+  known_hosts:
+    name: "{{ item.key }}"
+    key: "{{ item.value }}"
+    path: "{{ openssh_client.known_hosts.user.path }}"
+    state: present
+  loop: "{{ openssh_client.known_hosts.user.present|dict2items }}"
+
+- name: "openssh-client:template:~/.ssh/config.d/*.{{ openssh_client.config_file.extension }}"
+  become: false
+  template:
+    src: "openssh-client/ssh_config.ini.j2"
+    dest: "~/.ssh/config.d/{{ item.key }}.ssh_config"
+    mode: "0700"
+  loop: "{{ openssh_client.config.user | dict2items }}"
+
+- name: "openssh-client:create:/etc/ssh/ssh_config.d"
+  become: true
+  file:
+    path: "{{ openssh_client.config_file.global + '.d' }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: "openssh-client:file:directory:{{ openssh_client.config_file.global }}"
+  become: true
+  lineinfile:
+    path: "{{ openssh_client.config_file.global }}"
+    line: "Include {{ openssh_client.config_file.global }}.d/*{{ openssh_client.config_file.extension }}"
+    mode: "0755"
+    create: true
+
+- name: "openssh-client:file:directory:{{ openssh_client.config_file.global }}"
+  become: true
+  lineinfile:
+    path: "{{ openssh_client.config_file.global }}"
+    line: "Include {{ openssh_client.config_file.global + '.d/*' + openssh_client.config_file.extension }}"
+    mode: "0755"
+    insertafter: "EOF"
+    create: true
+    owner: "root"
+    group: "root"
+
+- name: "openssh-client:template:{{ openssh_client.config_file.global + '.d/*' + openssh_client.config_file.extension }}"
+  become: true
+  template:
+    src: "openssh-client/ssh_config.ini.j2"
+    dest: "{{ openssh_client.config_file.global + '.d/' + item.key + openssh_client.config_file.extension }}"
+    mode: "0755"
+    owner: root
+    group: root
+  loop: "{{ openssh_client.config.global | dict2items }}"

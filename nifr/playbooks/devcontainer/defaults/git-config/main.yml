@@ -1,0 +1,116 @@
+---
+git_config:
+  global: true
+  exclude:
+    url: "http://www.gitignore.io/api/"
+    patterns:
+      - "linux"
+      - "osx"
+      - "windows"
+      - "vim"
+      - "visualstudiocode"
+      - "python"
+  # overview: https://git-scm.com/docs/git-config
+  # all config keys: https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-config.html
+  config:
+    user:
+      - { name: "useConfigOnly", value: "true" }
+    core:
+      - { name: "editor", value: "code --wait" }
+      - { name: "excludesFile", value: "~/.config/git/ignore" }
+      - {
+          name: "attributesFile",
+          value: "~/.config/git/attributes",
+          file: true,
+        }
+      - { name: "autocrlf", value: "input" }
+    # 'url "git@github.com:"':
+    #   - { name: "pushInsteadOf", value: "https://github.com/" }
+    #   - { name: "pushInsteadOf", value: "git://github.com/" }
+    #   - { name: "pushInsteadOf", value: "github:" }
+    #   - { name: "pushInsteadOf", value: "gh:" }
+    #   - { name: "insteadOf", value: "https://github.com/" }
+    #   - { name: "insteadOf", value: "github:" }
+    #   - { name: "insteadOf", value: "gh:" }
+    # 'url "git@bitbucket.org:"':
+    #   - { name: "pushInsteadOf", value: "https://bitbucket.org/" }
+    #   - { name: "pushInsteadOf", value: "git://bitbucket.org/" }
+    #   - { name: "pushInsteadOf", value: "bitbucket:" }
+    #   - { name: "pushInsteadOf", value: "bb:" }
+    #   - { name: "insteadOf", value: "https://bitbucket.org/" }
+    #   - { name: "insteadOf", value: "bitbucket:" }
+    #   - { name: "insteadOf", value: "bb:" }
+    pager:
+      # navigate from file to file with n/N in diffs with diff-so-fancy
+      # see: https://github.com/so-fancy/diff-so-fancy/blob/master/pro-tips.md#moving-around-in-the-diff
+      - {
+          name: "diff",
+          value: "diff-so-fancy | less --tabs=4 -RFXS --pattern '^(Date|added|deleted|modified): '",
+        }
+    # see: https://github.com/holman/spaceman-diff
+    'diff "spaceman-diff"':
+      - { name: "command", value: "spaceman-diff" }
+    # see: https://github.com/jeffkaufman/icdiff
+    "icdiff":
+      - { name: "options", value: "--highlight --line-numbers" }
+    # colorful git status for improved readability
+    'color "status"':
+      - { name: "header", value: "black normal bold" }
+      - { name: "added", value: "green normal bold" }
+      - { name: "updated", value: "green normal bold" }
+      - { name: "changed", value: "yellow normal bold" }
+      - { name: "untracked", value: "cyan normal bold" }
+      - { name: "branch", value: "magenta normal bold" }
+      - { name: "nobranch", value: "normal normal bold" }
+      - { name: "unmerged", value: "red normal bold" }
+    color:
+      - { name: "ui", value: "true" }
+    status:
+      # (git v2.25.2) 'short' set to true in turn disables 'showStash'
+      # but we have starship showing the stash count
+      - { name: "short", value: "true" } # default: false
+      - { name: "branch", value: "true" } # default: false
+      - { name: "showStash", value: "true" } # default: false
+      - { name: "showUntrackedFiles", value: "all" } # default: 'normal'
+    log:
+      - { name: "abbrevCommit", value: "true" } # default: false
+    format:
+      - {
+          name: "pretty",
+          value: "%C(auto)%h -%d %s %Cgreen(%cr) %C(bold blue)<%an>%Creset",
+        }
+    fetch:
+      - { name: "prune", value: "true" }
+      - { name: "pruneTags", value: "true" }
+    pull:
+      - { name: "rebase", value: "true" }
+      - { name: "ff", value: "only" }
+    rerere:
+      - { name: "enabled", value: "true" }
+      - { name: "autoupdate", value: "true" }
+    rebase:
+      - { name: "autoSquash", value: "true" } # default: false
+      - { name: "autoStash", value: "true" } # default: false
+      - { name: "stat", value: "true" } # default: false
+      - { name: "missingCommitsCheck", value: "warn" } # default: 'ignore'
+    merge:
+      - { name: "tool", value: "vscode" }
+      - { name: "ff", value: "false" }
+    'mergetool "vscode"':
+      - { name: "cmd", value: "code --wait $MERGED" }
+    push:
+      - { name: "default", value: "current" } # default: 'simple'
+      - { name: "gpgSign", value: "if-asked" } # default: false
+    fixup:
+      # see: https://github.com/keis/git-fixup#--commit-by-default
+      - { name: "commit", value: "true" }
+      # see: https://github.com/keis/git-fixup#external-menu
+      - {
+          name: "menu",
+          value: "fzf --height '60%' --bind 'tab:toggle-preview' --preview 'git show --color {+1}' --preview-window=up:80% --prompt 'Select commit: '",
+        }
+  attributes:
+    - "*.png  diff=spaceman-diff"
+    - "*.jpg  diff=spaceman-diff"
+    - "*.jpeg diff=spaceman-diff"
+    - "*.gif  diff=spaceman-diff"

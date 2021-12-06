@@ -1,0 +1,98 @@
+---
+- name: "diskus:set_fact:diskus_release"
+  block:
+    - name: "diskus:sect_fact:diskus_release:from:github"
+      when: "diskus_release is not defined"
+      block:
+        - name: "diskus:get/latest-release"
+          github_release:
+            user: "{{ diskus.github.user }}"
+            repo: "{{ diskus.github.repo }}"
+            action: "latest_release"
+          register: "diskus_release"
+          until: "diskus_release is succeeded"
+          changed_when: "diskus_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not diskus_release.tag"
+        - name: "diskus:cache_fact:diskus_release.tag"
+          set_fact:
+            diskus_release: '{"tag": "{{ diskus_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "diskus:set_fact:diskus_release:from:defaults"
+      set_fact:
+        diskus_release: '{"tag": "{{ diskus.github.tag }}"}'
+        cacheable: false
+
+- name: "diskus:set_fact:download:filename"
+  set_fact:
+    diskus_download_filename: >-
+      {{
+        'diskus_'
+        + diskus_release.tag[1:]
+        + '_amd64.deb'
+      }}
+- name: "diskus:set_fact:download:url|cache_path"
+  set_fact:
+    diskus_download_url: >-
+      {{
+        'https://github.com/'
+        + diskus.github.user
+        + '/'
+        + diskus.github.repo
+        + '/releases/download/'
+        + diskus_release.tag
+        + '/'
+        + diskus_download_filename
+      }}
+
+- name: "diskus:cache"
+  when: "( ansible_use_download_cache | bool )"
+  block:
+    - name: "diskus:set_fact:cache:path"
+      set_fact:
+        diskus_download_cache_path: >-
+          {{
+            ansible_download_cache_path
+            + '/'
+            + diskus_download_filename
+          }}
+    - name: "diskus:stat:cache:path"
+      stat:
+        path: "{{ diskus_download_cache_path }}"
+      register: "diskus_download_cache_file"
+    - name: "diskus:cache:update"
+      when: "not diskus_download_cache_file.stat.exists"
+      block:
+        - name: "diskus:file:cache:directory"
+          file:
+            state: "directory"
+            path: "{{ ansible_download_cache_path }}"
+            mode: "750"
+        - name: "diskus:get_url:cache:download"
+          get_url:
+            url: "{{ diskus_download_url }}"
+            dest: "{{ diskus_download_cache_path }}"
+            mode: "750"
+          register: "diskus_download_result"
+          failed_when: "(diskus_download_result is failed)"
+          until: "(diskus_download_result is succeeded)"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+- name: "diskus:apt:deb:install"
+  become: true
+  apt:
+    deb: >-
+      {{
+        (ansible_use_download_cache | bool)
+        | ternary(
+            diskus_download_cache_path,
+            diskus_download_url
+          )
+      }}
+  register: "diskus_apt_result"
+  failed_when: "(diskus_apt_result is failed) and (not (diskus_apt_result.msg.find('already installed') > -1))"
+  until: "(diskus_apt_result is succeeded)"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

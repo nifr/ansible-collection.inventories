@@ -1,0 +1,98 @@
+---
+- name: "hexyl:set_fact:hexyl_release"
+  block:
+    - name: "hexyl:sect_fact:hexyl_release:from:github"
+      when: "hexyl_release is not defined"
+      block:
+        - name: "hexyl:get/latest-release"
+          github_release:
+            user: "{{ hexyl.github.user }}"
+            repo: "{{ hexyl.github.repo }}"
+            action: "latest_release"
+          register: "hexyl_release"
+          until: "hexyl_release is succeeded"
+          changed_when: "hexyl_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not hexyl_release.tag"
+        - name: "hexyl:cache_fact:hexyl_release.tag"
+          set_fact:
+            hexyl_release: '{"tag": "{{ hexyl_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "hexyl:set_fact:hexyl_release:from:defaults"
+      set_fact:
+        hexyl_release: '{"tag": "{{ hexyl.github.tag }}"}'
+        cacheable: false
+
+- name: "hexyl:set_fact:download:filename"
+  set_fact:
+    hexyl_download_filename: >-
+      {{
+        'hexyl_'
+        + hexyl_release.tag[1:]
+        + '_amd64.deb'
+      }}
+- name: "hexyl:set_fact:download_url"
+  set_fact:
+    hexyl_download_url: >-
+      {{
+        'https://github.com/'
+        + hexyl.github.user
+        + '/'
+        + hexyl.github.repo
+        + '/releases/download/'
+        + hexyl_release.tag
+        + '/'
+        + hexyl_download_filename
+      }}
+
+- name: "hexyl:cache"
+  when: "(ansible_use_download_cache | bool)"
+  block:
+    - name: "hexyl:set_fact:cache_path"
+      set_fact:
+        hexyl_download_cache_path: >-
+          {{
+            ansible_download_cache_path
+            + '/'
+            + hexyl_download_filename
+          }}
+    - name: "hexyl:stat:cache:path"
+      stat:
+        path: "{{ hexyl_download_cache_path }}"
+      register: "hexyl_download_cache_file"
+    - name: "hexyl:cache:update"
+      when: "not hexyl_download_cache_file.stat.exists"
+      block:
+        - name: "hexyl:file:cache:directory"
+          file:
+            state: "directory"
+            path: "{{ ansible_download_cache_path }}"
+            mode: "750"
+        - name: "hexyl:get_url:cache:download"
+          get_url:
+            url: "{{ hexyl_download_url }}"
+            dest: "{{ hexyl_download_cache_path }}"
+            mode: "750"
+          register: "hexyl_download_result"
+          failed_when: "(hexyl_download_result is failed)"
+          until: "(hexyl_download_result is succeeded)"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+- name: "hexyl:apt:deb:install"
+  become: true
+  apt:
+    deb: >-
+      {{
+        (ansible_use_download_cache | bool)
+        | ternary(
+            hexyl_download_cache_path,
+            hexyl_download_url
+          )
+      }}
+  register: "hexyl_apt_result"
+  failed_when: "(hexyl_apt_result is failed) and (not (hexyl_apt_result.msg.find('already installed') > -1))"
+  until: "(hexyl_apt_result is succeeded)"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

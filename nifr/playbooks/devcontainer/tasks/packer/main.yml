@@ -1,0 +1,62 @@
+---
+- name: "packer:set_fact:packer_release"
+  block:
+    - name: "packer:sect_fact:packer_release:from:github"
+      when: "packer_release is not defined"
+      block:
+        - name: "packer:get/latest-release"
+          github_release:
+            user: "{{ packer.github.user }}"
+            repo: "{{ packer.github.repo }}"
+            action: "latest_release"
+          register: "packer_release"
+          until: "packer_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "packer_release.tag"
+          failed_when: "not packer_release.tag"
+        - name: "packer:cache_fact:packer_release.tag"
+          set_fact:
+            packer_release: '{"tag": "{{ packer_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "packer:set_fact:packer_release:from:defaults"
+      set_fact:
+        packer_release: '{"tag": "{{ packer.github.tag }}"}'
+        cacheable: false
+
+- name: "packer:set_fact:latest_version/extract"
+  set_fact:
+    packer_latest_version: "{{ packer_release.tag }}"
+  no_log: true
+
+- name: "packer:version:local"
+  command: "~/.local/bin/packer --version"
+  register: "packer_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(packer_version.rc != 0) or (packer_version.stdout | regex_search('(\\d+(\\.\\d+){2,})') is version(packer_latest_version, operator='lt', strict=true))"
+  block:
+    - name: "packer:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "packer"
+      register: "packer_tmp_dir"
+
+    - name: "packer:unarchive"
+      unarchive:
+        src: "{{ packer.download.url | replace('%version%', packer_latest_version) }}"
+        remote_src: true
+        dest: "{{ packer_tmp_dir.path }}"
+      register: "packer_download"
+      until: "packer_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "packer:copy"
+      copy:
+        remote_src: true
+        src: "{{ packer_tmp_dir.path }}/packer"
+        dest: "~/.local/bin/packer"
+        mode: "750"

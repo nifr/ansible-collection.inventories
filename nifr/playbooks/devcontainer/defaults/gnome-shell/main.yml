@@ -1,0 +1,79 @@
+---
+gnome_shell:
+  dconf:
+    /com/ubuntu/update-manager/check-dist-upgrades: "false"
+    /com/ubuntu/update-manager/show-details: "true"
+    /com/ubuntu/update-manager/show-versions: "true"
+    /com/ubuntu/update-notifier/no-show-notifications: "true"
+    /com/ubuntu/update-notifier/show-apport-crashes: "false"
+    /com/ubuntu/update-notifier/show-livepatch-status-icon: "false"
+    /org/gnome/desktop/background/show-desktop-icons: "false"
+    /org/gnome/desktop/interface/clock-format: "'24h'"
+    /org/gnome/desktop/interface/clock-show-date: "false"
+    /org/gnome/desktop/interface/clock-show-seconds: "false"
+    /org/gnome/desktop/interface/clock-show-weekday: "false"
+    /org/gnome/desktop/interface/cursor-size: "32"
+    /org/gnome/desktop/interface/enable-animations: "false"
+    /org/gnome/desktop/lockdown/disable-lock-screen: "true"
+    /org/gnome/desktop/notifications/show-in-lock-screen: "false"
+    /org/gnome/desktop/privacy/remember-app-usage: "false"
+    /org/gnome/desktop/privacy/remember-recent-files: "false"
+    /org/gnome/desktop/privacy/remove-old-temp-files: "false"
+    /org/gnome/desktop/privacy/remove-old-trash-files: "false"
+    /org/gnome/desktop/privacy/report-technical-problems: "false"
+    /org/gnome/desktop/screensaver/idle-activation-enabled: "false"
+    /org/gnome/desktop/screensaver/lock-delay: "uint32 0"
+    /org/gnome/desktop/screensaver/lock-enabled: "false"
+    /org/gnome/desktop/screensaver/logout-enabled: "false"
+    /org/gnome/desktop/screensaver/status-message-enabled: "false"
+    /org/gnome/desktop/screensaver/ubuntu-lock-on-suspend: "false"
+    /org/gnome/desktop/session/idle-delay: "0"
+    /org/gnome/nautilus/desktop/trash-icon-visible: "false"
+    /org/gnome/nautilus/desktop/volumes-visible: "false"
+    /org/gnome/nautilus/icon-view/default-zoom-level: "'small'"
+    /org/gnome/nautilus/preferences/default-folder-viewer: "'list-view'"
+    /org/gnome/nautilus/preferences/show-hidden-files: "true"
+    /org/gnome/nautilus/window-state/maximized: "true"
+    /org/gnome/nautilus/window-state/start-with-location-bar: "true"
+    /org/gnome/nautilus/window-state/start-with-sidebar: "true"
+    /org/gnome/shell/extensions/dash-to-dock/animate-show-apps: "false"
+    /org/gnome/shell/extensions/dash-to-dock/animation-time: "0.0"
+    /org/gnome/shell/extensions/dash-to-dock/background-opacity: "1.0"
+    /org/gnome/shell/extensions/dash-to-dock/customize-alphas: "true"
+    /org/gnome/shell/extensions/dash-to-dock/dash-max-icon-size: "24"
+    /org/gnome/shell/extensions/dash-to-dock/dock-fixed: "true"
+    /org/gnome/shell/extensions/dash-to-dock/dock-position: "'LEFT'"
+    /org/gnome/shell/extensions/dash-to-dock/hide-delay: "0.0"
+    /org/gnome/shell/extensions/dash-to-dock/max-alpha: "0.0"
+    /org/gnome/shell/extensions/dash-to-dock/min-alpha: "0.0"
+    /org/gnome/shell/extensions/dash-to-dock/show-delay: "0.0"
+    /org/gnome/shell/extensions/dash-to-dock/transparency-mode: "'FIXED'"
+    /org/gnome/software/allow-updates: "false"
+    /org/gnome/software/download-updates: "false"
+  favorites: >-
+    'google-chrome.desktop',
+    'code_code.desktop',
+    'firefox.desktop',
+    'org.gnome.Terminal.desktop',
+    'org.gnome.Nautilus.desktop',
+    'org.keepassxc.KeePassXC.desktop',
+    'postman_postman.desktop',
+    'wireshark.desktop',
+    'dbeaver-ce_dbeaver-ce.desktop',
+    'nvim.desktop',
+    'com.uploadedlobster.peek.desktop',
+    'stoplight-studio.desktop'
+  input_sources: >-
+    ('xkb', 'us'),
+    ('xkb', 'de')
+  extensions: # https://extensions.gnome.org/
+    installed:
+      "disable-screenshield@lgpasquale.com": "https://github.com/lgpasquale/gnome-shell-extension-disable-screenshield.git"
+      "clipboard-indicator@tudmotu.com": "https://github.com/tudmotu/gnome-shell-extension-clipboard-indicator.git"
+      "dynamic-panel-transparency@rockon999.github.io": "https://github.com/rockon999/dynamic-panel-transparency.git"
+      "caffeine@patapon.info": "https://github.com/eonpatapon/gnome-shell-extension-caffeine.git"
+    enabled: >-
+      'disable-screenshield@lgpasquale.com',
+      'clipboard-indicator@tudmotu.com',
+      'dynamic-panel-transparency@rockon999.github.io',
+      'caffeine@patapon.info'

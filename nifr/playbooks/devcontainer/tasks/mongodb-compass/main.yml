@@ -1,0 +1,5 @@
+---
+- name: "mongodb-compass:apt/install"
+  become: true
+  apt:
+    deb: "https://downloads.mongodb.com/compass/mongodb-compass-community_{{ mongodb_compass.version }}_amd64.deb"

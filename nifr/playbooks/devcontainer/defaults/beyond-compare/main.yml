@@ -1,0 +1,17 @@
+---
+beyond_compare:
+  state: "present"
+  package:
+    apt:
+      key:
+        url: "https://www.scootersoftware.com/RPM-GPG-KEY-scootersoftware"
+        id: "C9467A8216C570CDFBAC3AFD331D6DDE7F8840CE"
+      deb: "https://www.scootersoftware.com/bcompare-#{version}_#{architecture}.deb"
+    homebrew:
+      update: true
+      cask: true
+      greedy: true
+      name: "beyond-compare"
+  facts:
+    version: "4.3.4.24657"
+    architecture: "amd64"

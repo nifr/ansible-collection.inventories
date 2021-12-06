@@ -1,0 +1,115 @@
+---
+- name: "kitematic:set_fact:kitematic_release"
+  block:
+    - name: "kitematic:sect_fact:kitematic_release:from:github"
+      when: "kitematic_release is not defined"
+      block:
+        - name: "kitematic:get/latest-release"
+          github_release:
+            user: "{{ kitematic.github.user }}"
+            repo: "{{ kitematic.github.repo }}"
+            action: "latest_release"
+          register: "kitematic_release"
+          until: "kitematic_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "kitematic_release.tag"
+          failed_when: "not kitematic_release.tag"
+        - name: "kitematic:cache_fact:kitematic_release.tag"
+          set_fact:
+            kitematic_release: '{"tag": "{{ kitematic_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "kitematic:set_fact:kitematic_release:from:defaults"
+      set_fact:
+        kitematic_release: '{"tag": "{{ kitematic.github.tag }}"}'
+        cacheable: false
+
+- name: "kitematic:set_fact:latest_version/extract"
+  set_fact:
+    kitematic_latest_version: "{{ kitematic_latest_release.tag[1:] }}"
+  no_log: true
+
+- name: "kitematic:debug:kitematic_latest_version"
+  debug:
+    var: "kitematic_latest_version"
+    verbosity: 2
+  failed_when: "not kitematic_latest_version"
+
+- name: "kitematic:package_facts"
+  package_facts:
+    manager: "auto"
+
+# - set_fact:
+#     kitematic_package: "ansible_facts.packages"
+
+- block:
+    - name: "kitematic:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "kitematic"
+      register: "kitematic_tmp_dir"
+    - set_fact:
+        kitematic_release_filename: >-
+          {{
+            kitematic.release.type.apt.archive
+            | replace(
+                "#{version}",
+                kitematic_latest_version
+              )
+            | replace(
+                "#{system}",
+                kitematic.release.facts.system[ansible_system]
+              )
+            | replace(
+                "#{architecture}",
+                kitematic.release.facts.architecture[ansible_architecture]
+              )
+            | replace(
+                "#{distribution}",
+                kitematic.release.facts.distribution[ansible_distribution]
+              )
+          }}
+    - set_fact:
+        kitematic_release_url: >-
+          {{
+            "https://github.com"
+            ~ "/" ~ kitematic.github.user
+            ~ "/" ~ kitematic.github.repo
+            ~ "/releases/download"
+            ~ "/" ~ kitematic_latest_release.tag
+            ~ "/" ~ kitematic_release_filename
+          }}
+    - name: "kitematic:unarchive"
+      unarchive:
+        src: "{{ kitematic_release_url }}"
+        remote_src: true
+        dest: "{{ kitematic_tmp_dir.path }}"
+    - set_fact:
+        kitematic_package_file: >-
+          {{
+            kitematic_tmp_dir.path
+            ~ "/" ~ (
+              kitematic.release.type.apt.file
+                | replace(
+                    "#{version}",
+                    kitematic_latest_version
+                  )
+                | replace(
+                    "#{system}",
+                    kitematic.release.facts.system[ansible_system]
+                  )
+                | replace(
+                    "#{architecture}",
+                    kitematic.release.facts.architecture[ansible_architecture]
+                  )
+            )
+          }}
+    - name: "kitematic:apt:deb-install"
+      become: true
+      apt:
+        deb: "{{ kitematic_package_file }}"
+      register: "kitematic_download"
+      until: "kitematic_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

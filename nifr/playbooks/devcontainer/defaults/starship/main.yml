@@ -1,0 +1,122 @@
+---
+starship:
+  github:
+    user: "starship"
+    repo: "starship"
+    tag: "v0.41.3"
+  config: # overview: https://starship.rs/config/
+    prompt_order:
+      - "username"
+      - "hostname"
+      - "kubernetes"
+      - "directory"
+      - "git_branch"
+      - "git_commit"
+      - "git_state"
+      - "git_status"
+      - "hg_branch"
+      - "docker_context"
+      - "package"
+      - "dotnet"
+      - "elixir"
+      - "elm"
+      - "erlang"
+      - "golang"
+      - "haskell"
+      - "java"
+      - "julia"
+      - "nodejs"
+      - "ocaml"
+      - "php"
+      - "purescript"
+      - "python"
+      - "ruby"
+      - "rust"
+      - "terraform"
+      - "zig"
+      - "nix_shell"
+      - "conda"
+      - "memory_usage"
+      - "aws"
+      - "env_var"
+      - "crystal"
+      - "cmd_duration"
+      # - "custom"
+      - "line_break"
+      - "jobs"
+      - "battery"
+      - "time"
+      - "custom.exit_code"
+      - "character"
+
+    aws:
+      displayed_items: "profile"
+
+    character:
+      symbol: "➜"
+      error_symbol: "✗"
+      use_symbol_for_status: true
+
+    cmd_duration:
+      style: "dimmed italic fg:white"
+
+    hostname:
+      ssh_only: false
+      style: "bold fg:green"
+
+    git_branch:
+      symbol: " "
+
+    git_status:
+      prefix: ""
+      suffix: " "
+      style: "fg:white"
+      show_sync_count: true
+
+      ahead: "⇡="
+      behind: "⇣="
+      diverged: "🧨 DIVERGED="
+
+      stashed: " ="
+      stashed_count.enabled: true
+      stashed_count.style: "fg:white"
+
+      staged: " +="
+      staged_count.enabled: true
+      staged_count.style: "fg:green"
+
+      untracked: " ?="
+      untracked_count.enabled: true
+      untracked_count.style: "fg:cyan"
+
+      modified: " M="
+      modified_count.enabled: true
+      modified_count.style: "fg:yellow"
+
+      renamed: " R="
+      renamed_count.enabled: true
+      renamed_count.style: "fg:purple"
+
+      deleted: " D="
+      deleted_count.enabled: true
+      deleted_count.style: "fg:red"
+
+      conflicted: "🧨 CONFLICTED="
+      conflicted_count.enabled: true
+      conflicted_count.style: "bold fg:red"
+
+    git_state:
+      progress_divider: " of "
+      cherry_pick: "🍒 PICKING"
+      merge: "🧨 MERGING"
+      rebase: "⚙️ REBASING"
+
+    docker:
+      symbol: " "
+    python:
+      symbol: " "
+    # "custom.sudo":
+    #   command: "echo '(sudo)'"
+    #   when: "sudo -n true"
+    #   style: "#ffb05b"
+    #   prefix: ""

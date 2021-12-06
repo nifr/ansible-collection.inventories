@@ -1,0 +1,5 @@
+zola:
+  github:
+    user: "getzola"
+    repo: "zola"
+    tag: "v0.9.0"

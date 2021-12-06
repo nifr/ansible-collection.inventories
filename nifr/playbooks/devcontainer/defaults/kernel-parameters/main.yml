@@ -1,0 +1,10 @@
+---
+kernel_parameters:
+  - "apm=off"
+  - "systemd.show_status=1"
+  - "nosplash"
+  - "elevator=noop"
+  - "cgroup_enable=memory"
+  - "swapaccount=1"
+  - "cgroup_enable=cpuset"
+  - "cgroup_memory=1"

@@ -1,0 +1,57 @@
+---
+- name: "heatseeker:set_fact:heatseeker_release"
+  block:
+    - name: "heatseeker:sect_fact:heatseeker_release:from:github"
+      when: "heatseeker_release is not defined"
+      block:
+        - name: "heatseeker:get/latest-release"
+          github_release:
+            user: "{{ heatseeker.github.user }}"
+            repo: "{{ heatseeker.github.repo }}"
+            action: "latest_release"
+          register: "heatseeker_release"
+          until: "heatseeker_release is succeeded"
+          changed_when: "heatseeker_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not heatseeker_release.tag"
+        - name: "heatseeker:cache_fact:heatseeker_release.tag"
+          set_fact:
+            heatseeker_release: '{"tag": "{{ heatseeker_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "heatseeker:set_fact:heatseeker_release:from:defaults"
+      set_fact:
+        heatseeker_release: '{"tag": "{{ heatseeker.github.tag }}"}'
+        cacheable: false
+
+- name: "heatseeker:version:"
+  command: "~/.local/bin/hs --version"
+  register: "heatseeker_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(heatseeker_version.rc != 0) or (heatseeker_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( heatseeker_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "heaterseeker:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "heatseeker"
+      register: "heatseeker_tmp_dir"
+
+    - name: "heatseeker:unarchive"
+      unarchive:
+        src: "https://github.com/{{ heatseeker.github.user }}/{{ heatseeker.github.repo }}/releases/download/{{ heatseeker_release.tag }}/heatseeker-{{ heatseeker_release.tag }}-x86_64-unknown-linux-gnu.tar.gz"
+        remote_src: true
+        dest: "{{ heatseeker_tmp_dir.path }}"
+      register: "heatseeker_download"
+      until: "heatseeker_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "heatseeker:copy"
+      copy:
+        remote_src: true
+        src: "{{ heatseeker_tmp_dir.path }}/hs"
+        dest: "~/.local/bin/hs"
+        mode: "750"

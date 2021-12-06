@@ -1,0 +1,6 @@
+{% for config, values in aws.config.items() %}
+{{'[' + (config|string) + ']' }}
+{% for key, value in values.items() %}
+{{ (key|string) + ' = ' + (value|string)}}
+{% endfor %}
+{% endfor %}

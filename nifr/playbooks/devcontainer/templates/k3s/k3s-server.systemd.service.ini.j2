@@ -1,0 +1,25 @@
+[Unit]
+Description=k3s - Lightweight Kubernetes Distribution (Server)
+Documentation=https://k3s.io
+Wants=network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=exec
+{% if k3s.service.environment is defined and k3s.service.environment -%}
+EnvironmentFile=/etc/systemd/system/k3s-server.env
+{%- endif %}
+KillMode=process
+Delegate=yes
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+Restart=always
+RestartSec=5s
+ExecStartPre=-/sbin/modprobe br_netfilter
+ExecStartPre=-/sbin/modprobe overlay
+ExecStart=/usr/local/bin/k3s server --write-kubeconfig-mode 755

@@ -1,0 +1,5 @@
+---
+sysctl:
+  settings:
+    "fs.file-max": "500000"
+    "fs.inotify.max_user_watches": "524288"

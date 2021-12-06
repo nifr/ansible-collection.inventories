@@ -1,0 +1,98 @@
+---
+- name: "lsd:set_fact:lsd_release"
+  block:
+    - name: "lsd:sect_fact:lsd_release:from:github"
+      when: "lsd_release is not defined"
+      block:
+        - name: "lsd:get/latest-release"
+          github_release:
+            user: "{{ lsd.github.user }}"
+            repo: "{{ lsd.github.repo }}"
+            action: "latest_release"
+          register: "lsd_release"
+          until: "lsd_release is succeeded"
+          changed_when: "lsd_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not lsd_release.tag"
+        - name: "lsd:cache_fact:lsd_release.tag"
+          set_fact:
+            lsd_release: '{"tag": "{{ lsd_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "lsd:set_fact:lsd_release:from:defaults"
+      set_fact:
+        lsd_release: '{"tag": "{{ lsd.github.tag }}"}'
+        cacheable: false
+
+- name: "lsd:set_fact:download:filename"
+  set_fact:
+    lsd_download_filename: >-
+      {{
+        'lsd_'
+        + lsd_release.tag
+        + '_amd64.deb'
+      }}
+- name: "lsd:set_fact:download:url|cache_path"
+  set_fact:
+    lsd_download_url: >-
+      {{
+        'https://github.com/'
+        + lsd.github.user
+        + '/'
+        + lsd.github.repo
+        + '/releases/download/'
+        + lsd_release.tag
+        + '/'
+        + lsd_download_filename
+      }}
+
+- name: "lsd:cache"
+  when: "( ansible_use_download_cache | bool )"
+  block:
+    - name: "lsd:set_fact:cache:path"
+      set_fact:
+        lsd_download_cache_path: >-
+          {{
+            ansible_download_cache_path
+            + '/'
+            + lsd_download_filename
+          }}
+    - name: "lsd:stat:cache:path"
+      stat:
+        path: "{{ lsd_download_cache_path }}"
+      register: "lsd_download_cache_file"
+    - name: "lsd:cache:update"
+      when: "not lsd_download_cache_file.stat.exists"
+      block:
+        - name: "lsd:file:cache:directory"
+          file:
+            state: "directory"
+            path: "{{ ansible_download_cache_path }}"
+            mode: "750"
+        - name: "lsd:get_url:cache:download"
+          get_url:
+            url: "{{ lsd_download_url }}"
+            dest: "{{ lsd_download_cache_path }}"
+            mode: "750"
+          register: "lsd_download_result"
+          failed_when: "(lsd_download_result is failed)"
+          until: "(lsd_download_result is succeeded)"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+- name: "lsd:apt:deb:install"
+  become: true
+  apt:
+    deb: >-
+      {{
+        (ansible_use_download_cache | bool)
+        | ternary(
+            lsd_download_cache_path,
+            lsd_download_url
+          )
+      }}
+  register: "lsd_apt_result"
+  failed_when: "(lsd_apt_result is failed) and (not (lsd_apt_result.msg.find('already installed') > -1))"
+  until: "(lsd_apt_result is succeeded)"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

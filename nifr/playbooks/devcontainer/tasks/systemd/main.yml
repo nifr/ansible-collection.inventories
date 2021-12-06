@@ -1,0 +1,30 @@
+---
+- name: "systemd:config:mkdir:/etc/systemd/system.conf.d"
+  become: true
+  file:
+    path: "/etc/systemd/system.conf.d"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "755"
+
+- name: "systemd:config:lineinfile:sections"
+  become: true
+  lineinfile:
+    line: "[{{ item.key }}]"
+    path: "/etc/systemd/system.conf.d/30-ansible-managed.conf"
+    regex: "^{{ ('[' + item.key + ']') | regex_escape }}"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+    create: true
+  loop: "{{ lookup('dict', systemd.config, wantlist=true) }}"
+
+- name: "systemd:config:lineinfile:/etc/systemd/system.conf.d/30-ansible-managed.conf"
+  become: true
+  lineinfile:
+    path: "/etc/systemd/system.conf.d/30-ansible-managed.conf"
+    regex: "^{{ (item.value.0.name + '=') | regex_escape }}"
+    line: "{{ item.value.0.name }}={{ item.value.0.value }}"
+    insertafter: "{{ ('[' + item.key + ']') | regex_escape }}"
+  loop: "{{ lookup('dict', systemd.config, wantlist=true) }}"

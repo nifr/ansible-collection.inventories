@@ -1,0 +1,57 @@
+---
+- name: "pup:set_fact:pup_release"
+  block:
+    - name: "pup:sect_fact:pup_release:from:github"
+      when: "pup_release is not defined"
+      block:
+        - name: "pup:get/latest-release"
+          github_release:
+            user: "{{ pup.github.user }}"
+            repo: "{{ pup.github.repo }}"
+            action: "latest_release"
+          register: "pup_release"
+          until: "pup_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "pup_release.tag"
+          failed_when: "not pup_release.tag"
+        - name: "pup:cache_fact:pup_release.tag"
+          set_fact:
+            pup_release: '{"tag": "{{ pup_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "pup:set_fact:pup_release:from:defaults"
+      set_fact:
+        pup_release: '{"tag": "{{ pup.github.tag }}"}'
+        cacheable: false
+
+- name: "pup:version:local"
+  command: "~/.local/bin/pup --version"
+  register: "pup_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(pup_version.rc != 0) or (pup_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( pup_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "pup:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "pup"
+      register: "pup_tmp_dir"
+
+    - name: "pup:unarchive"
+      unarchive:
+        src: "https://github.com/{{ pup.github.user }}/{{ pup.github.repo }}/releases/download/{{ pup_release.tag }}/pup_{{ pup_release.tag }}_linux_amd64.zip"
+        remote_src: true
+        dest: "{{ pup_tmp_dir.path }}"
+      register: "pup_unarchive"
+      until: "pup_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "pup:copy"
+      copy:
+        remote_src: true
+        src: "{{ pup_tmp_dir.path }}/pup"
+        dest: "~/.local/bin/pup"
+        mode: "750"

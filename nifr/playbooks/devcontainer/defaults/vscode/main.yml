@@ -1,0 +1,44 @@
+---
+vscode:
+  state: "present"
+  install_method: ~
+  insiders: false
+  config: {}
+  extensions:
+    - "MS-vsliveshare.vsliveshare"
+    - "editorconfig.editorconfig"
+    - "jeff-hykin.code-eol"
+    - "ybaumes.highlight-trailing-white-spaces"
+    - "eamodio.gitlens"
+    - "ms-azuretools.vscode-docker"
+  settings:
+    path:
+      linux: "~/.config/#{dirname}/User/settings.json"
+      macosx: "~/Library/Application Support/#{dirname}/User/settings.json"
+    content:
+      "editor.renderWhitespace": "all"
+      "editor.renderControlCharacters": true
+      #
+      # https://code.visualstudio.com/docs/getstarted/telemetry
+      #
+      "telemetry.enableTelemetry": false # Default: true
+      "telemetry.enableCrashReporter": false # Default: true
+      #
+      # https://marketplace.visualstudio.com/items?itemName=ms-vsliveshare.vsliveshare
+      #
+      "liveshare.allowGuestDebugControl": true
+      "liveshare.allowGuestTaskControl": true
+      "liveshare.anonymousGuestApproval": "reject"
+      "liveshare.guestApprovalRequired": true
+      "liveshare.publishWorkspaceInfo": true
+      "files.insertFinalNewline": true
+      "files.trimFinalNewlines": true
+      "files.eol": "\n"
+      #
+      # https://marketplace.visualstudio.com/items?itemName=jeff-hykin.code-eol
+      #
+      "code-eol.validLineEnding": "LF" # (optional) this makes "CRLF" endings render as error-color
+      "code-eol.toggleWithWhiteSpace": true
+      "code-eol.newlineCharacter": "¬"
+      "code-eol.returnCharacter": "⇠"
+      "code-eol.crlfCharacter": "↵"

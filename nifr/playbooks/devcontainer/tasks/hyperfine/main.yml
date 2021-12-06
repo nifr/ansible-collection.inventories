@@ -1,0 +1,35 @@
+---
+- name: "hyperfine:set_fact:hyperfine_release"
+  block:
+    - name: "hyperfine:sect_fact:hyperfine_release:from:github"
+      when: "hyperfine_release is not defined"
+      block:
+        - name: "hyperfine:get/latest-release"
+          github_release:
+            user: "{{ hyperfine.github.user }}"
+            repo: "{{ hyperfine.github.repo }}"
+            action: "latest_release"
+          register: "hyperfine_release"
+          until: "hyperfine_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "hyperfine_release.tag"
+          failed_when: "not hyperfine_release.tag"
+        - name: "hyperfine:cache_fact:hyperfine_release.tag"
+          set_fact:
+            hyperfine_release: '{"tag": "{{ hyperfine_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "hyperfine:set_fact:hyperfine_release:from:defaults"
+      set_fact:
+        hyperfine_release: '{"tag": "{{ hyperfine.github.tag }}"}'
+        cacheable: false
+
+- name: "hyperfine:apt/install"
+  become: true
+  apt:
+    deb: "https://github.com/{{ hyperfine.github.user }}/{{ hyperfine.github.repo }}/releases/download/{{ hyperfine_release.tag }}/hyperfine_{{ hyperfine_release.tag[1:] }}_amd64.deb"
+  register: "hyperfine_download"
+  until: "hyperfine_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

@@ -1,0 +1,21 @@
+---
+- name: "snap:service_facts"
+  service_facts:
+
+- name: "snap:snap:package-state"
+  loop: "{{ snap.packages }}"
+  snap:
+    name: "{{ (item is string) | ternary(item, item.name) }}"
+    state: "{{ item.state | default('present') }}"
+    classic: "{{ item.classic | default(true) | bool }}"
+    channel: "{{ item.channel | default('stable') }}"
+  become: true
+
+- name: "snap:service:state"
+  when: "not snap.automatic_upgrades"
+  become: true
+  service:
+    name: "snapd"
+    state: "stopped"
+    enabled: false
+  changed_when: "((ansible_facts.services['snapd.service'].state != 'stopped') or (ansible_facts.services['snapd.service'].status != 'disabled'))"

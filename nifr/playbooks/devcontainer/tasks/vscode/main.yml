@@ -1,0 +1,68 @@
+---
+- name: "vscode:set_facts"
+  tags:
+    - vscode[extensions]
+    - vscode[settings]
+  block:
+    - name: "vscode:set_fact:insiders"
+      when: "vscode.insiders | bool"
+      set_fact:
+        vscode_package_snap: "code-insiders"
+        vscode_package_homebrew: "visual-studio-code-insiders"
+        vscode_command: "code-insiders"
+        vscode_settings_dirname_linux: "Code - Insiders"
+        vscode_settings_dirname_macosx: "Code Insiders"
+    - name: "vscode:set_fact:insiders"
+      when: "not (vscode.insiders | bool)"
+      set_fact:
+        vscode_package_snap: "code"
+        vscode_package_homebrew: "visual-studio-code"
+        vscode_command: "code"
+        vscode_settings_dirname_linux: "Code"
+        vscode_settings_dirname_macosx: "Code"
+
+- name: "vscode:ubuntu"
+  when: "ansible_distribution == 'Ubuntu'"
+  block:
+    - name: "vscode:snap:install"
+      become: true
+      snap:
+        name: "{{ vscode_package_snap }}"
+        state: "{{ vscode.state }}"
+    - name: "vscode:template:settigs.json"
+      tags:
+        - vscode[config]
+      template:
+        src: "vscode/settings.json.j2"
+        dest: >-
+          {{
+            vscode.settings.path.linux
+            | replace(
+              '#{dirname}',
+              vscode_settings_dirname_linux
+            )
+          }}
+
+- name: "vscode:macosx"
+  when: "ansible_distribution == 'MacOSX'"
+  block:
+    - name: "vscode:homebrew_cask:install"
+      homebrew_cask:
+        name: "{{ vscode_package_homebrew }}"
+        state: "{{ vscode.state }}"
+
+# TODO: Add tasks to provision concrete state/list of extenions
+# --list-extensions (lists extension names - one per line)
+# --uninstall-extension <extension-name>
+- name: "vscode:command:install-extensions"
+  command:
+    argv:
+      - "{{ vscode_command }}"
+      - "--install-extension"
+      - "{{ item }}"
+      - "--force"
+  loop: "{{ vscode.extensions }}"
+  register: vscode_command_install_extension
+  changed_when: "'is already installed.' not in vscode_command_install_extension.stdout"
+  tags:
+    - vscode[extensions]

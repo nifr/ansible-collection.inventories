@@ -1,0 +1,6 @@
+---
+git_extras:
+  state: "present"
+  github:
+    user: "tj"
+    repo: "git-extras"

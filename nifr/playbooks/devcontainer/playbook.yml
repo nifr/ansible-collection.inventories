@@ -1,0 +1,118 @@
+---
+- hosts: "all"
+  gather_facts: true
+  tasks:
+  - name: "playbook:debug:ansible_playbook_python"
+    debug:
+      var: "ansible_playbook_python"
+    tags: "always"
+  # TODO: Add additional debugging capabilities
+  # see: https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
+  - name: "playbook:debug:ansible_python_interpreter"
+    debug:
+      var: "ansible_python_interpreter"
+    tags: "always"
+  - name: "playbook:include_vars"
+    ignore_errors: "{{ ansible_ignore_errors | default(false) | bool }}"
+    no_log: false
+    tags: "always"
+    block:
+    - name: "playbook:include_vars:defaults"
+      include_vars:
+        dir: "defaults/"
+        files_matching: '^(.*)main\.yml$'
+        ignore_unknown_extensions: true
+        extensions: ["yml"]
+    - when: "ansible_include_vars_os_family | bool"
+      block:
+      - name: "playbook:include_vars:os_family"
+        include_vars: >-
+          {{
+            'vars/os_family/'
+            + (ansible_os_family | lower)
+            + '.yml'
+          }}
+        ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+        register: playbook_include_vars
+        failed_when: >-
+          playbook_include_vars.failed
+          and
+          (
+            'Could not find or access'
+            not in
+            playbook_include_vars.message
+          )
+    - when: "ansible_include_vars_distribution | bool"
+      block:
+      - name: "playbook:include_vars:distribution_release:file"
+        include_vars: >-
+          {{
+            'vars/distribution/'
+            + (ansible_distribution | lower)
+            + '.yml'
+          }}
+        ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+        register: playbook_include_vars
+        failed_when: >-
+          playbook_include_vars.failed
+          and
+          (
+            'Could not find or access'
+            not in
+            playbook_include_vars.message
+          )
+      - name: "playbook:include_vars:distribution_release:file"
+        include_vars: >-
+          {{
+            'vars/distribution/'
+            + (
+                (
+                  ansible_distribution
+                  ~ '-'
+                  ~ ansible_distribution_release
+                )
+                | lower
+              )
+            + '.yml'
+          }}
+        ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+        register: playbook_include_vars
+        failed_when: >-
+          playbook_include_vars.failed
+          and
+          (
+            'Could not find or access'
+            not in
+            playbook_include_vars.message
+          )
+    - when: >-
+        ( ansible_include_vars_environment | bool )
+        and
+        ( ansible_environment | length )
+      block:
+      - name: "playbook:include_vars:environment"
+        include_vars:
+          dir: "vars/environment/{{ ansible_environment }}"
+          ignore_unknown_extensions: true
+          extensions: ["yaml", "yml", "json"]
+        ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+    - when: "ansible_include_vars_user | bool"
+      block:
+      - name: "playbook:include_vars:$HOME/private/ansible/vars"
+        include_vars:
+          dir: "{{ ansible_env.HOME }}/private/ansible/vars"
+          ignore_unknown_extensions: true
+          extensions: ["yaml", "yml", "json"]
+        ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+        register: playbook_include_vars
+        failed_when: >-
+          playbook_include_vars.failed
+          and
+          (
+            'directory does not exist'
+            not in
+            playbook_include_vars.message
+          )
+  - name: "playbook:import_tasks"
+    import_tasks: "tasks/main.yml"
+    ignore_errors: "{{ ansible_ignore_errors | bool }}"

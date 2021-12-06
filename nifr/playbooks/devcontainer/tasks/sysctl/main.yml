@@ -1,0 +1,9 @@
+---
+- name: "sysctl:lineinfile:/etc/sysctl.d/30-ansible-managed.conf"
+  become: true
+  lineinfile:
+    path: "/etc/sysctl.d/30-ansible-managed.conf"
+    regex: "^{{ item.key | regex_escape }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    create: true
+  loop: "{{ lookup('dict', sysctl.settings, wantlist=true) }}"

@@ -1,0 +1,75 @@
+---
+- name: "kustomize:set_fact:kustomize_release"
+  block:
+    - name: "kustomize:sect_fact:kustomize_release:from:github"
+      when: "kustomize_release is not defined"
+      block:
+        - name: "kustomize:get/latest-release"
+          github_release:
+            user: "{{ kustomize.github.user }}"
+            repo: "{{ kustomize.github.repo }}"
+            action: "latest_release"
+          register: "kustomize_release"
+          until: "kustomize_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "kustomize_release.tag"
+          failed_when: "not kustomize_release.tag"
+        - name: "kustomize:cache_fact:kustomize_release.tag"
+          set_fact:
+            kustomize_release: '{"tag": "{{ kustomize_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "kustomize:set_fact:kustomize_release:from:defaults"
+      set_fact:
+        kustomize_release: '{"tag": "{{ kustomize.github.tag }}"}'
+        cacheable: false
+
+- name: "kustomize:version:local"
+  command: "~/.local/bin/kustomize version --short"
+  register: "kustomize_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (kustomize_version.rc != 0)
+    or
+    (
+      kustomize_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(kustomize_release.tag[11:], operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (kustomize.install_method is equalto "binary")
+      block:
+        - name: "kustomize:mktemp"
+          tempfile:
+            state: "directory"
+            suffix: "kustomize"
+          register: "kustomize_tmp_dir"
+        - name: "kustomize:unarchive"
+          unarchive:
+            src: >-
+              {{
+                "https://github.com" ~
+                "/" ~ kustomize.github.user ~
+                "/" ~ kustomize.github.repo ~
+                "/releases/download" ~
+                "/" ~ kustomize_release.tag ~
+                "/kustomize_" ~ kustomize_release.tag[10:] ~ "_linux_amd64.tar.gz"
+              }}
+            remote_src: true
+            dest: "{{ kustomize_tmp_dir.path }}"
+          register: "kustomize_download"
+          until: "kustomize_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+        - name: "kustomize:copy"
+          copy:
+            remote_src: true
+            src: "{{ kustomize_tmp_dir.path }}/kustomize"
+            dest: "~/.local/bin/kustomize"
+            mode: "750"

@@ -1,0 +1,14 @@
+---
+- name: "kernel_parameters: ensure linux cmdline"
+  become: true
+  register: grub_cmdline
+  lineinfile:
+    path: /etc/default/grub
+    state: present
+    regexp: "^GRUB_CMDLINE_LINUX_DEFAULT"
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ kernel_parameters | join(" ") }}"'
+
+- name: "kernel_parameters: update grub bootloader"
+  when: grub_cmdline.changed
+  become: true
+  command: update-grub

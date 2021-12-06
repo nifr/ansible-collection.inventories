@@ -1,0 +1,18 @@
+---
+ngrok:
+  install:
+    systemd_service: false
+  config:
+    tunnels:
+      http:
+        proto: "http"
+        addr: "80"
+      https:
+        proto: "http"
+        addr: "443"
+      ssh:
+        proto: "tcp"
+        addr: "22"
+      vnc:
+        proto: "tcp"
+        addr: "5900"

@@ -1,0 +1,17 @@
+---
+kind:
+  install_method: "binary"
+  github:
+    user: "kubernetes-sigs"
+    repo: "kind"
+    tag: "v0.7.0"
+  release:
+    facts:
+      system:
+        Linux: "linux"
+        Darwin: "darwin"
+      architecture:
+        x86_64: "amd64"
+    filename:
+      binary: "kompose-#{system}-#{architecture}"
+      apt: "kompose_#{version}_#{architecture}.deb"

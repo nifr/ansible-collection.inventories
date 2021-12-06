@@ -1,0 +1,20 @@
+---
+- name: "pam-limits:pam_limits:/etc/security/limits.d/10-ansible-managed.conf"
+  become: true
+  pam_limits:
+    dest: "/etc/security/limits.d/10-ansible-managed.conf"
+    domain: "*"
+    limit_type: "-"
+    limit_item: "{{ item.key }}"
+    value: "{{ item.value | default('unlimited', true) }}"
+    use_max: true
+    comment: "unlimited {{ item }} for all users"
+  loop: "{{ lookup('dict', pam_limits, wantlist=true) }}"
+
+- name: "pam-limits:lineinfile:/etc/pam.d/common-session"
+  become: true
+  lineinfile:
+    path: "/etc/pam.d/common-session"
+    regex: '^session\s{2,}required\s{2,}pam_limits.so'
+    state: "present"
+    line: "session required             pam_limits.so"

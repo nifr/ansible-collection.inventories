@@ -1,0 +1,6 @@
+---
+
+- name: 'skype:apt/install'
+  become: true
+  apt:
+    deb: 'https://go.skype.com/skypeforlinux-64.deb'

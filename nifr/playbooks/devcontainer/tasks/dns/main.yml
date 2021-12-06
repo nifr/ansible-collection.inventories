@@ -1,0 +1,12 @@
+---
+- name: "hostname/set:hostname"
+  become: true
+  hostname:
+    name: "{{ dns.hostname }}"
+- name: "hostname/update:/etc/hosts"
+  become: true
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: '^127\.0\.0\.1[ \t]+localhost'
+    line: "127.0.0.1 localhost {{ dns.hostname }} {{ dns.hostname }}.{{ dns.domain }}"
+    state: present

@@ -1,0 +1,112 @@
+---
+- name: "git-config:file:remove-global-config-in-home"
+  file:
+    path: "~/.gitconfig"
+    state: "absent"
+
+- name: "git-config:file:create-directory"
+  file:
+    path: "~/.config/git"
+    state: "directory"
+    mode: "750"
+
+- name: "git-config:file:create-global-files"
+  file:
+    path: "{{item.value}}"
+    mode: "750"
+    state: "touch"
+    access_time: "preserve"
+  loop: "{{ git_config.config.core | rejectattr('file', 'undefined') | selectattr('file') | list }}"
+
+- name: "git-config:ini_file:set-global-configuration"
+  template:
+    src: "git-config/git_config.j2"
+    mode: "750"
+    dest: "~/.config/git/config"
+
+- name: "git-config:ignore-file:get-gitignore-file"
+  get_url:
+    url: "{{git_config.exclude.url}}{{git_config.exclude.patterns | join(',')}}"
+    dest: "~/.config/git/ignore"
+    mode: "750"
+  register: "git_config_ignore_pattern_download"
+  until: "git_config_ignore_pattern_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "git-config:get-data-of-gitlab"
+  uri:
+    url: "https://{{git_repositories.base}}/api/v4/user"
+    method: GET
+    status_code: "200"
+    body_format: json
+    headers:
+      PRIVATE-TOKEN: "{{gitlab.access_token}}"
+      Content-Type: "application/json"
+  when: gitlab.access_token is defined and git_repositories.base is defined
+  register: gitlab_user
+  until: "gitlab_user is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "git-config:ini_file:set-gitlab-user-details"
+  ini_file:
+    path: "~/.config/git/config"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    backup: false
+  loop:
+    - {
+        section: "user",
+        option: "name",
+        value: "{{ gitlab_user.json.username }}",
+      }
+    - {
+        section: "user",
+        option: "email",
+        value: "{{gitlab_user.json.id}}-{{gitlab_user.json.username}}@users.noreply.{{git_repositories.base}}",
+      }
+  when: gitlab_user is defined and git_repositories.base is defined
+
+- name: "git-config:ini_file:exists:~/.config/git/config.local"
+  stat:
+    path: "~/.config/git/config.local"
+  register: git_config_local
+
+- name: "git-config:ini_file:exists:~/private/git/config"
+  stat:
+    path: "~/private/git/config"
+  register: git_config_private
+
+- name: "git-config:ini_file:add-include"
+  lineinfile:
+    path: "~/.config/git/config"
+    line: "[include]"
+  when: git_config_local.stat.exists == true or git_config_private.stat.exists == true
+
+- name: "git-config:ini_file:include-local-git-config"
+  lineinfile:
+    path: "~/.config/git/config"
+    insertafter: "[include]"
+    line: "path = ~/.config/git/config.local"
+  when: git_config_local.stat.exists == true
+
+- name: "git-config:ini_file:include-private-git-config"
+  lineinfile:
+    path: "~/.config/git/config"
+    insertafter: "[include]"
+    line: "path = ~/private/git/config"
+  when: git_config_private.stat.exists == true
+
+- name: "git-config:init-repositories"
+  git:
+    repo: "git@{{ git_repositories.base}}:{{ item.value.user }}/{{ item.value.repo }}.git"
+    accept_hostkey: true
+    dest: "~/projects/{{ item.key }}"
+  loop: "{{ lookup('dict', git_repositories.projects, wantlist=True) }}"
+  when: gitlab.access_token is defined and git_repositories.base is defined
+  register: "git_clone_repositories"
+  until: "git_clone_repositories is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

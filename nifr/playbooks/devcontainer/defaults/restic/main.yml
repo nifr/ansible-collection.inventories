@@ -1,0 +1,7 @@
+---
+restic:
+  github:
+    user: "restic"
+    repo: "restic"
+    tag: "v0.9.6"
+  state: "present"

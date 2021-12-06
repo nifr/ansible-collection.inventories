@@ -1,0 +1,6 @@
+---
+watchexec:
+  github:
+    user: "watchexec"
+    repo: "watchexec"
+    tag: "1.12.0"

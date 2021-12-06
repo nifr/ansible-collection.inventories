@@ -1,0 +1,6 @@
+---
+hugo:
+  github:
+    user: "gohugoio"
+    repo: "hugo"
+    tag: "v0.62.2"

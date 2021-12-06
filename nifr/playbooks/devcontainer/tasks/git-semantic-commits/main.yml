@@ -1,0 +1,28 @@
+---
+- name: "git-semantic-commits:mktemp"
+  tempfile:
+    state: "directory"
+    suffix: "git_semantic_commits"
+  register: "git_semantic_commits_tmp_dir"
+
+- name: "git-semantic-commits:git:clone:github.com:"
+  git:
+    repo: "https://github.com/{{ git_semantic_commits.github.user }}/{{ git_semantic_commits.github.repo }}.git"
+    dest: "~/.local/share/git-semantic-commits/"
+    update: true
+  register: "git_semantic_commits_repository"
+
+- name: "git-semantic-commits:find:~/.local/share/git-semantic-commits/"
+  find:
+    paths: "~/.local/share/git-semantic-commits/"
+    patterns: "git-*"
+    recurse: true
+  register: "git_semantic_commits_scripts"
+
+- name: "git-semantic-commits:file:~/.local/bin"
+  file:
+    state: "link"
+    src: "{{ item.path }}"
+    path: "~/.local/bin/{{ item.path | basename }}"
+    mode: "750"
+  loop: "{{ git_semantic_commits_scripts.files }}"

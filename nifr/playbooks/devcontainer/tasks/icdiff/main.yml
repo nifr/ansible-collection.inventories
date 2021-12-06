@@ -1,0 +1,20 @@
+---
+- name: "icdiff:get_url"
+  get_url:
+    url: "https://raw.githubusercontent.com/{{ icdiff.github.user }}/{{ icdiff.github.repo }}/master/icdiff"
+    dest: "~/.local/bin/icdiff"
+    mode: "750"
+  register: "icdiff_download"
+  until: "icdiff_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "icdiff:get_url"
+  get_url:
+    url: "https://raw.githubusercontent.com/{{ icdiff.github.user }}/{{ icdiff.github.repo }}/master/git-icdiff"
+    dest: "~/.local/bin/git-icdiff"
+    mode: "750"
+  register: "icdiff_git_download"
+  until: "icdiff_git_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

@@ -1,0 +1,16 @@
+linuxbrew:
+  state: "present"
+  taps:
+    - "homebrew/bundle"
+    - "homebrew/core"
+  packages:
+    - "bat"
+    - "direnv"
+    - "fzf"
+    - "git"
+    - "jo"
+    - "jq"
+    - "starship"
+    - "yq"
+    - "zsh"
+    - "zsh-completions"

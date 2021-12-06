@@ -1,0 +1,41 @@
+---
+- name: "vagrant:set_fact:vagrant_release"
+  block:
+    - name: "vagrant:sect_fact:vagrant_release:from:github"
+      when: "vagrant_release is not defined"
+      block:
+        - name: "vagrant:get/latest-release"
+          github_release:
+            user: "{{ vagrant.github.user }}"
+            repo: "{{ vagrant.github.repo }}"
+            action: "latest_release"
+          register: "vagrant_release"
+          until: "vagrant_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "vagrant_release.tag"
+          failed_when: "not vagrant_release.tag"
+        - name: "vagrant:cache_fact:vagrant_release.tag"
+          set_fact:
+            vagrant_release: '{"tag": "{{ vagrant_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "vagrant:set_fact:vagrant_release:from:defaults"
+      set_fact:
+        vagrant_release: '{"tag": "{{ vagrant.github.tag }}"}'
+        cacheable: false
+
+- name: "vagrant:set_fact:latest_version/extract"
+  set_fact:
+    vagrant_latest_version: "{{ vagrant_release.tag[1:] }}"
+  no_log: true
+
+- name: "vagrant:apt:install-deb"
+  become: true
+  apt:
+    deb: "https://releases.hashicorp.com/vagrant/{{ vagrant_latest_version }}/vagrant_{{ vagrant_latest_version }}_x86_64.deb"
+    state: "present"
+  register: "vagrant_download"
+  until: "vagrant_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

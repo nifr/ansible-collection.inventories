@@ -1,0 +1,45 @@
+---
+# TODO: Get latest version from homepage / API
+- name: "beyond-compare:apt"
+  become: true
+  when: "ansible_pkg_mgr == 'apt'"
+  block:
+    - name: "beyond-compare:apt_key:state"
+      apt_key:
+        url: "{{ beyond_compare.apt.key.url }}"
+        id: "{{ beyond_compare.apt.key.id }}"
+      register: "beyond_compare_apt_key"
+      until: "beyond_compare_apt_key is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: "beyond-compare:apt:deb:state"
+      apt:
+        state: "{{ beyond_compare.state }}"
+        deb: >-
+          {{
+            (
+              beyond_compare.apt.deb
+            )
+            | replace(
+                "#{version}",
+                beyond_compare.facts.version
+            )
+            | replace(
+                "#{architecture}",
+                beyond_compare.facts.architecture
+            )
+          }}
+      register: "beyond_compare_apt"
+      until: "beyond_compare_apt is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+- name: "beyond-compare:homebrew"
+  when: "ansible_pkg_mgr == 'homebrew'"
+  block:
+    - name: "beyond-compare:homebrew_cask"
+      homebrew_cask:
+        name: "{{ beyond_compare.package.homebrew.name }}"
+        state: "{{ beyond_compare.state }}"
+        greedy: "{{ beyond_compare.package.homebrew.greedy | bool }}"
+        update_homebrew: "{{ beyond_compare.package.homebrew.update | bool }}"

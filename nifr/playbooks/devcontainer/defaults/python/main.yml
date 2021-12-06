@@ -1,0 +1,27 @@
+---
+python:
+  pyenv:
+    versions:
+      - &python_version "3.6.9"
+    global_version: *python_version
+  pip:
+    packages:
+      system:
+        - "github3.py" # required for ansible module `github_release`
+        - "psutil" # required for ansible module `debconf`
+      global:
+        - name: "pip"
+          state: "latest"
+        - name: "pipx"
+          state: "latest"
+        - name: "pipenv"
+          state: "latest"
+        - name: "poetry"
+          state: "latest"
+        - name: "dephell[full]"
+          state: "latest"
+  pipx:
+    packages:
+      - name: "zeroless-tools"
+      - name: "thefuck"
+      - name: "nfasd"

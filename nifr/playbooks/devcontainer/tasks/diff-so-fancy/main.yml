@@ -1,0 +1,11 @@
+---
+- name: "diff-so-fancy:download"
+  get_url:
+    url: "{{ diff_so_fancy.download.url }}"
+    dest: "~/.local/bin/diff-so-fancy"
+    mode: "700"
+    force: true
+  register: "diff_so_fancy_download"
+  until: "diff_so_fancy_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

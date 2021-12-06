@@ -1,0 +1,6 @@
+---
+apt:
+  automatic_upgrades: false
+  keys: []
+  repositories: []
+  packages: []

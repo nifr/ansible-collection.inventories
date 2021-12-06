@@ -1,0 +1,17 @@
+---
+- name: "mc:version:local"
+  command: "~/.local/bin/mc --version"
+  register: "mc_version"
+  failed_when: false
+  changed_when: false
+
+- name: "mc:download"
+  when: "mc_version.rc != 0"
+  get_url:
+    dest: "~/.local/bin/mc"
+    mode: "750"
+    url: "{{ mc.download.url }}"
+  register: "mc_download"
+  until: "mc_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

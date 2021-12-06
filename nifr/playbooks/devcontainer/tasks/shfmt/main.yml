@@ -1,0 +1,45 @@
+---
+- name: "shfmt:set_fact:shfmt_release"
+  block:
+    - name: "shfmt:sect_fact:shfmt_release:from:github"
+      when: "shfmt_release is not defined"
+      block:
+        - name: "shfmt:get/latest-release"
+          github_release:
+            user: "{{ shfmt.github.user }}"
+            repo: "{{ shfmt.github.repo }}"
+            action: "latest_release"
+          register: "shfmt_release"
+          until: "shfmt_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "shfmt_release.tag"
+          failed_when: "not shfmt_release.tag"
+        - name: "shfmt:cache_fact:shfmt_release.tag"
+          set_fact:
+            shfmt_release: '{"tag": "{{ shfmt_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "shfmt:set_fact:shfmt_release:from:defaults"
+      set_fact:
+        shfmt_release: '{"tag": "{{ shfmt.github.tag }}"}'
+        cacheable: false
+
+- name: "shfmt:version:"
+  command: "~/.local/bin/shfmt --version"
+  register: "shfmt_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(shfmt_version.rc != 0) or (shfmt_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( shfmt_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "shfmt:download"
+      get_url:
+        dest: "~/.local/bin/shfmt"
+        force: true
+        mode: "750"
+        url: "https://github.com/{{ shfmt.github.user }}/{{ shfmt.github.repo }}/releases/download/{{ shfmt_release.tag }}/shfmt_{{ shfmt_release.tag }}_linux_amd64"
+      register: "shfmt_download"
+      until: "shfmt_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

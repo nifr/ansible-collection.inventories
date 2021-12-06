@@ -1,0 +1,45 @@
+---
+- name: "yq:set_fact:yq_release"
+  block:
+    - name: "yq:sect_fact:yq_release:from:github"
+      when: "yq_release is not defined"
+      block:
+        - name: "yq:get/latest-release"
+          github_release:
+            user: "{{ yq.github.user }}"
+            repo: "{{ yq.github.repo }}"
+            action: "latest_release"
+          register: "yq_release"
+          until: "yq_release is succeeded"
+          changed_when: "yq_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not yq_release.tag"
+        - name: "yq:cache_fact:yq_release.tag"
+          set_fact:
+            yq_release: '{"tag": "{{ yq_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "yq:set_fact:yq_release:from:defaults"
+      set_fact:
+        yq_release: '{"tag": "{{ yq.github.tag }}"}'
+        cacheable: false
+
+- name: "yq:version:"
+  command: "~/.local/bin/yq --version"
+  register: "yq_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(yq_version.rc != 0) or (yq_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( yq_release.tag, operator='lt', strict=true))"
+  block:
+    - name: "yq:download"
+      get_url:
+        dest: "~/.local/bin/yq"
+        force: true
+        mode: "750"
+        url: "https://github.com/{{ yq.github.user }}/{{ yq.github.repo }}/releases/download/{{ yq_release.tag }}/yq_linux_amd64"
+      register: "yq_download"
+      until: "yq_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

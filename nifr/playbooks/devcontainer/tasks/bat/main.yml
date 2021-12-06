@@ -1,0 +1,98 @@
+---
+- name: "bat:set_fact:bat_release"
+  block:
+    - name: "bat:sect_fact:bat_release:from:github"
+      when: "bat_release is not defined"
+      block:
+        - name: "bat:get/latest-release"
+          github_release:
+            user: "{{ bat.github.user }}"
+            repo: "{{ bat.github.repo }}"
+            action: "latest_release"
+          register: "bat_release"
+          until: "bat_release is succeeded"
+          changed_when: "bat_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not bat_release.tag"
+        - name: "bat:cache_fact:bat_release.tag"
+          set_fact:
+            bat_release: '{"tag": "{{ bat_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "bat:set_fact:bat_release:from:defaults"
+      set_fact:
+        bat_release: '{"tag": "{{ bat.github.tag }}"}'
+        cacheable: false
+
+- name: "bat:set_fact:download:filename"
+  set_fact:
+    bat_download_filename: >-
+      {{
+        'bat_'
+        + bat_release.tag[1:]
+        + '_amd64.deb'
+      }}
+- name: "bat:set_fact:download:url|cache_path"
+  set_fact:
+    bat_download_url: >-
+      {{
+        'https://github.com/'
+        + bat.github.user
+        + '/'
+        + bat.github.repo
+        + '/releases/download/'
+        + bat_release.tag
+        + '/'
+        + bat_download_filename
+      }}
+
+- name: "bat:cache"
+  when: "(ansible_use_download_cache | bool)"
+  block:
+    - name: "bat:set_fact:cache:path"
+      set_fact:
+        bat_download_cache_path: >-
+          {{
+            ansible_download_cache_path
+            + '/'
+            + bat_download_filename
+          }}
+    - name: "bat:stat:cache:path"
+      stat:
+        path: "{{ bat_download_cache_path }}"
+      register: "bat_download_cache_file"
+    - name: "bat:cache:update"
+      when: "not bat_download_cache_file.stat.exists"
+      block:
+        - name: "bat:file:cache:directory"
+          file:
+            state: "directory"
+            path: "{{ ansible_download_cache_path }}"
+            mode: "750"
+        - name: "bat:get_url:cache:download"
+          get_url:
+            url: "{{ bat_download_url }}"
+            dest: "{{ bat_download_cache_path }}"
+            mode: "750"
+          register: "bat_download_result"
+          failed_when: "(bat_download_result is failed)"
+          until: "(bat_download_result is succeeded)"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+- name: "bat:apt:deb:install"
+  become: true
+  apt:
+    deb: >-
+      {{
+        (ansible_use_download_cache | bool)
+        | ternary(
+            bat_download_cache_path,
+            bat_download_url
+          )
+      }}
+  register: "bat_apt_result"
+  failed_when: "(bat_apt_result is failed) and (not (bat_apt_result.msg.find('already installed') > -1))"
+  until: "(bat_apt_result is succeeded)"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

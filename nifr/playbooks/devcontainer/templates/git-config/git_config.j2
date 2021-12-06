@@ -1,0 +1,6 @@
+{% for section, options in git_config.config.items() %}
+[{{section}}]
+{% for option in options %}
+{{option.name}} = {{option.value}}
+{% endfor %}
+{% endfor %}

@@ -1,0 +1,10 @@
+{% for hostAlias in item.value %}
+{{ (hostAlias|dict2items)[0]['key']|string }}
+{% for settings, valueList in hostAlias.items() %}
+{% for valuePair in valueList %}
+{% for setting in valuePair|dict2items %}
+{{ '  ' + setting.key|string + ' ' + setting.value|string }}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+{% endfor %}

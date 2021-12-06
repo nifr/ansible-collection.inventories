@@ -1,0 +1,6 @@
+---
+bat:
+  github:
+    tag: "v0.12.1"
+    repo: "bat"
+    user: "sharkdp"

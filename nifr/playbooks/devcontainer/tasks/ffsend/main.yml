@@ -1,0 +1,42 @@
+---
+- when: "ffsend_release is not defined"
+  block:
+    - name: "ffsend:get/latest-release"
+      github_release:
+        user: "{{ ffsend.github.user }}"
+        repo: "{{ ffsend.github.repo }}"
+        action: "latest_release"
+      register: "ffsend_release"
+      until: "ffsend_release is succeeded"
+      changed_when: "ffsend_release.tag"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+      failed_when: "not ffsend_release.tag"
+    - name: "ffsend:cache_fact:ffsend_release.tag"
+      set_fact:
+        ffsend_release: '{"tag": "{{ ffsend_release.tag }}"}'
+        cacheable: true
+  rescue:
+    - name: "ffsend:set_fact:ffsend_release:defaults"
+      set_fact:
+        ffsend_release: '{"tag": "{{ ffsend.github.tag }}"}'
+        cacheable: false
+
+- name: "ffsend:version:local"
+  command: "~/.local/bin/ffsend --version"
+  register: "ffsend_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(ffsend_version.rc != 0) or (ffsend_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( ffsend_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "ffsend:download"
+      get_url:
+        dest: "~/.local/bin/ffsend"
+        force: true
+        mode: "750"
+        url: "https://github.com/{{ ffsend.github.user }}/{{ ffsend.github.repo }}/releases/download/{{ ffsend_release.tag }}/ffsend-{{ ffsend_release.tag }}-linux-x64-static"
+      register: ffsend_download
+      until: "ffsend_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

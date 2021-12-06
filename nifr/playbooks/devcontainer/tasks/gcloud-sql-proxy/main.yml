@@ -1,0 +1,30 @@
+---
+- name: "gcloud-sql-proxy:mktemp"
+  tempfile:
+    state: "directory"
+    suffix: "gcloud-sql-proxy"
+  register: "gcloud_sql_proxy_tmp_dir"
+
+- name: "gcloud-sql-proxy:set_fact:download:filename"
+  set_fact:
+    gcloud_sql_proxy_download_filename: "cloud_sql_proxy.linux.amd64"
+
+- name: "gcloud-sql-proxy:set_fact:download:url"
+  set_fact:
+    gcloud_sql_proxy_download_url: >-
+      {{
+        'https://dl.google.com/cloudsql/'
+        + gcloud_sql_proxy_download_filename
+      }}
+
+- name: "gcloud-sql-proxy:get_url:{{ gcloud_sql_proxy_download_url }}"
+  get_url:
+    url: "{{ gcloud_sql_proxy_download_url }}"
+    dest: "{{ gcloud_sql_proxy_tmp_dir.path }}"
+
+- name: "gcloud-sql-proxy:copy:~/.local/bin/gcloud-sql-proxy"
+  copy:
+    remote_src: true
+    src: "{{ gcloud_sql_proxy_tmp_dir.path }}/{{ gcloud_sql_proxy_download_filename }}"
+    dest: "~/.local/bin/gcloud-sql-proxy"
+    mode: "755"

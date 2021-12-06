@@ -1,0 +1,95 @@
+---
+- name: "stoplight-studio:set_fact:stoplight_studio_release"
+  block:
+    - name: "stoplight-studio:sect_fact:stoplight_studio_release:from:github"
+      when: "stoplight_studio_release is not defined"
+      block:
+        - name: "stoplight-studio:get/latest-release"
+          github_release:
+            user: "{{ stoplight_studio.github.user }}"
+            repo: "{{ stoplight_studio.github.repo }}"
+            action: "latest_release"
+          register: "stoplight_studio_release"
+          until: "stoplight_studio_release is succeeded"
+          changed_when: "stoplight_studio_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not stoplight_studio_release.tag"
+        - name: "stoplight-studio:cache_fact:stoplight_studio_release.tag"
+          set_fact:
+            stoplight_studio_release: '{"tag": "{{ stoplight_studio_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "stoplight-studio:set_fact:stoplight_studio_release:from:defaults"
+      set_fact:
+        stoplight_studio_release: '{"tag": "{{ stoplight_studio.github.tag }}"}'
+        cacheable: false
+
+- name: "stoplight-studio:version:local"
+  command: "~/.local/bin/stoplight-studio --version"
+  register: "stoplight_studio_version"
+  failed_when: false
+  changed_when: false
+
+- when: '(stoplight_studio_version.rc != 0) or (stoplight_studio_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(stoplight_studio_release.tag, operator="lt", strict=true))'
+  block:
+    - name: "stoplight-studio:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "stoplight-studio"
+      register: "stoplight_studio_tmp_dir"
+
+    - name: "stoplight-studio:download"
+      get_url:
+        url: "https://github.com/stoplightio/studio/releases/download/v{{ stoplight_studio_release.tag[1:] }}/stoplight-studio-linux-x86_64.AppImage"
+        dest: "{{ stoplight_studio_tmp_dir.path }}"
+      register: "stoplight_studio_download"
+      until: "stoplight_studio_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "stoplight-studio:copy"
+      copy:
+        remote_src: true
+        src: "{{ stoplight_studio_tmp_dir.path }}/stoplight-studio-linux-x86_64.AppImage"
+        dest: "~/.local/bin/stoplight-studio"
+        mode: "750"
+
+- name: "stoplight-studio:file:/usr/share/icons/hicolor/**x**/apps/"
+  file:
+    path: "/usr/share/icons/hicolor/{{ item }}/apps/"
+    state: "directory"
+    mode: "755"
+    owner: "root"
+    group: "root"
+  loop:
+    - "16x16"
+    - "32x32"
+    - "256x256"
+    - "512x512"
+    - "1024x1024"
+  become: true
+
+- name: "stoplight-studio:copy:/usr/share/icons/hicolor/**x**/apps/"
+  copy:
+    src: "stoplight-studio/icons/{{ item }}/stoplight-studio.png"
+    dest: "/usr/share/icons/hicolor/{{ item }}/apps/stoplight-studio.png"
+    mode: "644"
+    owner: "root"
+    group: "root"
+  loop:
+    - "16x16"
+    - "32x32"
+    - "256x256"
+    - "512x512"
+    - "1024x1024"
+  become: true
+
+- name: "stoplight-studio:template:/usr/share/applications/stoplight-studio.desktop"
+  template:
+    src: "stoplight-studio/stoplight-studio.desktop.j2"
+    dest: "/usr/share/applications/stoplight-studio.desktop"
+    mode: "644"
+    owner: "root"
+    group: "root"
+  become: true

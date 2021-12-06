@@ -1,0 +1,6 @@
+---
+git_absorb:
+  github:
+    user: "tummychow"
+    repo: "git-absorb"
+    tag: "0.5.0"

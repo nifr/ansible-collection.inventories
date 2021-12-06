@@ -1,0 +1,52 @@
+---
+- name: "codimd-cli:mktemp"
+  tempfile:
+    state: "directory"
+    suffix: "codimd_cli"
+  register: "codimd_cli_tmp_dir"
+
+- name: "codimd-cli:clone-current-version"
+  get_url:
+    url: "https://github.com/{{codimd_cli.github.user}}/{{codimd_cli.github.repo}}/raw/master/bin/codimd"
+    dest: "{{codimd_cli_tmp_dir.path}}"
+
+- name: "codimd-cli:copy"
+  copy:
+    remote_src: true
+    src: "{{ codimd_cli_tmp_dir.path }}/codimd"
+    dest: "~/.local/bin/codimd-cli"
+    mode: "750"
+
+- name: "codimd-cli:create-settings-directory:~/.config/codimd-cli/"
+  file:
+    path: "~/.config/codimd-cli/"
+    state: "directory"
+    mode: "0755"
+
+- name: "codimd-cli:create-settings-file:~/.config/codimd-cli/key.conf"
+  file:
+    path: "~/.config/codimd-cli/key.conf"
+    mode: "750"
+    state: "touch"
+    access_time: "preserve"
+
+- name: "codimd-cli:create-settings-set-URL:/etc/environment"
+  become: true
+  lineinfile:
+    path: "/etc/environment"
+    line: 'CODIMD_SERVER="{{codimd_cli.config.server}}"'
+    regexp: "^CODIMD_SERVER="
+    state: "present"
+  when: "codimd_cli.config.server is defined"
+
+- name: "codimd-cli:login"
+  environment:
+    CODIMD_SERVER: "{{codimd_cli.config.server}}"
+  command:
+    argv:
+      - "~/.local/bin/codimd-cli"
+      - "login"
+      - "--email"
+      - "{{codimd_cli.config.user}}"
+      - "{{codimd_cli.config.password}}"
+  when: "codimd_cli.config.user is defined and codimd_cli.config.password is defined"

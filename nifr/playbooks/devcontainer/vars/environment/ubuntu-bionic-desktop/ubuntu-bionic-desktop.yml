@@ -1,0 +1,16 @@
+---
+apt:
+  keys:
+    - url: "https://dl.google.com/linux/linux_signing_key.pub"
+      id: "4CCA1EAF950CEE4AB83976DCA040830F7FAC5991"
+  repositories:
+    - repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+      filename: "google-chrome"
+    - repo: "ppa:git-core/ppa"
+      filename: "ppa:git-core.ppa"
+    - repo: "ppa:phoerious/keepassxc"
+      filename: "ppa:phoerious.keepassxc"
+    - repo: "ppa:peek-developers/stable"
+      filename: "ppa:peek-developers.stable"
+    - repo: "ppa:caffeine-developers/ppa"
+      filename: "ppa:caffeine-developers.ppa"

@@ -1,0 +1,95 @@
+---
+- name: "hugo:set_fact:hugo_release"
+  block:
+    - name: "hugo:sect_fact:hugo_release:from:github"
+      when: "hugo_release is not defined"
+      block:
+        - name: "hugo:get/latest-release"
+          github_release:
+            user: "{{ hugo.github.user }}"
+            repo: "{{ hugo.github.repo }}"
+            action: "latest_release"
+          register: "hugo_release"
+          until: "hugo_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "hugo_release.tag"
+          failed_when: "not hugo_release.tag"
+        - name: "hugo:cache_fact:hugo_release.tag"
+          set_fact:
+            hugo_release: '{"tag": "{{ hugo_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "hugo:set_fact:hugo_release:from:defaults"
+      set_fact:
+        hugo_release: '{"tag": "{{ hugo.github.tag }}"}'
+        cacheable: false
+
+- name: "hugo:version:local"
+  command: "~/.local/bin/hugo version"
+  register: "hugo_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (hugo_version.rc != 0)
+    or
+    (
+      hugo_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(hugo_release.tag[1:], operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (hugo.install_method is equalto "binary")
+      block:
+        - name: "hugo:mktemp"
+          tempfile:
+            state: "directory"
+            suffix: "hugo"
+          register: "hugo_tmp_dir"
+        - name: "hugo:unarchive"
+          unarchive:
+            src: >-
+              {{
+                "https://github.com" ~
+                "/" ~ hugo.github.user ~
+                "/" ~ hugo.github.repo ~
+                "/releases/download" ~
+                "/" ~ hugo_release.tag ~
+                "/hugo_extended_" ~ hugo_release.tag[1:] ~ "_Linux-64bit.tar.gz"
+              }}
+            remote_src: true
+            dest: "{{ hugo_tmp_dir.path }}"
+          register: "hugo_download"
+          until: "hugo_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+        - name: "hugo:copy"
+          copy:
+            remote_src: true
+            src: "{{ hugo_tmp_dir.path }}/hugo"
+            dest: "~/.local/bin/hugo"
+            mode: "750"
+
+    - when: >-
+        (ansible_os_family is equalto "Debian")
+        and
+        (hugo.install_method is not equalto "binary")
+        or
+        (hugo.install_method is equalto "deb")
+      block:
+        - name: "hugo:apt:deb:install"
+          become: true
+          apt:
+            deb: >-
+              {{
+                "https://github.com" ~
+                "/" ~ hugo.github.user ~
+                "/" ~ hugo.github.repo ~
+                "/releases/download" ~
+                "/" ~ hugo_release.tag ~
+                "/hugo_extended_" ~ hugo_release.tag[1:] ~ "_Linux-64bit.deb"
+              }}

@@ -1,0 +1,57 @@
+---
+- name: "lf:set_fact:lf_release"
+  block:
+    - name: "lf:sect_fact:lf_release:from:github"
+      when: "lf_release is not defined"
+      block:
+        - name: "lf:get/latest-release"
+          github_release:
+            user: "{{ lf.github.user }}"
+            repo: "{{ lf.github.repo }}"
+            action: "latest_release"
+          register: "lf_release"
+          until: "lf_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "lf_release.tag"
+          failed_when: "not lf_release.tag"
+        - name: "lf:cache_fact:lf_release.tag"
+          set_fact:
+            lf_release: '{"tag": "{{ lf_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "lf:set_fact:lf_release:from:defaults"
+      set_fact:
+        lf_release: '{"tag": "{{ lf.github.tag }}"}'
+        cacheable: false
+
+- name: "lf:version:local"
+  command: "~/.local/bin/lf --version"
+  register: "lf_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(lf_version.rc != 0) or (lf_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( lf_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "lf:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "lf"
+      register: "lf_tmp_dir"
+
+    - name: "lf:unarchive"
+      unarchive:
+        src: "https://github.com/{{ lf.github.user }}/{{ lf.github.repo }}/releases/download/{{ lf_release.tag }}/lf-linux-amd64.tar.gz"
+        remote_src: true
+        dest: "{{ lf_tmp_dir.path }}"
+      register: "lf_download"
+      until: "lf_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "lf:copy"
+      copy:
+        remote_src: true
+        src: "{{ lf_tmp_dir.path }}/lf"
+        dest: "~/.local/bin/lf"
+        mode: "750"

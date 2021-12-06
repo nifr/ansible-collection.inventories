@@ -1,0 +1,461 @@
+---
+
+- import_tasks: 'dns/main.yml'
+  tags:
+  - dns
+- import_tasks: 'user/main.yml'
+  tags:
+  - user
+- import_tasks: 'gnome-shell/main.yml'
+  tags:
+  - gnome-shell
+- import_tasks: 'apt/main.yml'
+  tags:
+  - apt
+- import_tasks: 'snap/main.yml'
+  tags:
+  - snap
+- import_tasks: 'docker/main.yml'
+  tags:
+  - docker
+  - docker-compose
+- import_tasks: 'openssh-client/main.yml'
+  tags:
+  - openssh-client
+
+# install 'lm-sensors' and 'fancontrol'
+# https://github.com/amanusk/s-tui
+# - block:
+#     - import_tasks: 's-tui/main.yml'
+#       tags:
+#       - s-tui
+#       - language-python
+#   tags:
+#   - monitoring
+
+- import_tasks: 'vagrant/main.yml'
+  tags:
+  - vagrant
+  - source-url
+  - package-deb
+
+- import_tasks: 'vscode-insider/main.yml'
+  tags:
+  - vscode-insider
+  - source-url
+  - package-deb
+
+- import_tasks: 'teamviewer/main.yml'
+  tags:
+  - teamviewer
+  - package-deb
+- import_tasks: 'smartsvn/main.yml'
+  tags:
+  - smartsvn
+  - archive
+  - archive-tar-gz
+  - language-java
+- import_tasks: 'nordvpn/main.yml'
+  tags:
+  - nordvpn
+  - vpn
+  - package-deb
+
+- import_tasks: 'wireshark/main.yml'
+  tags:
+  - wireshark
+
+- block: []
+  # - import_tasks: 'bats/main.yml'
+  # - import_tasks: 'bats_support/main.yml'
+  # - import_tasks: 'bats_assert/main.yml'
+  # - import_tasks: 'bats_file/main.yml'
+  tags:
+  - bats
+  - language-bash
+
+- block: []
+  # https://github.com/ryanoasis/vim-devicons
+  # https://github.com/whiteinge/diffconflicts#installation
+  tags:
+  - vim
+  - vim-plugin
+
+- block:
+  # https://github.com/Gabriel439/bench
+  # https://github.com/koalaman/shellcheck
+  - import_tasks: 'kitematic/main.yml'
+    tags:
+    - kitematic
+  - import_tasks: 'hadolint/main.yml'
+    tags:
+    - hadolint
+    - tools-linting
+    - language-haskell
+  tags:
+  - tools-docker
+
+- block:
+  - import_tasks: 'lnav/main.yml'
+    tags:
+    - lnav
+    - release-github
+    - source-github
+    - package-deb
+    - package-rpm
+    - archive
+    - archive-zip
+  tags:
+  - language-c
+
+- block:
+  # https://github.com/bobthecow/git-flow-completion
+  # eval "$(minikube completion zsh)"
+  # eval "$(kompose completion zsh)"
+  # eval "$(kind completion zsh)"
+  # source <(helm completion zsh)
+  - import_tasks: 'zsh-completions/main.yml'
+    tags:
+    - source-repository
+    - package-deb
+  tags:
+    - zsh-completions
+
+- block: []
+  # https://github.com/zsh-users/zsh-history-substring-search
+  tags:
+  - zsh-plugins
+
+- block:
+  # https://help.github.com/en/articles/setting-your-commit-email-address
+  # https://docs.ansible.com/ansible/latest/modules/git_config_module.html
+  - block:
+    - import_tasks: 'icdiff/main.yml'
+      tags:
+      - icdiff
+      - release-github
+      - source-github-repository
+      - script-only
+      - language-python
+    - import_tasks: 'diff-so-fancy/main.yml'
+      tags:
+      - diff-so-fancy
+      - source-github-repository
+      - script-only
+      - language-perl
+    # - import_tasks: 'spaceman_diff/main.yml'
+    #   tags:
+    #   - spaceman-diff
+    #   - language-sh
+    tags:
+    - git-difftools
+  - block: []
+    tags:
+    - git-subcommands
+  tags:
+  - tools-vcs
+  - tools-git
+
+- block:
+  # https://github.com/cloudflare/wrangler/releases
+  # https://github.com/rabite0/hunter , no binary-releases
+  # https://github.com/RazrFalcon/svgcleaner
+  # https://github.com/databricks/click
+  # https://github.com/cantino/mcfly
+  # https://github.com/mmstick/parallel - faster parallel
+  # -> sameas: https://gitlab.redox-os.org/redox-os/parallel
+  # https://github.com/ctbur/async/
+  # https://github.com/darakian/ddh - duplicate file finder
+  # https://github.com/jhspetersson/fselect - find files with SQL queries
+  # https://crates.io/crates/engiffen
+  # https://github.com/Freaky/cw
+  # https://lib.rs/crates/checkpwn
+  # https://lib.rs/crates/lights
+  # https://lib.rs/crates/gist
+  # https://lib.rs/crates/git-journal
+  # https://lib.rs/crates/ffmpeg-screen-recorder
+  # https://github.com/dskkato/rjo / https://github.com/skanehira/gjo/releases
+  # https://github.com/mozilla/sccache#usage - a build-cache with local,s3,gcp support
+  - import_tasks: 'exa/main.yml'
+    tags:
+    - exa
+    - tools-shell
+    - release-github
+    - source-github
+    - archive
+    - archive-zip
+    - hashsum-list
+  - import_tasks: 'zola/main.yml'
+    tags:
+    - zola
+    - release-github
+    - source-github
+    - archive
+    - archive-tar-gz
+  - import_tasks: 'sd/main.yml'
+    tags:
+    - sd
+  - import_tasks: 'git-absorb/main.yml'
+    tags:
+    - git-absorb
+    - tools-vcs
+  - import_tasks: 'tokei/main.yml'
+    tags:
+    - tokei
+    - tools-shell
+  - import_tasks: 'ffsend/main.yml'
+    tags:
+    - ffsend
+    - tools-shell
+  - import_tasks: 'heatseeker/main.yml'
+    tags:
+    - heatseeker
+    - tools-shell
+  - import_tasks: 'lsd/main.yml'
+    tags:
+    - lsd
+    - tools-shell
+  - import_tasks: 'watchexec/main.yml'
+    tags:
+    - watchexec
+    - tools-shell
+    - package-deb
+  - import_tasks: 'imdb-rename/main.yml'
+    tags:
+    - imdb-rename
+    - tools-shell
+    - burntsushi
+  - import_tasks: 'xsv/main.yml'
+    tags:
+    - xsv
+    - burntsushi
+  - import_tasks: 'ripgrep/main.yml'
+    tags:
+    - ripgrep
+    - burntsushi
+  - import_tasks: 'skim/main.yml'
+    tags:
+    - skim
+  - import_tasks: 'tealdeer/main.yml'
+    tags:
+    - tealdeer
+  - import_tasks: 'diskus/main.yml'
+    tags:
+    - diskus
+    - sharkdp
+  - import_tasks: 'hexyl/main.yml'
+    tags:
+    - hexyl
+    - sharkdp
+  - import_tasks: 'hyperfine/main.yml'
+    tags:
+    - hyperfine
+    - sharkdp
+  - import_tasks: 'vivid/main.yml'
+    tags:
+    - vivid
+    - sharkdp
+  - import_tasks: 'lscolors/main.yml'
+    tags:
+    - lscolors
+    - sharkdp
+  - import_tasks: 'fd/main.yml'
+    tags:
+    - fd
+    - sharkdp
+  - import_tasks: 'bat/main.yml'
+    tags:
+    - bat
+    - sharkdp
+    - tools-shell
+    - release-github
+    - source-github
+    - package-deb
+    - archive-tar-gz
+  tags:
+    - language-rust
+
+- block: []
+  # https://asciinema.org/docs/installation#installing-via-pip
+  # https://github.com/ytdl-org/youtube-dl#installation
+  # https://pipxproject.github.io/pipx/programs-to-try/
+  # python3 -m pip install --user --upgrade pip
+  # python3 -m pip install --user --upgrade pipx
+  # -> needs: sudo apt-get install python3-venv python3-dev
+  # -> otherwise: pipx install thefuck
+  # ->   error: command 'x86_64-linux-gnu-gcc' failed with exit status 1
+  # ERROR: Failed building wheel for psutil
+  tags:
+  - language-python
+
+# https://asdf-vm.com/#/core-commands
+
+# [tools-virtualization]
+# multipass- lightweight VM manager for Linux, Windows and macOS
+# uses KVM on Linux, Hyper-V on Windows and HyperKit on macOS
+# can be used to "run" microk8s on macOS and Windows
+# https://github.com/CanonicalLtd/multipass
+
+- import_tasks: 'k8s_setup/main.yml'
+  tags:
+  - k8s-setup
+
+- block: []
+  # https://docs.vapor.codes/3.0/install/ubuntu/
+  tags:
+  - language-swift
+
+- block:
+  # https://techoverflow.net/2019/04/01/fixing-gcloud-warning-docker-credential-gcloud-not-in-system-path/
+  # https://github.com/homeport/dyff - diff tool for yaml / json
+  # https://github.com/simeji/jid - repl for json
+  # https://github.com/mitchellh/gox
+  # https://github.com/goreleaser/goreleaser
+  # https://www.nomadproject.io/downloads.html
+  # https://github.com/evanmiller/hecate
+  # https://github.com/etcd-io/etcd/releases - etcdctl
+  # https://github.com/davecheney/httpstat
+  # https://github.com/asciimoo/wuzz
+  # https://github.com/anacrolix/torrent
+  # https://github.com/moul/assh
+  # https://github.com/containers/buildah/blob/master/install.md
+  # https://github.com/opencontainers/runc/releases
+  # https://github.com/dhiltgen/docker-machine-kvm
+  # https://github.com/wagoodman/dive
+  # https://github.com/github/hub
+  # https://github.com/docker/deploykit - terraform alternative
+  # https://github.com/wercker/stern - (multi-)container log tailing
+  # https://github.com/aquasecurity/trivy -> container security scanning
+  # https://github.com/odeke-em/drive
+  # https://github.com/concourse/concourse/releases - concourse/fly CI and CLI
+  # https://github.com/smallstep/cli/releases
+  # https://github.com/smallstep/certificates/releases
+  - import_tasks: 'docker-machine/main.yml'
+    tags:
+    - docker
+    - docker-machine
+    - release-github
+    - source-github
+    - binary-only
+  - block:
+    - import_tasks: 'helm/main.yml'
+      tags:
+      - helm
+    - import_tasks: 'kompose/main.yml'
+      tags:
+      - kompose
+      - release-github
+      - source-github
+      - package-deb
+      - binary-only
+    # https://github.com/slok/brigadeterm
+    tags:
+    - tools-kubernetes
+  - block:
+    # https://github.com/rancher/k3s
+    # https://github.com/kubernetes/kops -> generate clusters on aws, gce, virtualbox
+    - import_tasks: 'minikube/main.yml'
+      tags:
+      - minikube
+      - release-github
+      - source-github
+      - package-deb
+      - binary-only
+    - import_tasks: 'kind/main.yml'
+      tags:
+      - kind
+      - release-github
+      - source-github
+      - binary-only
+    tags:
+    - kubernetes-distributions
+  - import_tasks: 'lf/main.yml'
+    tags:
+    - lf
+    - release-github
+    - source-github
+    - archive
+    - archive-tar-gz
+  - import_tasks: 'hugo/main.yml'
+    tags:
+    - hugo
+    - release-github
+    - archive
+    - archive-tar-gz
+    - package-deb
+  - import_tasks: 'mc/main.yml'
+    tags:
+    - mc
+    - tools-backup
+    - release-github
+    - source-url
+  - import_tasks: 'yq/main.yml'
+    tags:
+    - yq
+    - tools-shell
+    - release-github
+    - source-github
+    - binary-only
+  - import_tasks: 'packer/main.yml'
+    tags:
+    - packer
+    - tools-virtualization
+    - release-github-tags
+    - source-url
+    - archive
+    - archive-zip
+  - import_tasks: 'pup/main.yml'
+    tags:
+    - pup
+    - tools-shell
+    - release-github
+    - source-github
+    - archive
+    - archive-zip
+  - import_tasks: 'restic/main.yml'
+    tags:
+    - restic
+    - tools-backup
+    - release-github
+    - source-github
+    - archive
+    - archive-bz2
+  - import_tasks: 'shfmt/main.yml'
+    tags:
+    - shfmt
+    - tools-shell
+    - release-github
+    - source-github
+    - binary-only
+  - import_tasks: 'fzf-bin/main.yml'
+    tags:
+    - fzf-bin
+    - tools-shell
+    - release-github
+    - source-github
+    - archive
+    - archive-tar-gz
+  tags:
+    - language-go
+
+- block: []
+  # https://github.com/facebook/PathPicker/releases
+  tags:
+    - language-bash
+    - language-python
+
+- block: []
+  # # cmatrix
+  # https://github.com/levithomason/cmatrix (C)
+  # https://github.com/kohler/gifsicle (C)
+  # https://github.com/facebook/watchman
+  tags:
+    - language-cpp
+
+# https://github.com/Homebrew/homebrew-cask-fonts/tree/master/Casks
+# https://github.com/abogoyavlensky/DroidCode
+# https://github.com/pyrho/hack-font-ligature-nerd-font
+- import_tasks: 'nerd-fonts/main.yml'
+  tags:
+  - nerd-fonts
+  - fonts

@@ -1,0 +1,68 @@
+---
+- name: "docker-machineset_fact:docker_machine_release"
+  block:
+    - name: "docker-machinesect_fact:docker_machine_release:from:github"
+      when: "docker_machine_release is not defined"
+      block:
+        - name: "docker-machineget/latest-release"
+          github_release:
+            user: "{{ docker_machine.github.user }}"
+            repo: "{{ docker_machine.github.repo }}"
+            action: "latest_release"
+          register: "docker_machine_release"
+          until: "docker_machine_release is succeeded"
+          changed_when: "docker_machine_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not docker_machine_release.tag"
+        - name: "docker-machinecache_fact:docker_machine_release.tag"
+          set_fact:
+            docker_machine_release: '{"tag": "{{ docker_machine_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "docker-machineset_fact:docker_machine_release:from:defaults"
+      set_fact:
+        docker_machine_release: '{"tag": "{{ docker_machine.github.tag }}"}'
+        cacheable: false
+
+- name: "docker-machine:version:latest_tag"
+  set_fact:
+    docker_machine_latest_version: "{{ docker_machine_release.tag[1:] }}"
+
+- debug:
+    var: "docker_machine_latest_version"
+    verbosity: 2
+
+- name: "docker-machine:version:local"
+  command: "~/.local/bin/docker-machine --version"
+  register: "docker_machine_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (docker_machine_version.rc != 0)
+    or
+    (
+      docker_machine_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(docker_machine_latest_version, operator='lt', strict=true)
+    )
+  block:
+    - name: "docker-machine:get_url"
+      get_url:
+        url: >-
+          {{
+            "https://github.com" ~
+            "/" ~ docker_machine.github.user ~
+            "/" ~ docker_machine.github.repo ~
+            "/releases/download" ~
+            "/v" ~ docker_machine_latest_version ~
+            "/docker-machine-Linux-x86_64"
+          }}
+        dest: "~/.local/bin/docker-machine"
+        mode: "750"
+        force: true
+      register: "docker_machine_download"
+      until: "docker_machine_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

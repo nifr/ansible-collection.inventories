@@ -1,0 +1,57 @@
+---
+- name: "sd:set_fact:sd_release"
+  block:
+    - name: "sd:sect_fact:sd_release:from:github"
+      when: "sd_release is not defined"
+      block:
+        - name: "sd:get/latest-release"
+          github_release:
+            user: "{{ sd.github.user }}"
+            repo: "{{ sd.github.repo }}"
+            action: "latest_release"
+          register: "sd_release"
+          until: "sd_release is succeeded"
+          changed_when: "sd_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not sd_release.tag"
+        - name: "sd:cache_fact:sd_release.tag"
+          set_fact:
+            sd_release: '{"tag": "{{ sd_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "sd:set_fact:sd_release:from:defaults"
+      set_fact:
+        sd_release: '{"tag": "{{ sd.github.tag }}"}'
+        cacheable: false
+
+- name: "sd:version:"
+  command: "~/.local/bin/sd --version"
+  register: "sd_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(sd_version.rc != 0) or (sd_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( sd_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "sd:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "sd"
+      register: "sd_tmp_dir"
+
+    - name: "sd:unarchive"
+      unarchive:
+        dest: "{{ sd_tmp_dir.path }}"
+        remote_src: true
+        src: "https://github.com/{{ sd.github.user }}/{{ sd.github.repo }}/releases/download/{{ sd_release.tag }}/sd.{{ sd_release.tag[1:] }}-.x86_64-unknown-linux-gnu.zip"
+      register: "sd_archive_download"
+      until: "sd_archive_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "sd:copy"
+      copy:
+        remote_src: true
+        src: "{{ sd_tmp_dir.path }}/b/x86_64-unknown-linux-gnu/release/sd"
+        dest: "~/.local/bin/sd"
+        mode: "750"

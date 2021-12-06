@@ -1,0 +1,138 @@
+---
+- name: "kompose:set_fact:kompose_release"
+  block:
+    - name: "kompose:sect_fact:kompose_release:from:github"
+      when: "kompose_release is not defined"
+      block:
+        - name: "kompose:get/latest-release"
+          github_release:
+            user: "{{ kompose.github.user }}"
+            repo: "{{ kompose.github.repo }}"
+            action: "latest_release"
+          register: "kompose_release"
+          until: "kompose_release is succeeded"
+          changed_when: "kompose_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not kompose_release.tag"
+        - name: "kompose:cache_fact:kompose_release.tag"
+          set_fact:
+            kompose_release: '{"tag": "{{ kompose_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "kompose:set_fact:kompose_release:from:defaults"
+      set_fact:
+        kompose_release: '{"tag": "{{ kompose.github.tag }}"}'
+        cacheable: false
+
+- name: "kompose:set_fact:latest_version/extract"
+  set_fact:
+    kompose_latest_version: "{{ kompose_release.tag[1:] }}"
+  no_log: true
+
+- name: "kompose:debug:kompose_latest_version"
+  debug:
+    var: "kompose_latest_version"
+    verbosity: 2
+  failed_when: "not kompose_latest_version"
+
+- name: "kompose:command:version/local"
+  command: "~/.local/bin/kompose version"
+  register: "kompose_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (kompose_version.rc != 0)
+    or
+    (
+      kompose_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(kompose_latest_version, operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (kompose.install_method is equalto "binary")
+      block:
+        - name: "kompose:set_fact:kompose_release_filename"
+          set_fact:
+            kompose_release_filename: >-
+              {{
+                kompose.release.type.binary
+                | replace(
+                    "#{version}",
+                    kompose_latest_version
+                  )
+                | replace(
+                    "#{system}",
+                    kompose.release.facts.system[ansible_system]
+                  )
+                | replace(
+                    "#{architecture}",
+                    kompose.release.facts.architecture[ansible_architecture]
+                  )
+              }}
+        - name: "kompose:get_url"
+          get_url:
+            url: >-
+              {{
+                "https://github.com" ~
+                "/" ~ kompose.github.user ~
+                "/" ~ kompose.github.repo ~
+                "/releases/download" ~
+                "/v" ~ kompose_latest_version ~
+                "/" ~ kompose_release_filename
+              }}
+            dest: "~/.local/bin/kompose"
+            mode: "750"
+            force: true
+          register: "kompose_download"
+          until: "kompose_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+    - when: >-
+        (ansible_os_family is equalto "Debian")
+        or
+        (kompose.install_method is equalto "deb")
+      block:
+        - name: "kompose:set_fact:kompose_release_filename"
+          set_fact:
+            kompose_release_filename: >-
+              {{
+                kompose.release.type.deb
+                | replace(
+                    "#{version}",
+                    kompose_latest_version
+                  )
+                | replace(
+                    "#{system}",
+                    kompose.release.facts.system[ansible_system]
+                  )
+                | replace(
+                    "#{architecture}",
+                    kompose.release.facts.architecture[ansible_architecture]
+                  )
+              }}
+        - name: "kompose:debug:kompose_release_filename"
+          debug:
+            var: "kompose_release_filename"
+            verbosity: 2
+          failed_when: "not kompose_release_filename"
+        - name: "kompose:deb:install"
+          become: true
+          apt:
+            deb: >-
+              {{
+                  "https://github.com" ~
+                  "/" ~ kompose.github.user ~
+                  "/" ~ kompose.github.repo ~
+                  "/releases/download" ~
+                  "/v" ~ kompose_latest_version ~
+                  "/" ~ kompose_release_filename
+              }}
+          register: "kompose_download"
+          until: "kompose_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"

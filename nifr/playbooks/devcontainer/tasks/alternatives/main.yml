@@ -1,0 +1,5 @@
+---
+- name: "alternatives:command:update-alternatives"
+  become: true
+  command: "update-alternatives --install '{{ item.link }}' '{{ item.name }}' '{{ item.source }}' '{{ item.priority }}'"
+  loop: "{{ alternatives }}"

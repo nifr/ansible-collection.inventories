@@ -1,0 +1,5 @@
+---
+tigervnc_server:
+  user: "vagrant"
+  group: "vagrant"
+  password: "vagrant"

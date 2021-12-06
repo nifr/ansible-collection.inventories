@@ -1,0 +1,76 @@
+---
+- name: "kind:set_fact:kind_release"
+  block:
+    - name: "kind:sect_fact:kind_release:from:github"
+      when: "kind_release is not defined"
+      block:
+        - name: "kind:get/latest-release"
+          github_release:
+            user: "{{ kind.github.user }}"
+            repo: "{{ kind.github.repo }}"
+            action: "latest_release"
+          register: "kind_release"
+          until: "kind_release is succeeded"
+          changed_when: "kind_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not kind_release.tag"
+        - name: "kind:cache_fact:kind_release.tag"
+          set_fact:
+            kind_release: '{"tag": "{{ kind_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "kind:set_fact:kind_release:from:defaults"
+      set_fact:
+        kind_release: '{"tag": "{{ kind.github.tag }}"}'
+        cacheable: false
+
+- name: "kind:set_fact:latest_version/extract"
+  set_fact:
+    kind_latest_version: "{{ kind_release.tag[1:] }}"
+  no_log: true
+
+- name: "kind:debug:kind_latest_version"
+  debug:
+    var: "kind_latest_version"
+    verbosity: 2
+  failed_when: "not kind_latest_version"
+
+- name: "kind:version:local"
+  command: "~/.local/bin/kind --version"
+  register: "kind_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (kind_version.rc != 0)
+    or
+    (
+      kind_version.stderr|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(kind_latest_version, operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (kind.install_method is equalto "binary")
+      block:
+        - name: "kind:get_url"
+          get_url:
+            url: >-
+              {{
+                "https://github.com" ~
+                "/" ~ kind.github.user ~
+                "/" ~ kind.github.repo ~
+                "/releases/download" ~
+                "/v" ~ kind_latest_version ~
+                "/kind-linux-amd64"
+              }}
+            dest: "~/.local/bin/kind"
+            mode: "750"
+            force: true
+          register: "kind_download"
+          until: "kind is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"

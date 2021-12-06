@@ -1,0 +1,6 @@
+---
+hyperfine:
+  github:
+    user: "sharkdp"
+    repo: "hyperfine"
+    tag: "v1.9.0"

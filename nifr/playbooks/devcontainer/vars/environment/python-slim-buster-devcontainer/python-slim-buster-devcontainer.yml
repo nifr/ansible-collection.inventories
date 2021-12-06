@@ -1,0 +1,5 @@
+---
+apt:
+  repositories:
+    - repo: "ppa:git-core/ppa"
+      filename: "ppa:git-core.ppa"

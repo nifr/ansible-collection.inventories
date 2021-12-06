@@ -1,0 +1,4 @@
+---
+timezone:
+  # list possible timezones with 'timedatectl list-timezones' in the VM
+  timezone: "UTC"

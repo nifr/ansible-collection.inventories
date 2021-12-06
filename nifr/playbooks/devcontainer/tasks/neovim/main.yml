@@ -1,0 +1,183 @@
+---
+# https://github.com/whiteinge/diffconflicts#installation
+# plugin paths:
+# https://neovim.io/doc/user/usr_05.html#05.5
+# package:
+#
+# mkdir -p ~/.local/share/nvim/site/plugin
+# cp /tmp/yourplugin.vim ~/.local/share/nvim/site/plugin\
+#
+# example: ~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim
+#
+# PPA: https://launchpad.net/~neovim-ppa/+archive/ubuntu/unstable
+- name: "neovim:set_fact:install_method:apt"
+  when: "ansible_facts['os_family'] == 'Debian'"
+  block:
+    - name: "neovim:set_fact:release-type"
+      set_fact:
+        neovim_release_type: >-
+          {{
+            (neovim.prefer_unstable| bool) | ternary (
+              'unstable',
+              'stable'
+            )
+          }}
+    - name: "neovim:set_fact:install_method:apt"
+      when: "ansible_distribution == 'Ubuntu'"
+      set_fact:
+        neovim_install_method: "ppa"
+    - name: "neovim:set_fact:install_method:apt"
+      when: "ansible_distribution != 'Ubuntu'"
+      set_fact:
+        neovim_install_method: "apt"
+- name: "neovim:set_fact:install_method:homebrew"
+  when: "ansible_pkg_mgr == 'homebrew'"
+  set_fact:
+    neovim_install_method: "homebrew"
+
+- name: "neovim:install:apt"
+  when: "neovim_install_method == 'apt'"
+  become: true
+  block:
+    - name: "neovim:apt_key:state"
+      apt_key:
+        keyserver: "keyserver.ubuntu.com"
+        id: "9DBB0BE9366964F134855E2255F96FCF8231B6DD"
+        state: >-
+          {{
+            ( neovim.state in ['present', 'latest'] )
+            | ternary(
+              'present',
+              'absent'
+            )
+          }}
+    - name: "neovim:apt_repository"
+      apt_repository:
+        repo: >-
+          {{
+            'deb http://ppa.launchpad.net/neovim-ppa/'
+            + neovim_release_type
+            + '/ubuntu'
+            + ' '
+            + (
+                (neovim_release_type == 'stable')
+                | ternary(
+                  'bionic',
+                  'focal'
+                )
+              )
+            + ' '
+            + 'main'
+          }}
+        state: >-
+          {{
+            ( neovim.state in ['present', 'latest'] )
+            | ternary(
+              'present',
+              'absent'
+            )
+          }}
+        filename: "{{ 'ppa:neovim-ppa.' + neovim_release_type }}"
+        update_cache: false
+      register: "neovim_repository_apt"
+
+- name: "neovim:install:ppa"
+  when: "neovim_install_method == 'ppa'"
+  become: true
+  block:
+    - name: "neovim:apt_repository:state"
+      apt_repository:
+        repo: "{{ 'ppa:neovim/' + neovim_release_type }}"
+        state: >-
+          {{
+            ( neovim.state in ['present', 'latest'] )
+            | ternary(
+              'present',
+              'absent'
+            )
+          }}
+        filename: "{{ 'ppa:neovim-ppa.' + neovim_release_type }}"
+        update_cache: false
+      register: "neovim_repository_ppa"
+
+- name: "neovim:apt:install-package"
+  when: "ansible_facts['os_family'] == 'Debian'"
+  become: true
+  block:
+    - name: "neovim:apt:update_cache"
+      when: "neovim_repository_apt.changed or neovim_repository_ppa.changed"
+      apt:
+        cache_valid_time: "0"
+        update_cache: true
+    - name: "neovim:apt:pkg"
+      apt:
+        state: "{{ neovim.state }}"
+        name: "neovim"
+        install_recommends: false
+
+- name: "neovim:install:homebrew"
+  when: "neovim_install_method == 'homebrew'"
+  homebrew:
+    name: "neovim"
+    state: "{{ neovim.state }}"
+
+- name: "neovim:config"
+  tags:
+    - config[*]
+    - config[neovim]
+    - neovim[config]
+  block:
+    - name: "neovim:file:directory:~/.config/nvim"
+      file:
+        path: "~/.config/nvim"
+        state: "directory"
+        mode: "750"
+    - name: "neovim:template:~/.config/nvim/init.vim"
+      template:
+        src: "neovim/init.vim.j2"
+        dest: "~/.config/nvim/init.vim"
+
+- name: "neovim:plugins"
+  tags:
+    - neovim[plugins]
+  block:
+    - name: "neovim:file:directory:~/.local/share/nvim/site/{pack,plugin}"
+      when: "(neovim.plugins | length) >= 0"
+      file:
+        path: "{{ item }}"
+        state: "directory"
+        mode: "750"
+      loop:
+        - "~/.local/share/nvim/site/pack"
+        - "~/.local/share/nvim/site/plugin"
+
+    - name: "neovim:git:install-plugins"
+      git:
+        repo: "{{ item.key }}"
+        dest: >-
+          {{
+            '~/.local/share/nvim/site/plugin/'
+            + ( item.value | default(
+                  item.value | basename
+                )
+              )
+          }}
+      loop: "{{ neovim.plugins | dict2items }}"
+
+    - name: "neovim:git:install-packs"
+      git:
+        repo: "{{ item.key }}"
+        dest: >-
+          {{
+            '~/.local/share/nvim/site/pack/'
+            + ( item.value | default(
+                  item.value | basename
+                )
+              )
+            + '/start/'
+            + ( item.value | default(
+                  item.value | basename
+                )
+              )
+          }}
+      loop: "{{ neovim.packs | dict2items }}"

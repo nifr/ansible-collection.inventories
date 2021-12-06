@@ -1,0 +1,6 @@
+---
+yq:
+  github:
+    user: "mikefarah"
+    repo: "yq"
+    tag: "2.4.1"

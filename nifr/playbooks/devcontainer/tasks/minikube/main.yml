@@ -1,0 +1,99 @@
+---
+- name: "minikube:set_fact:minikube_release"
+  block:
+    - name: "minikube:sect_fact:minikube_release:from:github"
+      when: "minikube_release is not defined"
+      block:
+        - name: "minikube:get/latest-release"
+          github_release:
+            user: "{{ minikube.github.user }}"
+            repo: "{{ minikube.github.repo }}"
+            action: "latest_release"
+          register: "minikube_release"
+          until: "minikube_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "minikube_release.tag"
+          failed_when: "not minikube_release.tag"
+        - name: "minikube:cache_fact:minikube_release.tag"
+          set_fact:
+            minikube_release: '{"tag": "{{ minikube_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "minikube:set_fact:minikube_release:from:defaults"
+      set_fact:
+        minikube_release: '{"tag": "{{ minikube.github.tag }}"}'
+        cacheable: false
+
+- name: "minikube:set_fact:latest_version/extract"
+  set_fact:
+    minikube_latest_version: "{{ minikube_release.tag[1:] }}"
+  no_log: true
+
+- name: "minikube:debug:minikube_latest_version"
+  debug:
+    var: "minikube_latest_version"
+    verbosity: 2
+  failed_when: "not minikube_latest_version"
+
+- name: "minikube:command:version/local"
+  command: "~/.local/bin/minikube version"
+  register: "minikube_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (minikube_version.rc != 0)
+    or
+    (
+      minikube_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(minikube_latest_version, operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (minikube.install_method is equalto "binary")
+      block:
+        - name: "minikube:set_fact:minikube_release_filename"
+          set_fact:
+            minikube_release_filename: >-
+              {{
+                minikube.release.type.binary
+                | replace(
+                    "#{version}",
+                    minikube_latest_version
+                  )
+                | replace(
+                    "#{system}",
+                    minikube.release.facts.system[ansible_system]
+                  )
+                | replace(
+                    "#{architecture}",
+                    minikube.release.facts.architecture[ansible_architecture]
+                  )
+              }}
+        - name: "minikube:debug:minikube_release_filename"
+          debug:
+            var: "minikube_release_filename"
+            verbosity: 2
+          failed_when: "not minikube_release_filename"
+        - name: "minikube:get_url"
+          get_url:
+            url: >-
+              {{
+                "https://github.com" ~
+                "/" ~ minikube.github.user ~
+                "/" ~ minikube.github.repo ~
+                "/releases/download" ~
+                "/v" ~ minikube_latest_version ~
+                "/" ~ minikube_release_filename
+              }}
+            dest: "~/.local/bin/minikube"
+            mode: "750"
+            force: true
+          register: "minikube_download"
+          until: "minikube_download is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"

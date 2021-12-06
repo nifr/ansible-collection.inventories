@@ -1,0 +1,6 @@
+---
+stoplight_studio:
+  github:
+    user: "stoplightio"
+    repo: "studio"
+    tag: "v1.8.1"

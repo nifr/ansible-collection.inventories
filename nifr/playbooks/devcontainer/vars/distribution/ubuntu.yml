@@ -1,0 +1,73 @@
+---
+---
+apt:
+  automatic_upgrades: false
+  keys: []
+  repositories: []
+  packages:
+    - apt-transport-https
+    - ca-certificates
+    - aptitude
+    - ncurses-term # provides the terminfo database in /usr/share/terminfo/**/*
+    - curl
+    - rsync
+    - zsh
+    - fasd
+    - git
+    - git-extras
+    - git-flow
+    - cowsay
+    - figlet
+    - tmux
+    - net-tools # provides `netstat`
+    - apache2-utils # provides `htpasswd`
+    - openssh-client
+
+    # provides `add-apt-repository` command
+    # ATTENTION depends: python3 (not desired in python debian containers)
+    - software-properties-common
+    - python3-dev # required to build python `psycopg2` module
+    - python3-apt # required for ansible module `apt_repository`
+    - python3-psutil # required for ansible module `dconf`
+    - python3-jmespath # required for ansible filter 'json_query'
+    - python3-junit.xml # required for ansible junit output
+    # required for ansible module `debconf`
+    # Depends: debconf
+    - debconf-utils
+
+    - libpq-dev # required for `pipx run pgcli` & `psycopg2` python module
+
+    # the `fortune` package is not available on debian (buster)
+    # the package name is `fortune-mod` + `fortunes-min`
+    - fortune
+    - postgresql-client # provides `psql`
+    - openssh-server
+    # --- gui packages ---
+    - fonts-emojione # provides emoji support in terminals
+    # --- gui applications ---
+    - peek
+    - wireshark
+    - google-chrome-stable
+    - chrome-gnome-shell
+    - firefox
+    - keepassxc
+    - xdotool
+    # TODO: 2020-05-16 Not yet compatible with Ubuntu 20.04 Focal
+    # - caffeine # tool & indicator to disable screensaver
+    # ---- packages that shall be absent last ---
+    - { name: "memtest86+", state: "absent" }
+    - { name: "ruby", state: "absent" }
+    - { name: "golang", state: "absent" }
+    - { name: "nodejs", state: "absent" }
+    # `gedebi-core` installs .deb packages and together with their dependencies
+    # not needed as modern versions of apt[-get] provide the same functionality
+    # Depends: python3-apt
+    # -> Leads to undesired installation of apt python in containers
+    #
+    # example: (the dot is required to prevent installing literal package by name)
+    # sudo apt -y install ./package.deb
+    # sudo dpkg -i /path/to/package.deb; sudo apt-get install -f
+    - { name: "gdebi-core", state: "absent" }
+    # Depends: python3
+    # -> Leads to undesired installation of apt python in containers
+    - { name: "lsb-release", state: "absent" }

@@ -1,0 +1,6 @@
+{% for section in (item.value|dict2items) %}
+{{ '[' + section.key + ']' }}
+{% for directive in (section.value|dict2items) %}
+{{- directive.key + ' = ' + directive.value }}
+{% endfor %}
+{% endfor %}

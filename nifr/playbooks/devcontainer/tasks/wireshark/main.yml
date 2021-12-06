@@ -1,0 +1,7 @@
+---
+- name: "debconf/prepare:wireshark"
+  debconf:
+    name: wireshark-common
+    question: wireshark-common/install-setuid
+    value: "true"
+    vtype: boolean

@@ -1,0 +1,11 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+pynvim = "~=0.4.1"
+neovim-remote = "~=2.4.0"
+python-language-server = "~=0.33.0"
+jedi = "~=0.17.0"
+

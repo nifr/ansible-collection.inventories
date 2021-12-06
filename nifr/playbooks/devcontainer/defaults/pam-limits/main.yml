@@ -1,0 +1,6 @@
+---
+pam_limits:
+  memlock: ~
+  nofile: "500000"
+  nproc: ~
+  locks: ~

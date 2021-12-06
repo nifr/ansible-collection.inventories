@@ -1,0 +1,5 @@
+tokei:
+  github:
+    user: "xampprocky"
+    repo: "tokei"
+    tag: "v11.1.0"

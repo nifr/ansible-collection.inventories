@@ -1,0 +1,42 @@
+---
+# TODO: Add `system` option to groups
+# TODO: Add `append` option to groups
+- name: "user:groups"
+  become: true
+  tags:
+    - user[groups]
+  block:
+    - name: "users:group/add:groups"
+      loop: "{{ user.groups }}"
+      group:
+        name: "{{ item }}"
+        state: "present"
+    - name: "user:user/configure:user.groups"
+      user:
+        name: "{{ ansible_ssh_user }}"
+        groups: "{{ user.groups }}"
+        append: true
+        force: true
+
+- name: "user:user:shell"
+  become: true
+  user:
+    name: "{{ ansible_ssh_user }}"
+    shell: "{{ user.shell }}"
+    force: true
+  tags:
+    - user[shell]
+
+- name: "user:file:directory:xdg-directories"
+  file:
+    path: "{{ item }}"
+    state: "directory"
+    mode: "0700"
+  loop:
+    - "~/.config"
+    - "~/.local/lib"
+    - "~/.local/share"
+    - "~/.local/bin"
+    - "~/.local/usr/bin"
+  tags:
+    - user[directory-structure]

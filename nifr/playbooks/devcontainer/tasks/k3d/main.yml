@@ -1,0 +1,77 @@
+# This role installs and configures "k3d"
+#
+# GitHub:    https://github.com/rancher/k3d
+# Reference: https://raw.githubusercontent.com/rancher/k3d/master/install.sh
+---
+- name: "k3d:set_fact:k3d_release"
+  block:
+    - name: "k3d:sect_fact:k3d_release:from:github"
+      when: "k3d_release is not defined"
+      block:
+        - name: "k3d:get/latest-release"
+          github_release:
+            user: "{{ k3d.github.user }}"
+            repo: "{{ k3d.github.repo }}"
+            action: "latest_release"
+          register: "k3d_release"
+          until: "k3d_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "k3d_release.tag"
+          failed_when: "not k3d_release.tag"
+        - name: "k3d:cache_fact:k3d_release.tag"
+          set_fact:
+            k3d_release: '{"tag": "{{ k3d_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "k3d:set_fact:k3d_release:from:defaults"
+      set_fact:
+        k3d_release: '{"tag": "{{ k3d.github.tag }}"}'
+        cacheable: false
+
+- name: "k3d:debug:k3d_release"
+  debug:
+    var: "k3d_release"
+    verbosity: 2
+  failed_when: "not k3d_release"
+
+- name: "k3d:command:version/local"
+  become: true
+  command: "/usr/local/bin/k3d --version"
+  register: "k3d_local_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (k3d_local_version.rc != 0)
+    or
+    (
+      k3d_local_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(k3d_release.tag|regex_search('(\\d+(\\.\\d+){2,})'), operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (k3d.install_method is equalto "binary")
+      block:
+        - name: "k3d:get_url"
+          become: true
+          get_url:
+            url: >-
+              {{
+                "https://github.com" ~
+                "/" ~ k3d.github.user ~
+                "/" ~ k3d.github.repo ~
+                "/releases/download" ~
+                "/" ~ k3d_release.tag ~
+                "/k3d-linux-amd64"
+              }}
+            dest: "/usr/local/bin/k3d"
+            mode: "755"
+            force: true
+          register: "k3d_download"
+          until: "k3d is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"

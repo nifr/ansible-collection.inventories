@@ -1,0 +1,6 @@
+---
+shfmt:
+  github:
+    user: "mvdan"
+    repo: "sh"
+    tag: "v3.0.1"

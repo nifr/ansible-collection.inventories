@@ -1,0 +1,72 @@
+---
+- name: "ngrok:mktemp"
+  tempfile:
+    state: "directory"
+    suffix: "ngrok"
+  register: "ngrok_tmp_dir"
+
+- name: "ngrok:unarchive"
+  unarchive:
+    src: "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+    remote_src: true
+    dest: "{{ ngrok_tmp_dir.path }}"
+  register: "ngrok_unarchive"
+  until: "ngrok_unarchive is succeeded"
+  retries: 5
+  delay: 60
+
+- name: "ngrok:copy"
+  copy:
+    remote_src: true
+    src: "{{ ngrok_tmp_dir.path }}/ngrok"
+    dest: "~/.local/bin/ngrok"
+    mode: "750"
+
+- name: "ngrok:file:directory:~/.config/ngrok/"
+  file:
+    path: "~/.config/ngrok"
+    state: directory
+    mode: "750"
+
+- name: "ngrok:template:~/.config/ngrok/ngrok.yml"
+  template:
+    src: "ngrok/ngrok.yml.j2"
+    mode: "750"
+    dest: "~/.config/ngrok/ngrok.yml"
+
+- name: "ngrok:file:directory:~/.local/var/log/ngrok/"
+  file:
+    path: "~/.local/var/log/ngrok"
+    state: directory
+    mode: "750"
+
+- name: "ngrok:file:directory:~/.config/systemd/user/"
+  file:
+    path: "~/.config/systemd/user"
+    state: directory
+    mode: "750"
+
+- name: "ngrok:file:~/.local/var/log/ngrok/ngrok.log"
+  file:
+    path: "~/.local/var/log/ngrok/ngrok.log"
+    state: touch
+    mode: "750"
+
+- name: "ngrok:systemd"
+  when: "{{ ngrok.install.systemd_service | bool }}"
+  block:
+    - name: "ngrok:template:~/.config/systemd/user/ngrok@.service"
+      template:
+        src: "ngrok/ngrok.service"
+        dest: "~/.config/systemd/user/ngrok@.service"
+        mode: "750"
+    - name: "ngrok:systemd:daemon_reload"
+      systemd:
+        scope: "user"
+        daemon_reload: true
+    - name: "ngrok:sytemd:ngrok@http"
+      systemd:
+        enabled: true
+        force: true
+        scope: "user"
+        name: "ngrok@http"

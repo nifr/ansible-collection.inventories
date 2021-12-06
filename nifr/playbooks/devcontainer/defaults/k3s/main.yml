@@ -1,0 +1,10 @@
+---
+k3s:
+  install_method: "binary"
+  github:
+    user: "rancher"
+    repo: "k3s"
+    tag: "v1.17.0+k3s.1"
+  service:
+    state: "restarted"
+    environment: {}

@@ -1,0 +1,31 @@
+---
+helm:
+  prerelease: false
+  install_method: "binary"
+  github:
+    user: "helm"
+    repo: "helm"
+    tags: "v3.0.2"
+  release:
+    base_url: "https://get.helm.sh"
+    type:
+      binary:
+        archive: "helm-v#{version}-#{system}-#{architecture}.tar.gz"
+        files:
+          - name: "helm"
+            path: "#{system}-#{architecture}/helm"
+        hash:
+          sha256: "https://get.helm.sh/helm-v#{version}-#{system}-#{architecture}.tar.gz.sha256"
+      package:
+        apt: ~
+        homebrew:
+          name: "kubernetes-helm"
+        snap:
+          name: "helm"
+          classic: true
+    facts:
+      system:
+        Linux: "linux"
+        Darwin: "darwin"
+      architecture:
+        x86_64: "amd64"

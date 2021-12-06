@@ -1,0 +1,53 @@
+---
+- when: "git_absorb_release is not defined"
+  block:
+    - name: "git-absorb:get/latest-release"
+      github_release:
+        user: "{{ git_absorb.github.user }}"
+        repo: "{{ git_absorb.github.repo }}"
+        action: "latest_release"
+      register: "git_absorb_release"
+      until: "git_absorb_release is succeeded"
+      changed_when: "git_absorb_release.tag"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+      failed_when: "not git_absorb_release.tag"
+    - name: "git-absorb:cache_fact:git_absorb_release.tag"
+      set_fact:
+        git_absorb_release: '{"tag": "{{ git_absorb_release.tag }}"}'
+        cacheable: true
+  rescue:
+    - name: "git-absorb:set_fact:git_absorb_release:defaults"
+      set_fact:
+        git_absorb_release: '{"tag": "{{ git_absorb.github.tag }}"}'
+        cacheable: false
+
+- name: "git-absorb:version:local"
+  command: "~/.local/bin/git-absorb --version"
+  register: "git_absorb_version"
+  failed_when: false
+  changed_when: false
+
+- name: "git-absorb:download"
+  when: "(git_absorb_version.rc != 0) or (git_absorb_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version(git_absorb_release.tag, operator='lt', strict=true))"
+  block:
+    - name: "git-absorb:get_url:download"
+      get_url:
+        dest: "~/.local/bin/git-absorb"
+        force: true
+        mode: "750"
+        url: "https://github.com/{{ git_absorb.github.user }}/{{ git_absorb.github.repo }}/releases/download/{{ git_absorb_release.tag }}/git-absorb-linux-x86_64"
+      register: "git_absorb_download"
+      until: "git_absorb_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+  rescue:
+    - get_url:
+        dest: "~/.local/bin/git-absorb"
+        force: true
+        mode: "750"
+        url: "https://github.com/{{ git_absorb.github.user }}/{{ git_absorb.github.repo }}/releases/download/{{ git_absorb_release.tag }}/git-absorb"
+      register: "git_absorb_download"
+      until: "git_absorb_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

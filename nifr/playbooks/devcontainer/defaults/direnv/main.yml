@@ -1,0 +1,6 @@
+---
+direnv:
+  github:
+    tag: "v2.20.0"
+    repo: "direnv"
+    user: "direnv"

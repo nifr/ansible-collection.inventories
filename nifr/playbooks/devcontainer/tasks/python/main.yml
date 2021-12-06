@@ -1,0 +1,51 @@
+---
+- name: "python:include_role:markosamuli.pyenv"
+  include_role:
+    name: "markosamuli.pyenv"
+    apply:
+      become: false
+  vars:
+    pyenv_init_shell: false
+    pyenv_python3_version: "{{ python.pyenv.global_version }}"
+    pyenv_python_versions:
+      - "{{ python.pyenv.global_version }}"
+    pyenv_global: "{{ python.pyenv.global_version }}"
+  tags:
+    - python[pyenv]
+
+- name: "python:lineinfile:~/.pyenv/version"
+  lineinfile:
+    path: "~/.pyenv/version"
+    regex: "^(.*)$"
+    line: "{{ python.pyenv.global_version }}"
+    create: true
+
+- name: "python:include_role:geerlingguy.pip:system"
+  include_role:
+    name: "geerlingguy.pip"
+    apply:
+      become: true
+  vars:
+    pip_package: &pip_package "python3-pip"
+    pip_install_packages: "{{ python.pip.packages.system }}"
+  tags:
+    - python[pip]
+
+- name: "python:include_role:geerlingguy.pi:pyenv-global"
+  include_role:
+    name: "geerlingguy.pip"
+    apply:
+      become: false
+  vars:
+    pip_package: *pip_package
+    pip_executable: "~/.pyenv/versions/{{ python.pyenv.global_version }}/bin/pip"
+    pip_install_packages: "{{ python.pip.packages.global }}"
+  tags:
+    - python[pip]
+
+- name: "python:pipx:package-installation"
+  loop: "{{ python.pipx.packages }}"
+  shell:
+    cmd: "~/.pyenv/versions/{{ python.pyenv.global_version }}/bin/pipx install {{ item.name }}"
+  tags:
+    - python[pipx]

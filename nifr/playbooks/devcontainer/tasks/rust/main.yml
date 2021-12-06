@@ -1,0 +1,38 @@
+---
+
+- name: "rust:version"
+  command: "rustc --version"
+  register: "rust_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(rust_version.rc != 0)"
+  block:
+    - name: "rust:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "rust"
+      register: "rust_tmp_dir"
+
+    - name: "rust:get_url:{{ rust_tmp_dir.path }}"
+      get_url:
+        dest: "{{ rust_tmp_dir.path }}"
+        url: "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"
+        mode: "755"
+      register: "rust_init_download"
+      until: "rust_init_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - environment:
+        CARGO_HOME: "{{ ansible_env.HOME }}/.local/lib/cargo"
+        RUSTUP_HOME: "{{ ansible_env.HOME }}/.local/lib/rustup"
+      block:
+      - name: "rust:command:rustup-init"
+        command: "{{ rust_init_download.dest }} -y --quiet --no-modify-path --profile {{ rust.rustup.profile }}"
+        register: "rust_install"
+      - name: "rust:command:rustup:install-toolchains"
+        command: "{{ ansible_env.HOME }}/.local/lib/cargo/bin/rustup toolchain install {{ item }}"
+        loop: "{{ rust.toolchain.additional }}"
+      - name: "rust:command:rustup:install-toolchains"
+        command: "{{ ansible_env.HOME }}/.local/lib/cargo/bin/rustup default {{ rust.toolchain.default }}"

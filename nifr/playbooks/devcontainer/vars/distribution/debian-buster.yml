@@ -1,0 +1,61 @@
+---
+apt:
+  packages:
+    - apt-transport-https
+    - ca-certificates
+    - aptitude
+    - ncurses-term # provides the terminfo database in /usr/share/terminfo/**/*
+    - less
+    - curl
+    - rsync
+    # `icu-devtools` is needed to prevent the VSCode liveshare extension
+    # from failing with message:
+    # "Couldn't find a valid ICU package installed on the system."
+    # see: https://stackoverflow.com/a/58736573
+    - icu-devtools
+    # * provides the `watch` command
+    # * provides the `ps` command
+    # * provides the `pgrep`
+    # * provides the `pkill` commands
+    #
+    # required to prevent `linuxbrew` from failing:
+    # /home/linuxbrew/.linuxbrew/Homebrew/Library/Homebrew/cmd/update.sh: line 1: /usr/bin/pkill: No such file or directory
+    - procps
+    # better alternative to `top` command
+    - htop
+    # required for some sub-commands of `git-extras`
+    # the package provides the "column" command
+    - bsdmainutils
+    - net-tools # provides `netstat`
+    - apache2-utils # provides `htpasswd`
+
+    # shell goodies
+    - fasd
+    - cowsay
+    - figlet
+
+    - openssh-client
+    - openssh-server
+
+    - groff
+
+    - libpq-dev # required for `pipx run pgcli` & `psycopg2` python module
+    - postgresql-client # provides `psql`
+
+    # ---- packages that shall be absent last ---
+    - { name: "memtest86+", state: "absent" }
+    - { name: "ruby", state: "absent" }
+    - { name: "golang", state: "absent" }
+    - { name: "nodejs", state: "absent" }
+    # `gedebi-core` installs .deb packages and together with their dependencies
+    # not needed as modern versions of apt[-get] provide the same functionality
+    # Depends: python3-apt
+    # -> Leads to undesired installation of apt python in containers
+    #
+    # example: (the dot is required to prevent installing literal package by name)
+    # sudo apt -y install ./package.deb
+    # sudo dpkg -i /path/to/package.deb; sudo apt-get install -f
+    - { name: "gdebi-core", state: "absent" }
+    # Depends: python3
+    # -> Leads to undesired installation of apt python in containers
+    - { name: "lsb-release", state: "absent" }

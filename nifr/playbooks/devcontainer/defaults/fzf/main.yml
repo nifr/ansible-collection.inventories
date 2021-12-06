@@ -1,0 +1,6 @@
+---
+fzf:
+  github:
+    repo: "fzf-bin"
+    user: "junegunn"
+    tag: "0.20.0"

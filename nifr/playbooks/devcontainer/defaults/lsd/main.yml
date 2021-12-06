@@ -1,0 +1,6 @@
+---
+lsd:
+  github:
+    user: "peltoche"
+    repo: "lsd"
+    tag: "0.16.0"

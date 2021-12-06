@@ -1,0 +1,119 @@
+---
+- name: "nerd-fonts:directory:font"
+  # become: true
+  file:
+    path: >-
+      {{
+        nerd_fonts["target"][(
+          item["target"] | default(nerd_fonts["default"]["target"])
+        )]["dir"]["path"]
+        ~ "/"
+        ~ nerd_fonts["type_dir"][(
+          item[0]["type"] | default(nerd_fonts["default"]["type"])
+        )]
+        ~ "/"
+        ~ item["name"] | replace(" ", "")
+      }}
+    state: "directory"
+    mode: >-
+      {{
+        nerd_fonts["target"][(
+          item["target"] | default(nerd_fonts["default"]["target"])
+        )]["dir"]["mode"]
+      }}
+  loop: '{{ nerd_fonts["fonts"] }}'
+
+- name: "nerd-fonts:directory:font:style"
+  # become: true
+  file:
+    path: >-
+      {{
+        nerd_fonts["target"][(
+          item[0]["target"] | default(nerd_fonts["default"]["target"])
+        )]["dir"]["path"]
+        ~ "/"
+        ~ nerd_fonts["type_dir"][(
+          item[0]["type"] | default(nerd_fonts["default"]["type"])
+        )]
+        ~ "/"
+        ~ item[0]["name"] | replace(" ", "") | lower
+        ~ "/"
+        ~ item[1] | replace(" ", "")
+      }}
+    state: "directory"
+    mode: >-
+      {{
+        nerd_fonts["target"][(
+          item[0]["target"] | default(nerd_fonts["default"]["target"])
+        )]["dir"]["mode"]
+      }}
+  with_subelements:
+    - '{{ nerd_fonts["fonts"] }}'
+    - "styles"
+    - skip_missing: true
+
+- name: "nerd-fonts:download:font"
+  get_url:
+    # https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/FiraCode/Retina/complete/Fira%20Code%20Retina%20Nerd%20Font%20Complete.ttf?raw=true
+    # https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/FiraCode/complete/Regular/Fira%20Code%20Regular%20Nerd%20Font%20Complete%20Mono.otf?raw=true
+    # https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/FiraCodeBold//complete/Fira%20Code%20Bold%20Nerd%20Font%20Complete%20Mono.otf?raw=true
+    url: >-
+      {{
+        "https://github.com/"
+        ~ nerd_fonts["github"]["user"]
+        ~ "/"
+        ~ nerd_fonts["github"]["repo"]
+        ~ "/blob/master/patched-fonts/"
+        ~ item[0]["name"] | replace(" ", "")
+        ~ "/"
+        ~ item[1] | replace(" ", "")
+        ~ "/complete/"
+        ~ (
+          item[0]["name"]
+          ~ " " ~ item[1]
+          ~ " Nerd Font "
+          ~ item[0]["variant"] | default(nerd_fonts["default"]["variant"])
+        ) | urlencode
+        ~ "." ~ item[0]["type"] | default(nerd_fonts["default"]["type"])
+        ~ "?raw=true"
+      }}
+    dest: >-
+      {{
+        nerd_fonts["target"][(
+          item[0]["target"] | default(nerd_fonts["default"]["target"])
+        )]["dir"]["path"]
+        ~ "/"
+        ~ nerd_fonts["type_dir"][(
+          item[0]["type"] | default(nerd_fonts["default"]["type"])
+        )]
+        ~ "/"
+        ~ item[0]["name"] | replace(" ", "") | lower
+        ~ "/"
+        ~ (
+            (
+              item[0]["name"] | replace(" ","")
+              ~ "NerdFont"
+              ~ "-"
+              ~ item[0]["variant"] 
+              | default(nerd_fonts["default"]["variant"])
+              | replace("Complete","")
+            )
+            | replace(" ","")
+            ~ "-"
+            ~ item[1] | replace(" ", "")
+          )
+        ~ "." ~ item[0]["type"] | default(nerd_fonts["default"]["type"])
+      }}
+    mode: >-
+      {{
+        nerd_fonts["target"][(
+          item[0]["target"] | default(nerd_fonts["default"]["target"])
+        )]["file"]["mode"]
+      }}
+  with_subelements:
+    - '{{ nerd_fonts["fonts"] | selectattr("styles", "defined") | list }}'
+    - "styles"
+  register: "nerd_fonts_download"
+  until: "nerd_fonts_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

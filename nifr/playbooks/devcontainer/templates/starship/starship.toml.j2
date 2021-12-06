@@ -1,0 +1,12 @@
+{% for section, options in starship.config.items() %}
+{% if ((options is string) or (options is number)) %}
+{{ section + ' = ' + ((options is string) | ternary('"' + (options | string) + '"', (options | string | lower))) }}
+{% elif (options is mapping) %}
+[{{ section }}]
+{% for option, value in options.items() %}
+{{ option + ' = ' + ((value is string) | ternary('"' + (value | string) + '"', (value | string | lower))) }}
+{% endfor %}
+{% elif (options is iterable) %}
+{{ section + ' = ' + (options | to_nice_json) }}
+{% endif %}
+{% endfor %}

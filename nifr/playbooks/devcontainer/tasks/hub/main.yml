@@ -1,0 +1,70 @@
+---
+- name: "hub:set_fact:hub_release"
+  block:
+    - name: "hub:sect_fact:hub_release:from:github"
+      when: "hub_release is not defined"
+      block:
+        - name: "hub:get/latest-release"
+          github_release:
+            user: "{{ hub.github.user }}"
+            repo: "{{ hub.github.repo }}"
+            action: "latest_release"
+          register: "hub_release"
+          until: "hub_release is succeeded"
+          changed_when: "hub_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not hub_release.tag"
+        - name: "hub:cache_fact:hub_release.tag"
+          set_fact:
+            hub_release: '{"tag": "{{ hub_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "hub:set_fact:hub_release:from:defaults"
+      set_fact:
+        hub_release: '{"tag": "{{ hub.github.tag }}"}'
+        cacheable: false
+
+- name: "hub:command:hub --version"
+  command: "~/.local/bin/hub --version"
+  register: "hub_local_version"
+  failed_when: false
+  changed_when: false
+
+- when: '(hub_local_version.rc != 0) or (hub_local_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(hub_release.tag[1:], operator="lt", strict=true))'
+  block:
+    - name: "hub:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "hub"
+      register: "hub_tmp_dir"
+
+    - name: "hub:unarchive"
+      unarchive:
+        src: "https://github.com/{{ hub.github.user }}/{{ hub.github.repo }}/releases/download/{{ hub_release.tag}}/hub-linux-amd64-{{ hub_release.tag[1:]}}.tgz"
+        remote_src: true
+        dest: "{{ hub_tmp_dir.path }}"
+      register: "hub_unarchive"
+      until: "hub_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "hub:copy:~/.local/bin/hub"
+      copy:
+        remote_src: true
+        src: "{{ hub_tmp_dir.path }}/hub-linux-amd64-{{ hub_release.tag[1:]}}/bin/hub"
+        dest: "~/.local/bin/hub"
+        mode: "750"
+
+    - name: "hub:file:directory:~/.local/share/zsh/completions"
+      file:
+        path: "~/.local/share/zsh/completions"
+        state: "directory"
+        mode: "750"
+
+    - name: "hub:copy:~/.local/share/zsh-completions/git/src/_hub"
+      copy:
+        remote_src: true
+        src: "{{ hub_tmp_dir.path }}/hub-linux-amd64-{{ hub_release.tag[1:]}}/etc/hub.zsh_completion"
+        dest: "~/.local/share/zsh/completions/_hub"
+        mode: "750"

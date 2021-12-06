@@ -1,0 +1,34 @@
+---
+# TODO: Prefer to install the "asciinema" python package with `pipx`
+
+- name: "asciinema:snap:install:asciinema"
+  become: true
+  snap:
+    name: "asciinema"
+    channel: "stable"
+    state: "present"
+    classic: true
+  tags:
+    - snap[*]
+    - asciinema[snap]
+
+- name: "[asciinema-config]"
+  tags:
+    - config[*]
+    - asciinema[config]
+  block:
+    - name: "asciinema:file:directory:~/.config/asciinema"
+      file:
+        path: "~/.config/asciinema"
+        state: "directory"
+        mode: "0700"
+    - name: "asciinema:stat:~/.config/asciinema/install-id"
+      stat:
+        path: "~/.config/asciinema/install-id"
+      register: "asciinema_install_id"
+    - name: "asciinema:set:install_id"
+      when: "((not asciinema_install_id.stat.exists) or (asciinema.install_id | default(false, true)))"
+      template:
+        src: "asciinema/install-id.j2"
+        dest: "~/.config/asciinema/install-id"
+        mode: "750"

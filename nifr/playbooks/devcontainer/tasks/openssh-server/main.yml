@@ -1,0 +1,16 @@
+---
+- name: "openssh-server:template:/etc/ssh/sshd_config"
+  template:
+    src: "openssh-server/sshd_config.j2"
+    dest: "/etc/ssh/sshd_config"
+    mode: "644"
+    owner: "root"
+    group: "root"
+  become: true
+
+- name: "openssh-server:service:restarted"
+  service:
+    name: "ssh"
+    sleep: 3
+    state: "restarted"
+  become: true

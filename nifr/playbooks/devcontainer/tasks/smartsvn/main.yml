@@ -1,0 +1,88 @@
+---
+- name: "smartsvn:fail/without-version-hash"
+  fail:
+    msg: "Refusing to download version: variable smartsvn.sha1.{{ smartsvn.version }} is not set."
+  when: "not smartsvn.sha1[smartsvn.version]"
+- name: "smartsvn:bin-dir"
+  file:
+    dest: "~/.local/usr/bin"
+    state: "directory"
+    mode: "0750"
+- name: "smartsvn:lib-dir"
+  register: smartsvn_dir
+  file:
+    path: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}"
+    state: "directory"
+    mode: "0750"
+- name: "smartsvn:stat:binary"
+  register: smartsvn_binary
+  stat:
+    path: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}/bin/smartsvn.sh"
+- name: "smartsvn:mktemp"
+  register: smartsvn_tmp_dir
+  when: "not smartsvn_binary.stat.executable|default(false)"
+  tempfile:
+    state: "directory"
+    suffix: "smartsvn"
+- name: "smartsvn:download"
+  when: "smartsvn_tmp_dir.changed"
+  loop: "{{ smartsvn.urls }}"
+  register: smartsvn_download
+  # failed_when: "(item == smartsvn.urls|last) and (smartsvn_download is not succeeded)"
+  ignore_errors: true
+  get_url:
+    url: "{{ item|format(smartsvn.version|replace('.','_')) }}"
+    dest: "{{ smartsvn_tmp_dir.path }}/{{ item | basename }}"
+    checksum: "sha1:{{ smartsvn.sha1[smartsvn.version]|default() }}"
+  until: "smartsvn_download is succeeded"
+  retries: 5
+  delay: 60
+- name: "smartsvn:extract"
+  when: "smartsvn_download.changed"
+  unarchive:
+    src: "{{ smartsvn_download.results|selectattr('failed','equalto', False)|map(attribute='dest')|first }}"
+    dest: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}"
+    creates: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}/bin/smartsvn.sh"
+    extra_opts:
+      - "--strip-components=1"
+- name: "smartsvn:remove:tmpdir"
+  when: smartsvn_tmp_dir.changed
+  file:
+    path: "{{ smartsvn_tmp_dir.path }}"
+    state: absent
+- name: "smartsvn:permissions:binary"
+  file:
+    path: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}/bin/smartsvn.sh"
+    mode: "0550"
+- name: "smartsvn:permissions:dir"
+  file:
+    path: "~/.local/usr/lib/smartsvn"
+    mode: "o-rwx"
+    state: "directory"
+    recurse: true
+- name: "smartsvn:symlink:dir"
+  file:
+    src: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}"
+    dest: "~/.local/usr/lib/smartsvn/current"
+    state: "link"
+- name: "smartsvn:symlink:binary"
+  file:
+    src: "~/.local/usr/lib/smartsvn/current/bin/smartsvn.sh"
+    dest: "~/.local/usr/bin/smartsvn"
+    state: "link"
+- name: "smartsvn:desktop-file:create"
+  command: "~/.local/usr/lib/smartsvn/{{ smartsvn.version }}/bin/add-menuitem.sh"
+  args:
+    creates: "~/.local/share/applications/smartsvn-{{ smartsvn.version }}.desktop"
+- name: "smartsvn:desktop-file:find"
+  register: smartsvn_desktop_file
+  find:
+    paths: "~/.local/share/applications"
+    patterns: "smartsvn*"
+    age: "-10s"
+    use_regex: true
+- name: "smartsvn:desktop-file:rename"
+  loop: "{{ smartsvn_desktop_file.files }}"
+  command: "mv {{ item.path }} ~/.local/share/applications/smartsvn-{{ smartsvn.version }}.desktop"
+  args:
+    removes: "{{ item.path }}"

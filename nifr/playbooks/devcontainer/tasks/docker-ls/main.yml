@@ -1,0 +1,69 @@
+---
+- name: "docker-ls:set_fact:docker_ls_release"
+  block:
+    - name: "docker-ls:sect_fact:docker_ls_release:from:github"
+      when: "docker_ls_release is not defined"
+      block:
+        - name: "docker-ls:get/latest-release"
+          github_release:
+            user: "{{ docker_ls.github.user }}"
+            repo: "{{ docker_ls.github.repo }}"
+            action: "latest_release"
+          register: "docker_ls_release"
+          until: "docker_ls_release is succeeded"
+          changed_when: "docker_ls_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not docker_ls_release.tag"
+        - name: "docker-ls:cache_fact:docker_ls_release.tag"
+          set_fact:
+            docker_ls_release: '{"tag": "{{ docker_ls_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "docker-ls:set_fact:docker_ls_release:from:defaults"
+      set_fact:
+        docker_ls_release: '{"tag": "{{ docker_ls.github.tag }}"}'
+        cacheable: false
+
+- name: "docker-ls:version:local"
+  command: "~/.local/bin/docker-ls --version"
+  register: "docker_ls_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(docker_ls_version.rc != 0) or (docker_ls_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( docker_ls_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "docker-ls:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "docker_ls"
+      register: "docker_ls_tmp_dir"
+
+    - name: "docker-ls:unarchive"
+      unarchive:
+        dest: "{{docker_ls_tmp_dir.path }}"
+        remote_src: true
+        src: "https://github.com/{{ docker_ls.github.user }}/{{ docker_ls.github.repo }}/releases/download/{{ docker_ls_release.tag }}/docker-ls-linux-amd64.zip"
+      register: "docker_ls_unarchive"
+      until: "docker_ls_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "docker-ls:copy"
+      copy:
+        remote_src: true
+        src: "{{ docker_ls_tmp_dir.path }}/docker-ls"
+        dest: "~/.local/bin/docker-ls"
+        mode: "750"
+
+- name: "docker-ls:create-settings-directory:~/.config/docker-ls"
+  file:
+    path: "~/.config/docker-ls"
+    state: directory
+    mode: "0755"
+
+- name: "docker-ls:create-settings-configuration:~/.config/docker-ls/.docker-ls.yaml"
+  template:
+    src: "docker-ls/docker-ls.yaml.j2"
+    mode: "750"
+    dest: "~/.config/docker-ls/.docker-ls.yaml"

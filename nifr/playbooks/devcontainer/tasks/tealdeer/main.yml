@@ -1,0 +1,94 @@
+---
+- name: "tealdeer:set_fact:tealdeer_release"
+  block:
+    - name: "tealdeer:sect_fact:tealdeer_release:from:github"
+      when: "tealdeer_release is not defined"
+      block:
+        - name: "tealdeer:get/latest-release"
+          github_release:
+            user: "{{ tealdeer.github.user }}"
+            repo: "{{ tealdeer.github.repo }}"
+            action: "latest_release"
+          register: "tealdeer_release"
+          until: "tealdeer_release is succeeded"
+          changed_when: "tealdeer_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not tealdeer_release.tag"
+        - name: "tealdeer:cache_fact:tealdeer_release.tag"
+          set_fact:
+            tealdeer_release: '{"tag": "{{ tealdeer_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "tealdeer:set_fact:tealdeer_release:from:defaults"
+      set_fact:
+        tealdeer_release: '{"tag": "{{ tealdeer.github.tag }}"}'
+        cacheable: false
+
+- name: "tealdeer:file/directory"
+  file:
+    dest: "~/.local/lib/tldr/{{ tealdeer_release.tag }}"
+    state: "directory"
+    mode: "750"
+
+- name: "tealdeer:file/directory/symlink-current"
+  file:
+    state: "link"
+    path: "~/.local/lib/tldr/current"
+    src: "~/.local/lib/tldr/{{ tealdeer_release.tag }}"
+
+- set_fact:
+    tealdeer_checksum_file_path: "~/.local/lib/tldr/{{ tealdeer_release.tag }}/tldr.sha1"
+
+- name: "tealdeer:stat/checksum-file"
+  stat:
+    path: "{{ tealdeer_checksum_file_path }}"
+  register: "tealdeer_checksum_file"
+
+- name: "tealdeer:get_url"
+  get_url:
+    url: "https://github.com/{{ tealdeer.github.user }}/{{ tealdeer.github.repo }}/releases/download/{{ tealdeer_release.tag }}/tldr-linux-x86_64-musl"
+    checksum: "{{ ('sha1:' ~ lookup('file', ('~/.local/lib/tldr/' ~ tealdeer_release.tag ~ '/tldr.sha1'), errors='ignore')) if tealdeer_checksum_file.stat.exists else '' }}"
+    dest: "~/.local/lib/tldr/{{ tealdeer_release.tag }}/tldr"
+    mode: "750"
+  register: "tealdeer_download"
+  until: "tealdeer_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "tealdeer:stat/binary"
+  when: "tealdeer_download.changed"
+  stat:
+    path: "~/.local/lib/tldr/{{ tealdeer_release.tag }}/tldr"
+    checksum_algorithm: "sha1"
+    get_attributes: false
+    get_mime: false
+    get_checksum: true
+  register: "tealdeer_binary_file"
+
+- name: "tealdeer:copy/sha1"
+  when: "tealdeer_download.changed"
+  copy:
+    content: "{{ tealdeer_binary_file.stat.checksum }}"
+    dest: "~/.local/lib/tldr/{{ tealdeer_release.tag }}/tldr.sha1"
+
+- name: "tealdeer:file/link/binary"
+  file:
+    state: "link"
+    src: "~/.local/lib/tldr/current/tldr"
+    path: "~/.local/bin/tldr"
+
+- name: "tealdeer:command/create-config"
+  command: "~/.local/bin/tldr --seed-config"
+  args:
+    creates: "~/.config/tealdeer/config.toml"
+
+- name: "tealdeer:command/list"
+  command: "~/.local/bin/tldr --list"
+  register: "tealdeer_has_cache"
+  failed_when: false
+  changed_when: false
+
+- name: "tealdeer:command/update-cache"
+  when: "(tealdeer_has_cache.rc != 0) or (tealdeer.force_update)"
+  command: "~/.local/bin/tldr --update"

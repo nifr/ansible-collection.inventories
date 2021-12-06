@@ -1,0 +1,47 @@
+---
+docker:
+  config:
+    content:
+      "credHelpers":
+        "us.gcr.io": "gcloud"
+        "asia.gcr.io": "gcloud"
+        "marketplace.gcr.io": "gcloud"
+        "eu.gcr.io": "gcloud"
+        "staging-k8s.gcr.io": "gcloud"
+        "gcr.io": "gcloud"
+        # "aws_account_id.dkr.ecr.region.amazonaws.com": "ecr-login"
+      "detachKeys": "ctrl-q,ctrl-q"
+      "experimental": "enabled"
+  daemon:
+    bip: 10.200.0.1/24
+    default-address-pools:
+      - base: 10.201.0.0/16
+        size: 24
+      - base: 10.202.0.0/16
+        size: 24
+    host:
+      - "unix:///var/run/docker.sock"
+    live-restore: true
+    experimental: true
+    group: "docker" # group ownership of the docker socket
+    dns:
+      - "127.0.0.1"
+      - "1.1.1.1"
+    dns-search:
+      - "test"
+    max-concurrent-downloads: 10 # default: 3
+    max-concurrent-uploads: 10 # default: 5
+    raw-logs: true
+    log-driver: "json-file"
+    log-opts:
+      max-size: "10m"
+      max-file: "1"
+    metrics-addr: "127.0.0.1:9323"
+    features:
+      buildkit: true
+
+docker_compose:
+  github:
+    user: docker
+    repo: compose
+    tag: "1.25.5"

@@ -1,0 +1,6 @@
+{% for tap in linuxbrew.taps %}
+tap "{{ tap }}"
+{% endfor %}
+{% for package in linuxbrew.packages %}
+brew "{{ package }}"
+{% endfor %}

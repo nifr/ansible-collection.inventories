@@ -1,0 +1,6 @@
+---
+terraform:
+  github:
+    user: "hashicorp"
+    repo: "terraform"
+    tag: "v0.12.19"

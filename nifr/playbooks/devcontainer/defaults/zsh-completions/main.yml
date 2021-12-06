@@ -1,0 +1,10 @@
+---
+zsh_completions_opensuse_distribution_name: "{{ 'x' if ('ubuntu' in ansible_distribution|lower) }}{{ ansible_distribution }}_{{ ansible_distribution_version }}"
+zsh_completions:
+  install_method: "git"
+  apt_repository: "deb http://download.opensuse.org/repositories/shells:/zsh-users:/zsh-completions/{{ zsh_completions_opensuse_distribution_name }}/ /"
+  apt_key:
+    # https://download.opensuse.org/repositories/shells:zsh-users:zsh-completions/xUbuntu_18.04/Release.key
+    url: "https://download.opensuse.org/repositories/shells:zsh-users:zsh-completions/{{ zsh_completions_opensuse_distribution_name }}/Release.key"
+  package_name: "zsh-completions"
+  state: "present"

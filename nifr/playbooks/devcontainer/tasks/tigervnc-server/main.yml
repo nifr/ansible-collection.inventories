@@ -1,0 +1,57 @@
+---
+- name: "tigervnc-server:apt:install"
+  become: true
+  apt:
+    package: "{{ item }}"
+    state: "present"
+  loop:
+    - "tigervnc-standalone-server"
+    - "tigervnc-scraping-server"
+    - "tigervnc-common"
+
+- name: "tigervnc-server:ufw:allow-5900/tcp"
+  become: true
+  ufw:
+    rule: allow
+    port: "5900"
+    proto: tcp
+
+- name: "tigervnc-server:file/directory:~/.config/tigervnc-server"
+  file:
+    path: "~/.config/tigervnc-server"
+    state: directory
+    mode: "0700"
+
+- name: "tigervnc-server:shell:create/set:~/.config/tigervnc-server/passwd"
+  changed_when: false
+  shell: "vncpasswd -f | tee ~/.config/tigervnc-server/passwd"
+  args:
+    stdin: "{{ tigervnc_server.password }}"
+    stdin_add_newline: false
+
+- name: "tigervnc-server:file/mode:~/.config/tigervnc-server/passwd"
+  file:
+    path: "~/.config/tigervnc-server/passwd"
+    state: file
+    mode: "0700"
+
+- name: "tigervnc-server:include_role:cimon-io.systemd-service"
+  include_role:
+    name: "cimon-io.systemd-service"
+    apply:
+      become: true
+  vars:
+    systemd_service:
+      "tigervnc-scraping-server":
+        service_name: tigervnc-scraping-server
+        enabled: true
+        after: "syslog.target network.target multi-user.target gdm3.service"
+        requires: "gdm3.service"
+        type: "forking"
+        user: "{{ tigervnc_server.user }}"
+        group: "{{ tigervnc_server.group }}"
+        exec_start: "/bin/sh -c 'sleep 3 && /usr/bin/x0tigervncserver -display :0 -rfbauth /home/vagrant/.config/tigervnc-server/passwd -rfbport 5900 &'"
+        exec_stop: "/bin/kill -INT $MAINPID"
+        restart: "always"
+        restart_sec: 3
+        wanted_by: "multi-user.target"

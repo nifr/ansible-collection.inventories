@@ -1,0 +1,31 @@
+---
+- name: "tmux:file:directory:~/.config/tmux"
+  file:
+    path: "~/.config/tmux"
+    state: directory
+    mode: "0700"
+
+- name: "tmux:template:~/.config/tmux/tmux.conf"
+  template:
+    src: "tmux/.tmux.conf"
+    dest: "~/.config/tmux/tmux.conf"
+    mode: "0700"
+
+- name: "tmux:file:directory:~/.config/tmux/tmux.conf.d"
+  file:
+    path: "~/.config/tmux/tmux.conf.d"
+    state: "directory"
+    mode: "0700"
+
+- name: "tmux:template:~/.config/tmux/tmux.conf.d/*.tmux.conf"
+  template:
+    src: "{{ item.src }}"
+    dest: "~/.config/tmux/tmux.conf.d/{{ item.path }}"
+    mode: "0700"
+  loop: '{{ lookup("filetree", playbook_dir + "/templates/tmux/tmux.conf.d/", wantlist=true) }}'
+
+- name: "tmux:file:directory:~/.local/share/tmux/plugins"
+  file:
+    path: "~/.local/share/tmux/plugins"
+    state: directory
+    mode: "0700"

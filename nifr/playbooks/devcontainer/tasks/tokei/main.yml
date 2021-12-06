@@ -1,0 +1,57 @@
+---
+- name: "tokei:set_fact:tokei_release"
+  block:
+    - name: "tokei:sect_fact:tokei_release:from:github"
+      when: "tokei_release is not defined"
+      block:
+        - name: "tokei:get/latest-release"
+          github_release:
+            user: "{{ tokei.github.user }}"
+            repo: "{{ tokei.github.repo }}"
+            action: "latest_release"
+          register: "tokei_release"
+          until: "tokei_release is succeeded"
+          changed_when: "tokei_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not tokei_release.tag"
+        - name: "tokei:cache_fact:tokei_release.tag"
+          set_fact:
+            tokei_release: '{"tag": "{{ tokei_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "tokei:set_fact:tokei_release:from:defaults"
+      set_fact:
+        tokei_release: '{"tag": "{{ tokei.github.tag }}"}'
+        cacheable: false
+
+- name: "tokei:version:local"
+  command: "~/.local/bin/tokei --version"
+  register: "tokei_version"
+  failed_when: false
+  changed_when: false
+
+- when: "(tokei_version.rc != 0) or (tokei_version.stdout|regex_search('(\\d+(\\.\\d+){2,})') is version( tokei_release.tag[1:], operator='lt', strict=true))"
+  block:
+    - name: "tokei:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "tokei"
+      register: "tokei_tmp_dir"
+
+    - name: "tokei:unarchive"
+      unarchive:
+        src: "https://github.com/{{ tokei.github.user }}/{{ tokei.github.repo }}/releases/download/{{ tokei_release.tag }}/tokei-x86_64-unknown-linux-gnu.tar.gz"
+        remote_src: true
+        dest: "{{ tokei_tmp_dir.path }}"
+      register: "tokei_archive"
+      until: "tokei_archive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "tokei:copy"
+      copy:
+        remote_src: true
+        src: "{{ tokei_tmp_dir.path }}/tokei"
+        dest: "~/.local/bin/tokei"
+        mode: "750"

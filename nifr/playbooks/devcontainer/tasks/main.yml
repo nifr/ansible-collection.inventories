@@ -1,0 +1,453 @@
+---
+# [desktop]
+- name: "[desktop]"
+  tags:
+    - "[desktop]"
+    - "desktop[*]"
+  block:
+    - import_tasks: "kernel-parameters/main.yml"
+      tags:
+        - kernel-parameters
+    - import_tasks: "timezone/main.yml"
+      tags:
+        - timezone
+    - import_tasks: "dns/main.yml"
+      tags:
+        - dns
+    - import_tasks: "sysctl/main.yml"
+      tags:
+        - sysctl
+    - import_tasks: "pam-limits/main.yml"
+      tags:
+        - pam-limits
+    - import_tasks: "systemd/main.yml"
+      tags:
+        - systemd
+    - import_tasks: "journald/main.yml"
+      tags:
+        - journald
+    - import_tasks: "gnome-shell/main.yml"
+      tags:
+        - gnome-shell
+# END [desktop]
+
+- import_tasks: "python/main.yml"
+  tags:
+    - python
+
+- import_tasks: "apt/main.yml"
+  tags:
+    - apt
+
+- import_tasks: "snap/main.yml"
+  tags:
+    - snap[*]
+    - snap
+
+- import_tasks: "linuxbrew/main.yml"
+  tags:
+    - linuxbrew
+
+- import_tasks: "user/main.yml"
+  tags:
+    - user
+
+- import_tasks: "alternatives/main.yml"
+  tags:
+    - alternatives
+
+# [ssh]
+- name: "[ssh]"
+  tags:
+    - "[ssh]"
+    - "ssh[*]"
+  block:
+    - import_tasks: "openssh-client/main.yml"
+      tags:
+        - "ssh[openssh-client]"
+        - "openssh-client"
+    - import_tasks: "openssh-server/main.yml"
+      tags:
+        - "ssh[openssh-server]"
+        - "openssh-server"
+# END [openssh]
+
+# [shells]
+- name: "[shells]"
+  tags:
+    - "[shells]"
+    - "shells[*]"
+  block:
+    - import_tasks: "zsh/main.yml"
+      tags:
+        - "shells[zsh]"
+        - "zsh"
+    - import_tasks: "zsh-completions/main.yml"
+      tags:
+        - "shells[zsh]"
+        - "zsh-completions"
+# END [zsh]
+
+# [editors]
+- name: "[editors]"
+  tags:
+    - "[editors]"
+    - "editors[*]"
+  block:
+    - import_tasks: "neovim/main.yml"
+      tags:
+        - "editors[neovim]"
+        - "neovim"
+# END [editors]
+
+- import_tasks: "docker/main.yml"
+  tags:
+    - docker
+
+# [cloud-providers]
+- name: "[cloud-providers]"
+  tags:
+    - "[cloud-providers]"
+    - "cloud-providers[*]"
+  block:
+    - import_tasks: "aws/main.yml"
+      tags:
+        - "cloud-providers[aws]"
+        - "aws"
+    - import_tasks: "gcloud/main.yml"
+      tags:
+        - "cloud-providers[gcloud]"
+        - "gcloud"
+# END [cloud-providers]
+
+- name: "[gui]"
+  tags:
+    - "[gui]"
+    - "gui[*]"
+  block:
+    # [fonts]
+    - name: "[fonts]"
+      tags:
+        - "[fonts]"
+        - "fonts[*]"
+      block:
+        - import_tasks: "nerd-fonts/main.yml"
+          tags:
+            - "fonts[nerd-fonts]"
+            - "nerd-fonts"
+    # END [fonts]
+
+    - name: "[applications]"
+      tags:
+        - "[applications]"
+        - "applications[*]"
+      block:
+        - import_tasks: "tigervnc-server/main.yml"
+          tags:
+            - "applications[tigervnc-server]"
+            - "tigervnc-server"
+        - import_tasks: "beyond-compare/main.yml"
+          tags:
+            - "applications[beyond-compare]"
+            - "beyond-compare"
+        - import_tasks: "mongodb-compass/main.yml"
+          tags:
+            - "applications[mongodb-compass]"
+            - "mongodb-compass"
+        - import_tasks: "vscode/main.yml"
+          tags:
+            - "applications[vscode]"
+            - "vscode"
+    # [appimages]
+    - name: "[appimages]"
+      tags:
+        - "[appimages]"
+        - "appimages[*]"
+      block:
+        - import_tasks: "stoplight-studio/main.yml"
+          tags:
+            - "appimages[stoplight-studio]"
+            - "stoplight-studio"
+    # END [appimages]
+
+- import_tasks: "gcloud-sql-proxy/main.yml"
+  tags:
+    - gcloud-sql-proxy
+
+# [languages]
+- name: "[languages]"
+  tags:
+    - "[languages]"
+    - "languages[*]"
+  block:
+    # rustup, rustfmt, cargo, ...
+    - import_tasks: "rust/main.yml"
+      tags:
+        - "languages[rust]"
+        - "rust"
+# END [programming-languages]
+
+- name: "[rust]"
+  tags:
+    - "[rust]"
+    - "rust[*]"
+  block:
+    - name: "[rust] binaries with `.deb` releases"
+      tags:
+        - "[deb]"
+        - "deb[*]"
+      block:
+        - import_tasks: "bat/main.yml"
+          tags:
+            - "rust[bat]"
+            - "bat"
+        - import_tasks: "diskus/main.yml"
+          tags:
+            - "rust[diskus]"
+            - "diskus"
+        - import_tasks: "fd/main.yml"
+          tags:
+            - "rust[fd]"
+            - "fd"
+        - import_tasks: "hexyl/main.yml"
+          tags:
+            - "rust[hexyl]"
+            - "hexyl"
+        - import_tasks: "lscolors/main.yml"
+          tags:
+            - "rust[lscolors]"
+            - "lscolors"
+        - import_tasks: "lsd/main.yml"
+          tags:
+            - "rust[lsd]"
+            - "lsd"
+        - import_tasks: "ripgrep/main.yml"
+          tags:
+            - "rust[ripgrep]"
+            - "ripgrep"
+        - import_tasks: "vivid/main.yml"
+          tags:
+            - "rust[vivid]"
+            - "vivid"
+        - import_tasks: "watchexec/main.yml"
+          tags:
+            - "rust[watchexec]"
+            - "watchexec"
+    - name: "[rust] binary-only releases"
+      tags:
+        - "binary[*]"
+      block:
+        - import_tasks: "git-absorb/main.yml"
+          tags:
+            - "rust[git-absorb]"
+            - "git-absorb"
+        - import_tasks: "heatseeker/main.yml"
+          tags:
+            - "rust[heatseeker]"
+            - "heatseeker"
+        - import_tasks: "sd/main.yml"
+          tags:
+            - "rust[sd]"
+            - "sd"
+        - import_tasks: "skim/main.yml"
+          tags:
+            - "rust[skim]"
+            - "skim"
+        - import_tasks: "starship/main.yml"
+          tags:
+            - "rust[starship]"
+            - "starship"
+        - import_tasks: "tealdeer/main.yml"
+          tags:
+            - "rust[tealdeer]"
+            - "tealdeer"
+        - import_tasks: "tokei/main.yml"
+          tags:
+            - "rust[tokei]"
+            - "tokei"
+        - import_tasks: "xsv/main.yml"
+          tags:
+            - "rust[xsv]"
+            - "xsv"
+# END [rust]
+
+- import_tasks: "git-journal/main.yml"
+  tags:
+    - "cargo[*]"
+    - "git-journal"
+
+# [go]
+- name: "[go] binary releases"
+  tags:
+    - go[*]
+    - go-cli[*]
+    - binary[*]
+  block:
+    - import_tasks: "direnv/main.yml"
+      tags:
+        - go[direnv]
+        - direnv
+    - import_tasks: "docker-ls/main.yml"
+      tags:
+        - go[docker-ls]
+        - docker-ls
+    - import_tasks: "fzf/main.yml"
+      tags:
+        - go[fzf]
+        - fzf
+    - import_tasks: "mc/main.yml"
+      tags:
+        - go[mc]
+        - mc
+    - import_tasks: "pup/main.yml"
+      tags:
+        - go[pup]
+        - pup
+    - import_tasks: "restic/main.yml"
+      tags:
+        - go[restic]
+        - restic
+    - import_tasks: "shfmt/main.yml"
+      tags:
+        - go[shfmt]
+        - shfmt
+    - import_tasks: "terraform/main.yml"
+      tags:
+        - go[terraform]
+        - terraform
+    - import_tasks: "yq/main.yml"
+      tags:
+        - go[yq]
+        - yq
+    - import_tasks: "ngrok/main.yml"
+      tags:
+        - go[ngrok]
+        - ngrok
+# END [go]
+
+# [haskell]
+- name: "[haskell] binary releases"
+  tags:
+    - haskell[*]
+    - binary[*]
+  block:
+    - import_tasks: "hadolint/main.yml"
+      tags:
+        - haskell[hadolint]
+        - hadolint
+# END [haskell]
+
+- import_tasks: "codimd-cli/main.yml"
+  tags:
+    - shell-script[*]
+    - codimd-cli
+
+- import_tasks: "tmux/main.yml"
+  tags:
+    - tmux
+
+- import_tasks: "asciinema/main.yml"
+  tags:
+    - "snap[*]"
+    - "asciinema"
+
+# [git]
+- name: "[git]"
+  tags:
+    - git
+  block:
+    - import_tasks: "git/main.yml"
+    - import_tasks: "git-config/main.yml"
+      tags:
+        - config[*]
+        - config[git]
+- name: "[git-recommended]"
+  tags:
+    - git-recommended[*]
+  block:
+    - import_tasks: "hub/main.yml"
+      tags:
+        - "go-cli[*]"
+        - "go-binary[*]"
+        - "binary[*]"
+        - "hub"
+    # [perl]
+    - name: "[perl] scripts"
+      tags:
+        - perl[*]
+      block:
+        - import_tasks: "diff-so-fancy/main.yml"
+          tags:
+            - perl[diff-so-fancy]
+            - diff-so-fancy
+        - import_tasks: "icdiff/main.yml"
+          tags:
+            - perl[icdiff]
+    # END [perl]
+    - import_tasks: "spaceman-diff/main.yml"
+      tags:
+        - shell-script[*]
+        - spaceman-diff
+    - import_tasks: "git-semantic-commits/main.yml"
+      tags:
+        - shell-script[*]
+        - git-semantic-commits
+# END [git]
+
+# [kubernetes]
+- name: "[kubernetes]"
+  tags:
+    - kubernetes[*]
+  block:
+    - import_tasks: "microk8s/main.yml"
+      tags:
+        - snap[*]
+        - kubernetes[microk8s]
+        - microk8s
+    - import_tasks: "telepresence/main.yml"
+      tags:
+        - deb[*]
+        - kubernetes[telepresence]
+        - telepresence
+    - tags:
+        - go-cli[*]
+        - go-binary[*]
+        - binary[*]
+      block:
+        - import_tasks: "kubectx/main.yml"
+          tags:
+            # go binary available since v0.9.0+
+            - go[kubectx]
+            - kubernetes[kubectx]
+            - kubectx
+        - import_tasks: "helm/main.yml"
+          tags:
+            - go[helm]
+            - kubernetes[helm]
+            - helm
+        - import_tasks: "kompose/main.yml"
+          tags:
+            - go[kompose]
+            - kubernetes[kompose]
+            - kompose
+        - import_tasks: "kustomize/main.yml"
+          tags:
+            - go[kustomize]
+            - kubernetes[kustomize]
+            - kustomize
+        - import_tasks: "kind/main.yml"
+          tags:
+            - go[kind]
+            - kubernetes[kind]
+            - kind
+        - import_tasks: "k3s/main.yml"
+          tags:
+            - go[k3s]
+            - kubernetes[k3s]
+            - k3s
+        - import_tasks: "k3d/main.yml"
+          tags:
+            - go[k3d]
+            - kubernetes[k3d]
+            - k3d
+# END [kubernetes]

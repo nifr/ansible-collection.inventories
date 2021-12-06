@@ -1,0 +1,33 @@
+---
+- name: "zsh-completions install from opensuse"
+  when: 'zsh_completions.install_method == "apt_repository"'
+  become: true
+  block:
+    - name: "zsh-completions:apt_key"
+      apt_key:
+        url: "{{ zsh_completions.apt_key.url }}"
+        state: "{{ zsh_completions.state }}"
+    - name: "zsh-completions:apt_repository"
+      apt_repository:
+        repo: "{{ zsh_completions.apt_repository }}"
+        filename: "zsh-completions"
+        state: "{{ zsh_completions.state }}"
+    - name: "zsh-completions:package"
+      package:
+        name: "{{ zsh_completions.package_name }}"
+        state: "{{ zsh_completions.state }}"
+
+- name: "zsh-completions install from git"
+  when: 'zsh_completions.install_method == "git"'
+  block:
+    - name: "zsh-completions:git:clone:github.com/zsh-users/zsh-completions.git"
+      git:
+        repo: "https://github.com/zsh-users/zsh-completions.git"
+        dest: "~/.local/share/zsh-completions/git"
+        update: true
+    - name: "zsh-completions:file:link:~/.local/share/zsh/completions/*"
+      file:
+        state: "link"
+        src: "{{ item.src }}"
+        dest: "~/.local/share/zsh/completions/{{ item.path }}"
+      loop: "{{ lookup('filetree', '~/.local/share/zsh-completions/git/src') }}"

@@ -1,0 +1,76 @@
+---
+- name: "kubectx:set_fact:kubectx_release"
+  block:
+    - name: "kubectx:sect_fact:kubectx_release:from:github"
+      when: "kubectx_release is not defined"
+      block:
+        - name: "kubectx:get/latest-release"
+          github_release:
+            user: "{{ kubectx.github.user }}"
+            repo: "{{ kubectx.github.repo }}"
+            action: "latest_release"
+          register: "kubectx_release"
+          until: "kubectx_release is succeeded"
+          changed_when: "kubectx_release.tag"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          failed_when: "not kubectx_release.tag"
+        - name: "kubectx:cache_fact:kubectx_release.tag"
+          set_fact:
+            kubectx_release: '{"tag": "{{ kubectx_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "kubectx:set_fact:kubectx_release:from:defaults"
+      set_fact:
+        kubectx_release: '{"tag": "{{ kubectx.github.tag }}"}'
+        cacheable: false
+
+- name: "kubectx:version:local"
+  command: "~/.local/bin/kubectx --version"
+  register: "kubectx_version"
+  failed_when: false
+  changed_when: false
+
+- when: '(kubectx_version.rc != 0) or (kubectx_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(kubectx_release.tag[1:], operator="lt", strict=true))'
+  block:
+    - name: "kubectx:mktemp"
+      tempfile:
+        state: "directory"
+        suffix: "kubectx"
+      register: "kubectx_tmp_dir"
+
+    - name: "kubectx:unarchive"
+      unarchive:
+        src: "https://github.com/{{ kubectx.github.user }}/{{ kubectx.github.repo }}/archive/{{ kubectx_release.tag }}.zip"
+        remote_src: true
+        dest: "{{ kubectx_tmp_dir.path }}"
+      register: "kubectx_unarchive"
+      until: "kubectx_unarchive is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
+    - name: "kubectx:copy:~/.local/bin/kubectx"
+      copy:
+        remote_src: true
+        src: "{{ kubectx_tmp_dir.path }}/kubectx-{{ kubectx_release.tag[1:] }}/{{ item }}"
+        dest: "~/.local/bin/{{ item }}"
+        mode: "750"
+      loop:
+        - "kubectx"
+        - "kubens"
+
+    - name: "kubectx:file:directory:~/.local/share/zsh/completions"
+      file:
+        path: "~/.local/share/zsh/completions"
+        state: "directory"
+        mode: "750"
+
+    - name: "kubectx:copy:~/.local/share/zsh/completions/_{kubectx,kubens}"
+      copy:
+        remote_src: true
+        src: "{{ kubectx_tmp_dir.path }}/kubectx-{{ kubectx_release.tag[1:] }}/{{ item }}"
+        dest: "~/.local/share/zsh/completions/_{{ (item | basename | splitext).0 }}"
+        mode: "750"
+      loop:
+        - "completion/kubectx.zsh"
+        - "completion/kubens.zsh"

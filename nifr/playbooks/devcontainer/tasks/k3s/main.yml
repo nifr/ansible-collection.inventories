@@ -1,0 +1,109 @@
+# This role installs and configures "k3s"
+#
+# Homepage:  https://k3s.io
+# GitHub:    https://github.com/rancher/k3s
+# Reference: https://raw.githubusercontent.com/rancher/k3s/master/install.sh
+---
+- name: "k3s:set_fact:k3s_release"
+  block:
+    - name: "k3s:sect_fact:k3s_release:from:github"
+      when: "k3s_release is not defined"
+      block:
+        - name: "k3s:get/latest-release"
+          github_release:
+            user: "{{ k3s.github.user }}"
+            repo: "{{ k3s.github.repo }}"
+            action: "latest_release"
+          register: "k3s_release"
+          until: "k3s_release is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+          changed_when: "k3s_release.tag"
+          failed_when: "not k3s_release.tag"
+        - name: "k3s:cache_fact:k3s_release.tag"
+          set_fact:
+            k3s_release: '{"tag": "{{ k3s_release.tag }}"}'
+            cacheable: true
+  rescue:
+    - name: "k3s:set_fact:k3s_release:from:defaults"
+      set_fact:
+        k3s_release: '{"tag": "{{ k3s.github.tag }}"}'
+        cacheable: false
+
+- name: "k3s:debug:k3s_release"
+  debug:
+    var: "k3s_release"
+    verbosity: 2
+  failed_when: "not k3s_release"
+
+- name: "k3s:command:version/local"
+  become: true
+  command: "/usr/local/bin/k3s --version"
+  register: "k3s_local_version"
+  failed_when: false
+  changed_when: false
+
+- when: >-
+    (k3s_local_version.rc != 0)
+    or
+    (
+      k3s_local_version.stdout|regex_search('(\\d+(\\.\\d+){2,})')
+      is
+      version(k3s_release.tag|regex_search('(\\d+(\\.\\d+){2,})'), operator='lt', strict=true)
+    )
+  block:
+    - when: >-
+        (ansible_os_family is not equalto "Debian")
+        or
+        (k3s.install_method is equalto "binary")
+      block:
+        - name: "k3s:get_url"
+          become: true
+          get_url:
+            url: >-
+              {{
+                "https://github.com" ~
+                "/" ~ k3s.github.user ~
+                "/" ~ k3s.github.repo ~
+                "/releases/download" ~
+                "/" ~ k3s_release.tag ~
+                "/k3s"
+              }}
+            dest: "/usr/local/bin/k3s"
+            mode: "755"
+            force: true
+          register: "k3s_download"
+          until: "k3s is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
+
+- name: "k3:sysctl:enable-ipv4/ipv6-forwarding"
+  become: true
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    state: "present"
+    reload: true
+  loop:
+    - "net.ipv4.ip_forward"
+    - "net.ipv6.conf.all.forwarding"
+
+- when: 'ansible_service_mgr == "systemd"'
+  become: true
+  block:
+    - name: "k3s:template:systemd-service:k3s-server"
+      when: "k3s.server.environment is defined and k3s.server.environment"
+      template:
+        src: "k3s/k3s-server.systemd.environment.env.j2"
+        dest: "/etc/systemd/system/k3s-server.env"
+        mode: "755"
+    - name: "k3s:template:systemd-service:k3s-server"
+      template:
+        src: "k3s/k3s-server.systemd.service.ini.j2"
+        dest: "/etc/systemd/system/k3s-server.service"
+        mode: "755"
+    - name: "k3s:systemd:state"
+      systemd:
+        daemon_reload: true
+        name: "k3s-server"
+        state: "{{ k3s.service.state }}"

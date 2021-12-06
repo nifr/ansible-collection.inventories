@@ -1,0 +1,5 @@
+---
+systemd:
+  config:
+    Manager:
+      - { name: "DefaultLimitNOFILE", value: "500000" }

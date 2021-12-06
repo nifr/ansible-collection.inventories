@@ -1,0 +1,5 @@
+{% for directive in openssh_server %}
+{% for key,value in directive.items() %}
+{{- (key|string) + ' ' +  (value|string) }}
+{% endfor %}
+{% endfor %}

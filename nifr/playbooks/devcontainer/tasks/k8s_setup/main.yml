@@ -1,0 +1,51 @@
+---
+
+- name: 'k8s_setup:command:kind/get/kubeconfig-path'
+  command: 'kind get kubeconfig-path --name="kind"'
+  register: 'k8s_setup_kubeconfig_path_cmd'
+  changed_when: false
+
+- name: 'k8s_setup:k8s_facts:kubeystem/secret/default'
+  no_log: true
+  k8s_facts:
+    kubeconfig: '{{ k8s_setup_kubeconfig_path_cmd.stdout }}'
+    namespace: 'kube-system'
+    kind: 'secrets'
+  register: 'k8s_setup_system_secrets'
+
+- name: 'k8s_setup:set_fact:k8s_setup_system_secret_default_name'
+  set_fact:
+    k8s_setup_system_secret_default_name: >-
+      {{
+        k8s_setup_system_secrets.resources
+        | map(attribute="metadata")
+        | selectattr("name", "match", "^default-token")
+        | map(attribute="name")
+        | list
+        | first
+      }}
+
+- name: 'k8s_setup:k8s_facts:kubeystem/secret/default'
+  no_log: true
+  k8s_facts:
+    kubeconfig: '{{ k8s_setup_kubeconfig_path_cmd.stdout }}'
+    namespace: 'kube-system'
+    kind: 'secret'
+    name: '{{ k8s_setup_system_secret_default_name }}'
+  register: 'k8s_setup_system_secret_default'
+
+- name: 'k8s_setup:debug:k8s_setup_default_token'
+  no_log: true
+  set_fact:
+    k8s_setup_system_secret_default_token: >-
+      {{
+        (k8s_setup_system_secret_default.resources|first).data.token
+      }}
+  failed_when: 'not k8s_setup_system_secret_default_token'
+
+- name: 'k8s_setup:lineinfile:kubeconfig/add/token'
+  lineinfile:
+    path: '{{ k8s_setup_kubeconfig_path_cmd.stdout }}'
+    regexp: '^\s*token: '
+    line: '    token: {{ k8s_setup_system_secret_default_token | b64decode }}'
+    insertbefore: '^\s*client-certificate-data:'

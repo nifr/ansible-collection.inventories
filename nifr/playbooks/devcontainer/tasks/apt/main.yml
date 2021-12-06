@@ -1,0 +1,93 @@
+---
+- name: "apt_key/add:apt_keys"
+  become: true
+  apt_key:
+    url: "{{ (item is string)|ternary(item, item.url) }}"
+    id: "{{ item.id|default('') }}"
+  loop: "{{ apt['keys'] }}"
+  register: "apt_keys"
+  until: "apt_keys is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+  tags:
+    - apt[keys]
+
+- name: "apt:lineinfile:add:/etc/apt/apt.conf.d/90-ansible-managed:Dpkg::Use-Pty"
+  become: true
+  lineinfile:
+    create: true
+    path: "/etc/apt/apt.conf.d/90-ansible-managed"
+    regex: '^{{ "Dpkg::Use-Pty" | regex_escape }}'
+    line: 'Dpkg::Use-Pty "0";'
+
+- name: "apt_repository/add:apt_repositories"
+  tags:
+    - apt[repositories]
+  become: true
+  apt_repository:
+    repo: "{{ (item is string)|ternary(item, item.repo) }}"
+    filename: "{{ item.filename|default((item is string) | ternary(item, item.repo) | to_uuid) }}"
+    state: "{{ item.state|default('present') }}"
+    update_cache: true
+  loop: "{{ apt.repositories }}"
+  register: "ppas"
+  until: "ppas is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "apt/update-cache"
+  become: true
+  apt:
+    cache_valid_time: 0
+    update_cache: true
+  register: "apt_update"
+  until: "apt_update is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+
+- name: "apt/install:apt_packages"
+  loop: "{{ apt.packages }}"
+  apt:
+    name: "{{ (item is string)|ternary(item, item.name) }}"
+    state: "{{ item.state|default('latest') }}"
+    cache_valid_time: 1800
+  become: true
+  register: "apt_packages"
+  until: "apt_packages is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: "apt:lineinfile:remove:/etc/apt/apt.conf.d/90-ansible-managed:Dpkg::Use-Pty"
+  become: true
+  lineinfile:
+    state: "absent"
+    path: "/etc/apt/apt.conf.d/90-ansible-managed"
+    regex: '^{{ "Dpkg::Use-Pty" | regex_escape }}'
+
+- when: "not apt.automatic_upgrades"
+  tags:
+    - apt[automatic-upgrades]
+  block:
+    - name: "apt:remove-package:unattended-upgrades"
+      apt:
+        name: "unattended-upgrades"
+        state: "absent"
+      become: true
+    - name: "apt:lineinfile:/etc/apt/apt.conf.d/90-ansible-managed"
+      tags:
+        - config[*]
+        - config[apt]
+      lineinfile:
+        create: true
+        path: "/etc/apt/apt.conf.d/90-ansible-managed"
+        regex: "^{{ item | regex_escape }}"
+        line: '{{ item }} "0";'
+      loop:
+        - "APT::Periodic::Update-Package-Lists"
+        - "APT::Periodic::Download-Upgradeable-Packages"
+        - "APT::Periodic::AutocleanInterval"
+        - "APT::Install-Recommends"
+        - "APT::Install-Suggests"
+      become: true
