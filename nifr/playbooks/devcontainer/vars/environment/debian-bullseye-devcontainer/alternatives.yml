@@ -1,0 +1,11 @@
+alternatives:
+  - name: "vi"
+    priority: "80"
+    link: "/usr/bin/vi"
+    source: "/home/linuxbrew/.linuxbrew/bin/nvim"
+    state: "present"
+  - name: "vim"
+    priority: "80"
+    link: "/usr/bin/vim"
+    source: "/home/linuxbrew/.linuxbrew/bin/nvim"
+    state: "present"

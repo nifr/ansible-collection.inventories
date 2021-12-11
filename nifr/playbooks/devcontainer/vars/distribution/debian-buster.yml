@@ -50,12 +50,12 @@ apt:
     # `gedebi-core` installs .deb packages and together with their dependencies
     # not needed as modern versions of apt[-get] provide the same functionality
     # Depends: python3-apt
-    # -> Leads to undesired installation of apt python in containers
+    # -> Leads to undesired installation of python via apt in containers
     #
     # example: (the dot is required to prevent installing literal package by name)
     # sudo apt -y install ./package.deb
     # sudo dpkg -i /path/to/package.deb; sudo apt-get install -f
     - { name: "gdebi-core", state: "absent" }
     # Depends: python3
-    # -> Leads to undesired installation of apt python in containers
+    # -> Leads to undesired installation of python via apt in containers
     - { name: "lsb-release", state: "absent" }
