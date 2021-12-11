@@ -1,5 +1,7 @@
 ---
 - name: "apt_key/add:apt_keys"
+  tags:
+    - apt[keys]
   become: true
   apt_key:
     url: "{{ (item is string)|ternary(item, item.url) }}"
@@ -9,10 +11,10 @@
   until: "apt_keys is succeeded"
   retries: "{{ ansible_retry_count | int }}"
   delay: "{{ ansible_retry_delay | int }}"
-  tags:
-    - apt[keys]
 
 - name: "apt:lineinfile:add:/etc/apt/apt.conf.d/90-ansible-managed:Dpkg::Use-Pty"
+  tags:
+    - apt[config]
   become: true
   lineinfile:
     create: true
@@ -35,31 +37,35 @@
   retries: "{{ ansible_retry_count | int }}"
   delay: "{{ ansible_retry_delay | int }}"
 
-- name: "apt/update-cache"
+- tags:
+    - apt[packages]
   become: true
-  apt:
-    cache_valid_time: 0
-    update_cache: true
-  register: "apt_update"
-  until: "apt_update is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
-
-- name: "apt/install:apt_packages"
-  loop: "{{ apt.packages }}"
-  apt:
-    name: "{{ (item is string)|ternary(item, item.name) }}"
-    state: "{{ item.state|default('latest') }}"
-    cache_valid_time: 1800
-  become: true
-  register: "apt_packages"
-  until: "apt_packages is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
   environment:
     DEBIAN_FRONTEND: noninteractive
+  block:
+    - name: "apt/update-cache"
+      apt:
+        cache_valid_time: 0
+        update_cache: true
+      register: "apt_update"
+      until: "apt_update is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: "apt/install:apt_packages"
+      loop: "{{ apt.packages }}"
+      apt:
+        name: "{{ (item is string)|ternary(item, item.name) }}"
+        state: "{{ item.state|default('latest') }}"
+        cache_valid_time: 1800
+      register: "apt_packages"
+      until: "apt_packages is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+
 
 - name: "apt:lineinfile:remove:/etc/apt/apt.conf.d/90-ansible-managed:Dpkg::Use-Pty"
+  tags:
+    - apt[config]
   become: true
   lineinfile:
     state: "absent"
