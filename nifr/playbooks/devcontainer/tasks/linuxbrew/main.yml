@@ -74,24 +74,73 @@
   become: true
   when: "linuxbrew_local_version.rc != 0"
   block:
-    - name: "linuxbrew:mktemp"
-      become_user: "linuxbrew"
-      tempfile:
-        state: "directory"
-        suffix: "linuxbrew"
-      register: "linuxbrew_tmp_dir"
-    - name: "linuxbrew:get_url:download"
-      get_url:
-        url: "https://raw.githubusercontent.com/Homebrew/install/master/install.sh"
-        dest: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
-        owner: "linuxbrew"
-        group: "linuxbrew"
-        mode: "555"
-    - name: "linuxbrew:command:install"
-      become_user: "linuxbrew"
-      command: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
-      environment:
-        CI: 1
+    - when: "ansible_architecture == 'x86_64'"
+      block:
+        - name: "linuxbrew:mktemp"
+          become_user: "linuxbrew"
+          tempfile:
+            state: "directory"
+            suffix: "linuxbrew"
+          register: "linuxbrew_tmp_dir"
+        - name: "linuxbrew:get_url:download"
+          get_url:
+            url: "https://raw.githubusercontent.com/Homebrew/install/master/install.sh"
+            dest: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
+            owner: "linuxbrew"
+            group: "linuxbrew"
+            mode: "555"
+        - name: "linuxbrew:command:install"
+          become_user: "linuxbrew"
+          command: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
+          environment:
+            CI: 1
+    - when: "ansible_architecture == 'aarch64'"
+      # The official requirements list states a "64-bit x86_64 CPU" is required
+      # see: https://github.com/Homebrew/brew/blob/master/docs/Homebrew-on-Linux.md#requirements
+      #
+      # In order to make linuxbrew work on ARM devices it needs to be manually installed
+      # As of 2021-12-12 The installation script throws:
+      #
+      # > Homebrew on Linux is only supported on Intel processors!
+      #
+      # linuxbrew CAN be used on ARM devices though:
+      # see:
+      #
+      # > Homebrew can run on 32-bit ARM (Raspberry Pi and others) and 64-bit ARM (AArch64), but no binary packages (bottles) are available.
+      # > [..]
+      # > You may need to install your own Ruby using your system package manager, a PPA, or rbenv/ruby-build as we no longer distribute a Homebrew Portable Ruby for ARM.
+      #
+      # The manual installation steps are:
+      # see: https://github.com/Linuxbrew/brew#alternative-installation
+      #
+      # git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
+      # mkdir ~/.linuxbrew/bin
+      # ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
+      # eval $(~/.linuxbrew/bin/brew shellenv)
+      #
+      block:
+        - ansible.builtin.git:
+            repo: https://github.com/Homebrew/brew.git
+            dest: ~linuxbrew/.linuxbrew/Homebrew
+            single_branch: yes
+            version: master
+          environment:
+            GIT_TERMINAL_PROMPT: 0
+        - become: true
+          ansible.builtin.file:
+            path: "~linuxbrew/.linuxbrew/bin"
+            state: "directory"
+            owner: "linuxbrew"
+            group: "linuxbrew"
+            mode: "750"
+            recurse: true
+        - become: true
+          ansible.builtin.file:
+            src: "~linuxbrew/Homebrew/bin/brew"
+            dest: "~linuxbrew/bin/brew"
+            owner: linuxbrew
+            group: linuxbrew
+            state: link
 
 # prevent zsh completion warnings:
 # "zsh compinit: insecure directories"
