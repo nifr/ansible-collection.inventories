@@ -141,7 +141,13 @@
             owner: linuxbrew
             group: linuxbrew
             state: link
-
+        - become: true
+          ansible.builtin.apt:
+            pkg:
+              - "ruby"
+            state: 'present'
+            update_cache: true
+            cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
 # prevent zsh completion warnings:
 # "zsh compinit: insecure directories"
 # -> chmod go-w '/home/linuxbrew/.linuxbrew/share'
