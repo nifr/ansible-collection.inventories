@@ -169,6 +169,8 @@
     recurse: true
 
 - name: "linuxbrew:template:~linuxbrew/.Brewfile"
+  tags:
+    - 'linuxbrew[packages]'
   become: true
   template:
     src: "linuxbrew/Brewfile.j2"
@@ -177,6 +179,8 @@
     group: "linuxbrew"
 
 - name: "linuxbrew[packages]"
+  tags:
+    - 'linuxbrew[packages]'
   become: true
   become_user: "linuxbrew"
   environment:
