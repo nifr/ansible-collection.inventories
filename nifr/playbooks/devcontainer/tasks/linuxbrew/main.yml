@@ -136,8 +136,8 @@
             recurse: true
         - become: true
           ansible.builtin.file:
-            src: "~linuxbrew/Homebrew/bin/brew"
-            dest: "~linuxbrew/bin/brew"
+            src: "~linuxbrew/.linuxbrew/Homebrew/bin/brew"
+            dest: "~linuxbrew/.linuxbrew/bin/brew"
             owner: linuxbrew
             group: linuxbrew
             state: link
