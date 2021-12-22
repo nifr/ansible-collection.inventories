@@ -223,6 +223,10 @@ fi
 
 (( $+commands[kitty] )) && source <(kitty + complete setup zsh)
 
+(( $+commands[vault] )) && complete -o nospace -C "$(which vault)" vault
+(( $+commands[terraform] )) && complete -o nospace -C "$(which terraform)" terraform
+(( $+commands[nomad] )) && complete -o nospace -C "$(which nomad)" nomad
+
 if [[ -d /snap/google-cloud-sdk/current/bin ]]; then
   path=(/snap/google-cloud-sdk/current/bin $path)
 
