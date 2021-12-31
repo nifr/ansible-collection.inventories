@@ -1,0 +1,15 @@
+- name: 'local-php-security-checker:get_url'
+  become: true
+  ansible.builtin.get_url:
+    url: >-
+          {{
+            "https://github.com/fabpot/local-php-security-checker/releases/download"
+            ~ "/v" ~ local_php_security_checker.version
+            ~ "/local-php-security-checker"
+            ~ "_" ~ local_php_security_checker.version
+            ~ "_linux_" ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          }}
+    dest: /usr/local/bin/local-php-security-checker
+    owner: root
+    group: root
+    mode: '755'

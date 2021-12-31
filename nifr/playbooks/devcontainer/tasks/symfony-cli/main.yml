@@ -1,0 +1,14 @@
+- name: 'symfony-cli:get_url'
+  become: true
+  ansible.builtin.get_url:
+    url: >-
+          {{
+            "https://github.com/symfony/cli/releases/download"
+            ~ "/v" ~ symfony_cli.version
+            ~ "/symfony"
+            ~ "_linux_" ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          }}
+    dest: /usr/local/bin/symfony
+    owner: root
+    group: root
+    mode: '755'

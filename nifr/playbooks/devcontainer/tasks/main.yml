@@ -473,3 +473,18 @@
         - databases[mysql]
         - mysql-community-server
 # END [databases]
+
+# [php-tools]
+- name: "[php-tools]"
+  tags:
+    - php-tools[*]
+  block:
+    - import_tasks: "symfony-cli/main.yml"
+      tags:
+        - php-tools[symfony-cli]
+        - symfony-cli
+    - import_tasks: "local-php-security-checker/main.yml"
+      tags:
+        - php-tools[local-php-security-checker]
+        - local-php-security-checker
+# END [databases]
