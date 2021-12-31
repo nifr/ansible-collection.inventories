@@ -451,3 +451,14 @@
             - kubernetes[k3d]
             - k3d
 # END [kubernetes]
+
+# [browsers]
+- name: "[browsers]"
+  tags:
+    - browsers[*]
+  block:
+    - import_tasks: "microsoft-edge/main.yml"
+      tags:
+        - browsers[microsoft-edge]
+        - microsoft-edge
+# END [haskell]

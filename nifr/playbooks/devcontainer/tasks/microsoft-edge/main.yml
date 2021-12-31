@@ -1,0 +1,18 @@
+---
+- name: "microsoft-edge"
+  become: true
+  block:
+    - name: "microsoft-edge:apt_key"
+      ansible.builtin.apt_key:
+        state: "{{ microsoft_edge.state }}"
+        url: https://packages.microsoft.com/keys/microsoft.asc
+    - name: "microsoft-edge:apt_repository"
+      ansible.builtin.apt_repository:
+        state: "{{ microsoft_edge.state }}"
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main"
+        install_python_apt: false
+        filename: microsoft-edge-beta
+    - name: "microsoft-edge:apt"
+      ansible.builtin.apt:
+        state: "{{ microsoft_edge.state }}"
+        name: microsoft-edge-beta
