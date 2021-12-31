@@ -2,7 +2,7 @@
   become: true
   ansible.builtin.copy:
     src: templates/s6/{{ item }}/services.d
-    dest: /etc/services.d
+    dest: /etc
     owner: root
     group: root
     mode: '755'
