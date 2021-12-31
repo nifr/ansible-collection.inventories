@@ -499,3 +499,6 @@
 - import_tasks: "minio/main.yml"
   tags:
     - minio
+- import_tasks: "s6/main.yml"
+  tags:
+    - s6

@@ -1,0 +1,4 @@
+#!/usr/bin/with-contenv sh
+
+exec 2>&1
+exec redis-server /etc/redis/redis.conf

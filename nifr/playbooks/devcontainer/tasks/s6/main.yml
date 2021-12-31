@@ -1,0 +1,11 @@
+- name: "s6:copy"
+  become: true
+  ansible.builtin.copy:
+    src: templates/s6/{{ item }}/services.d
+    dest: /etc/services.d
+    owner: root
+    group: root
+    mode: '755'
+    backup: false
+    remote_src: true
+  loop: "{{ s6.services }}"

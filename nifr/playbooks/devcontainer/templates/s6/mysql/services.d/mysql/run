@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv sh
+
+exec 2>&1
+exec mysqld_safe \
+  --defaults-file=/etc/mysql/my.cnf \
+  --pid-file=/var/run/mysqld/mysqld.pid \
+  --port=3306 \
+  --user=root \
+  --socket=/var/run/mysqld/mysqld.sock \
+  --verbose

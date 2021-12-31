@@ -1,0 +1,5 @@
+s6:
+  services:
+    - mysql
+    - redis
+    - minio
