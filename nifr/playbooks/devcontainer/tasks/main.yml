@@ -483,6 +483,10 @@
       tags:
         - php-tools[symfony-cli]
         - symfony-cli
+    - import_tasks: "composer-require-checker/main.yml"
+      tags:
+        - php-tools[composer-require-checker]
+        - composer-require-checker
     - import_tasks: "local-php-security-checker/main.yml"
       tags:
         - php-tools[local-php-security-checker]

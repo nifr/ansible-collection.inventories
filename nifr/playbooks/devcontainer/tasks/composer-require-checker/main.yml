@@ -1,0 +1,13 @@
+- name: 'composer-require-checker:get_url'
+  become: true
+  ansible.builtin.get_url:
+    url: >-
+          {{
+            "https://github.com/maglnet/ComposerRequireChecker/releases/download"
+            ~ "/" ~ composer_require_checker.version
+            ~ "/composer-require-checker.phar"
+          }}
+    dest: /usr/local/bin/composer-require-checker
+    owner: root
+    group: root
+    mode: '755'
