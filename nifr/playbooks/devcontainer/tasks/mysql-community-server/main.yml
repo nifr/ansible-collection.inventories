@@ -5,6 +5,11 @@
       ansible.builtin.apt:
         state: "{{ mysql_community_server.state }}"
         deb: https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
+      register: "mysql_community_server_repo_installed"
+    - ansible.builtin.apt:
+        when: mysql_community_server_repo_installed.changed
+        update_cache: true
+        cache_valid_time: 0
     - name: "mysql-community-server:debconf:root-pass"
       ansible.builtin.debconf:
         name: mysql-community-server
