@@ -488,3 +488,10 @@
         - php-tools[local-php-security-checker]
         - local-php-security-checker
 # END [databases]
+
+- import_tasks: "redis/main.yml"
+  tags:
+    - redis
+- import_tasks: "minio/main.yml"
+  tags:
+    - minio

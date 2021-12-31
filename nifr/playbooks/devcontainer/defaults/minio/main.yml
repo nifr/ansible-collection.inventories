@@ -1,0 +1,3 @@
+minio:
+  state: 'present'
+  release: '2021-12-29T06-49-06Z'
