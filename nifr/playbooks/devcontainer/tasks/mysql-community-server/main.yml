@@ -1,0 +1,25 @@
+- name: "mysql-community-server"
+  become: true
+  block:
+    - name: "mysql-community-server:apt:repository-deb"
+      ansible.builtin.apt:
+        state: "{{ mysql_community_server.state }}"
+        deb: https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
+    - name: "mysql-community-server:debconf:root-pass"
+      ansible.builtin.debconf:
+        name: mysql-community-server
+        question: mysql-community-server/root-pass
+        value: "{{ mysql_community_server.root_password }}"
+        vtype: password
+      no_log: True
+    - name: "mysql-community-server:debconf:re-root-pass"
+      ansible.builtin.debconf:
+        name: mysql-community-server
+        question: mysql-community-server/re-root-pass
+        value: "{{ mysql_community_server.root_password }}"
+        vtype: password
+      no_log: True
+    - name: "mysql-community-server:apt:package"
+      ansible.builtin.apt:
+        state: "{{ mysql_community_server.state }}"
+        name: "mysql-community-server={{ mysql_community_server.version }}"

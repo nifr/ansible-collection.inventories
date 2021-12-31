@@ -461,4 +461,15 @@
       tags:
         - browsers[microsoft-edge]
         - microsoft-edge
-# END [haskell]
+# END [browsers]
+
+# [databases]
+- name: "[databases]"
+  tags:
+    - databases[*]
+  block:
+    - import_tasks: "mysql-community-server/main.yml"
+      tags:
+        - databases[mysql]
+        - mysql-community-server
+# END [databases]
