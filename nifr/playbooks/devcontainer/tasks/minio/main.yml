@@ -7,7 +7,7 @@
     state: "{{ minio.state }}"
     name: "{{ minio.group.name }}"
     gid: "{{ minio.group.gid }}"
-    system: "{{ minio.group.system }}"
+    system: true
   tags:
     - minio[user]
 
