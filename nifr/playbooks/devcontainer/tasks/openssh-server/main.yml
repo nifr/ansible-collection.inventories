@@ -7,6 +7,8 @@
     owner: "root"
     group: "root"
   become: true
+  tags:
+    - openssh-server[config]
 
 - name: "openssh-server:service:restarted"
   service:
@@ -14,3 +16,5 @@
     sleep: 3
     state: "restarted"
   become: true
+  tags:
+    - openssh-server[service]
