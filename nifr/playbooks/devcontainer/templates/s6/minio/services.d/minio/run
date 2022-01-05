@@ -1,9 +1,8 @@
 #!/usr/bin/with-contenv sh
 
-exec 2>&1
-exec \
-  MINIO_ROOT_USER=admin \
-  MINIO_ROOT_PASSWORD=password \
-  minio server /data \
-    --console-address ":9001" \
-    --json
+# see:
+exec s6-setuidgid minio \
+  minio server /opt/minio/data \
+    --console-address "127.0.0.1:9001" \
+    --json \
+    2>&1
