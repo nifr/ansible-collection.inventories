@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv sh
+
+# options:
+# -f = config file
+# -e = send output to stderr
+# -D = do not daemonize
+exec sshd -f /etc/ssh/sshd_config -D -e 2>&1
