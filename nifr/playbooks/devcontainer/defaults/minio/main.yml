@@ -1,3 +1,14 @@
 minio:
   state: 'present'
+  binary:
+    path: /usr/local/bin/minio
+    owner: root
+    group: root
+    mode: 755
   release: '2021-12-29T06-49-06Z'
+  user:
+    name: minio
+    uid: 202
+  group:
+    name: minio
+    gid: 202

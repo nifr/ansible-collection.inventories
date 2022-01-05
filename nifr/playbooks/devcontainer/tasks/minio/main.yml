@@ -1,16 +1,50 @@
 # see: https://min.io/download#/linux
 # see: https://dl.min.io/server/minio/release/
-- name: 'minio:get_url'
+
+- name: 'minio:group'
   become: true
-  ansible.builtin.get_url:
-    url: >-
-      {{
-        "https://dl.min.io/server/minio/release"
-        ~ "/linux-" ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
-        ~ "/archive"
-        ~ "/minio.RELEASE." ~ minio.release
-      }}
-    dest: /usr/local/bin/minio
-    owner: root
-    group: root
-    mode: '755'
+  ansible.builtin.group:
+    state: "{{ minio.state }}"
+    name: "{{ minio.group.name }}"
+    gid: "{{ minio.group.gid }}"
+    system: "{{ minio.group.system }}"
+  tags:
+    - minio[user]
+
+- name: 'minio:user'
+  become: true
+  ansible.builtin.user:
+    state: "{{ minio.state }}"
+    name: "{{ minio.user.name }}"
+    uid: "{{ minio.user.uid }}"
+    create_home: false
+    shell: /bin/false
+    system: true
+    group: "{{ minio.group.name }}"
+  tags:
+    - minio[group]
+
+- name: 'minio:binary'
+  become: true
+  block:
+    - name: 'minio:binary:get_url'
+      when: "minio.state == 'present'"
+      ansible.builtin.get_url:
+        url: >-
+          {{
+            "https://dl.min.io/server/minio/release"
+            ~ "/linux-" ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+            ~ "/archive"
+            ~ "/minio.RELEASE." ~ minio.release
+          }}
+        dest: "{{ minio.binary.path }}"
+        owner: "{{ minio.binary.owner }}"
+        group: "{{ minio.binary.group }}"
+        mode: "{{ minio.binary.mode }}"
+    - name: 'minio:binary:file:absent'
+      when: "minio.state == 'absent'"
+      ansible.builtin.file:
+        path: "{{ minio.binary.path }}"
+        state: "{{ minio.state }}"
+  tags:
+    - minio[binary]
