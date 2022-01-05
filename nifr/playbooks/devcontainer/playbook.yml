@@ -8,6 +8,12 @@
     tags: "always"
   # TODO: Add additional debugging capabilities
   # see: https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
+  - name: "playbook:debug:inventory_hostname"
+    debug:
+      var: inventory_hostname
+  - name: "playbook:debug:ansible_hostname"
+    debug:
+      var: ansible_hostname
   - name: "playbook:debug:ansible_python_interpreter"
     debug:
       var: "ansible_python_interpreter"
@@ -96,6 +102,21 @@
           ignore_unknown_extensions: true
           extensions: ["yaml", "yml", "json"]
         ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+    - name: "playbook:include_vars:host"
+      include_vars:
+        dir: "/etc/ansible/host_vars/{{ inventory_hostname }}"
+        ignore_unknown_extensions: true
+        extensions: ["yaml", "yml", "json"]
+      ignore_errors: "{{ ansible_ignore_include_errors | bool }}"
+      register: host_include_vars
+      failed_when: >-
+        host_include_vars.failed
+        and
+        (
+          'directory does not exist'
+          not in
+          playbook_include_vars.message
+        )
     - when: "ansible_include_vars_user | bool"
       block:
       - name: "playbook:include_vars:$HOME/private/ansible/vars"
