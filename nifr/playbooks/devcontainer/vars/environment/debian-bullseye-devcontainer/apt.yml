@@ -9,6 +9,7 @@ apt:
       # we install openssh-server to be able to access a devcontainer remotely
       # i.e. as a VSCode devcontainer with the Remote SSH extension
       state: present
+    - { name: "htop", state: "present" }
     # ---- packages that shall be absent last ---
     - { name: "memtest86+", state: "absent" }
     - { name: "ruby", state: "absent" }
