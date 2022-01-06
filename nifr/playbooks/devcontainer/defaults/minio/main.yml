@@ -8,7 +8,7 @@ minio:
   release: '2021-12-29T06-49-06Z'
   user:
     name: minio
-    uid: 202
+    uid: 205
   group:
     name: minio
-    gid: 202
+    gid: 205
