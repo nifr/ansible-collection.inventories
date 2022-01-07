@@ -3,6 +3,7 @@
 # see:
 exec s6-setuidgid minio \
   minio server /opt/minio/data \
-    --console-address "127.0.0.1:9001" \
+    --address '0.0.0.0:9000' \
+    --console-address '0.0.0.0:9001' \
     --json \
     2>&1
