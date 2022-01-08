@@ -34,6 +34,54 @@
     owner: "root"
     group: "root"
     mode: "440"
+    regexp: "^Defaults secure_path="
+    line: 'Defaults secure_path="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"'
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:set-umask"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    owner: "root"
+    group: "root"
+    mode: "440"
+    regexp: "^Defaults umask="
+    line: 'Defaults umask=0002'
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:force-umask"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    owner: "root"
+    group: "root"
+    mode: "440"
+    regexp: "^Defaults umask_override"
+    line: 'Defaults umask_override'
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:force-umask"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    owner: "root"
+    group: "root"
+    mode: "440"
+    regexp: '^Defaults env_keep+="HOMEBREW_'
+    line: 'Defaults env_keep+="HOMEBREW_*"'
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "sudoers:lineinfile:/etc/sudoers.d/*:disable-requiretty-for-root-user"
+  become: true
+  lineinfile:
+    path: "/etc/sudoers.d/20-ansible-managed"
+    create: true
+    owner: "root"
+    group: "root"
+    mode: "440"
     regexp: "^Defaults:linuxbrew !?requiretty"
     line: "Defaults:linuxbrew !requiretty"
     validate: "/usr/sbin/visudo -cf %s"
