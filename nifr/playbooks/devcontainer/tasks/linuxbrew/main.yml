@@ -104,7 +104,7 @@
     state: "directory"
     owner: "linuxbrew"
     group: "linuxbrew"
-    mode: "750"
+    mode: "2770"
   loop:
     - "~linuxbrew"
     - "~linuxbrew/.linuxbrew"
@@ -136,7 +136,7 @@
             dest: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
             owner: "linuxbrew"
             group: "linuxbrew"
-            mode: "555"
+            mode: "550"
         - name: "linuxbrew:command:install"
           become_user: "linuxbrew"
           command: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
@@ -187,7 +187,7 @@
             state: "directory"
             owner: "linuxbrew"
             group: "linuxbrew"
-            mode: "750"
+            mode: "2770"
             recurse: true
         - become: true
           ansible.builtin.file:
@@ -213,7 +213,7 @@
     state: "directory"
     owner: "linuxbrew"
     group: "linuxbrew"
-    mode: "750"
+    mode: "2770"
     recurse: true
 
 - name: "linuxbrew:template:~linuxbrew/.Brewfile"
