@@ -32,6 +32,26 @@
     - config[*]
     - zsh[config]
 
+- name: "zsh[plugins]"
+  tags:
+    - zsh[plugins]
+  become: true
+  block:
+    - name: "zsh[plugins]:file:directory:/usr/share/zsh/plugins"
+      ansible.builtin.file:
+        path: '/usr/share/zsh/plugins/zsh-defer'
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+    - name: "zsh[plugins]:get_url:zsh-defer"
+      ansible.builtin.get_url:
+        url: 'https://raw.githubusercontent.com/romkatv/zsh-defer/master/zsh-defer.plugin.zsh'
+        dest: '/usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh'
+        owner: 'root'
+        group: 'root'
+        mode: '0744'
+
 - name: "zsh[global-zshenv]"
   tags:
     - zsh[global-zshenv]
