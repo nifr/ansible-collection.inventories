@@ -18,6 +18,7 @@ fpath=(
   ~/.local/share/zsh/functions
   ~/.local/share/zsh/completions
   ~linuxbrew/.linuxbrew/share/zsh/site-functions
+  ~linuxbrew/.linuxbrew/share/zsh-completions
   $fpath
 )
 # TODO: FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
