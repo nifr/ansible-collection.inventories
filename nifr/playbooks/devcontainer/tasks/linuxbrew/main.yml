@@ -35,7 +35,7 @@
     group: "root"
     mode: "440"
     regexp: "^Defaults secure_path="
-    line: 'Defaults secure_path="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"'
+    line: 'Defaults secure_path="/home/linuxbrew/.linuxbrew/shims:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"'
     validate: "/usr/sbin/visudo -cf %s"
 
 - name: "sudoers:lineinfile:/etc/sudoers.d/*:set-umask"
@@ -204,18 +204,6 @@
             state: 'present'
             update_cache: true
             cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
-# prevent zsh completion warnings:
-# "zsh compinit: insecure directories"
-# -> chmod go-w '/home/linuxbrew/.linuxbrew/share'
-- name: "linuxbrew:file:directory:permissions"
-  become: true
-  file:
-    path: "~linuxbrew/.linuxbrew/share"
-    state: "directory"
-    owner: "linuxbrew"
-    group: "linuxbrew"
-    mode: "2770"
-    recurse: true
 
 - name: "linuxbrew:template:~linuxbrew/.Brewfile"
   tags:
@@ -233,7 +221,6 @@
   become: true
   become_user: "linuxbrew"
   environment:
-    # eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
     PATH: "~linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
     # Attention: "--global" is not save to use if HOMEBREW_BUNDLE_FILE is set on the remote
     # > Error: 'HOMEBREW_BUNDLE_FILE' cannot be specified with '--global'
@@ -251,10 +238,99 @@
     - name: "linuxbrew:command:brew bundle"
       command: "~linuxbrew/.linuxbrew/bin/brew bundle"
 
+
+- name: "linuxbrew[fix][zsh]"
+  become: true
+  block:
+  - name: "linuxbrew:file:directory:permissions:zsh"
+    # warning:  "zsh compinit: insecure directories"
+    # solution: remove group write permission on zsh completion dirs
+    # example:  chmod go-w '/home/linuxbrew/.linuxbrew/share/zsh'
+    # see:      output of "compaudit" command
+    # see:      https://stackoverflow.com/a/22753363
+    when: "'zsh' in linuxbrew.packages"
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: "directory"
+      owner: "linuxbrew"
+      group: "linuxbrew"
+      mode: "2750"
+      recurse: false
+    loop:
+      - "~linuxbrew/.linuxbrew/share/zsh"
+      - "~linuxbrew/.linuxbrew/share/zsh/site-functions"
+  - name: "linuxbrew:file:directory:permissions:zsh-completions"
+    when: "'zsh-completions' in linuxbrew.packages"
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: "directory"
+      owner: "linuxbrew"
+      group: "linuxbrew"
+      mode: "2750"
+      recurse: false
+    loop:
+      - "~linuxbrew/.linuxbrew/share/zsh-completions"
+  # fix: docker-compsoe v2
+
+- name: "linuxbrew[fix][docker-compose]"
+  become: true
+  when: "'docker-compose' in linuxbrew.packages"
+  block:
+  - name: "linuxbrew:file:directory:/usr/lib/docker/cli-plugins"
+    when: "'docker-compose' in linuxbrew.packages"
+    ansible.builtin.file:
+      path: "/usr/lib/docker/cli-plugins"
+      state: "directory"
+      owner: "root"
+      group: "root"
+      mode: "0755"
+  - name: "linuxbrew:file:directory:/usr/lib/docker/cli-plugins"
+    when: "'docker-compose' in linuxbrew.packages"
+    ansible.builtin.file:
+      src: "~/linuxbrew/opt/docker-compose/bin/docker-compose"
+      dest: "/usr/lib/docker/cli-plugins/docker-compose"
+      state: "link"
+      owner: "root"
+      group: "root"
+
+- name: "linuxbrew[shim]"
+  # Recent versions of Homebrew show the following error if run as root:
+  #
+  # Error: Running Homebrew as root is extremely dangerous and no longer supported.
+  # As Homebrew does not drop privileges on installation you would be giving all
+  # build scripts full access to your system.
+  #
+  # To mitigate the issue we deploy a shim script for the "brew" command.
+  #
+  # * installed at ~linuxbrew/.linuxbrew/shims/brew
+  # * checks if the current user is "linuxbrew"
+  # * uses "sudo" to execute the "brew" command as user "linuxbrew"
+  #
+  become: true
+  tags:
+    - 'linuxbrew[shim]'
+  block:
+  - name: "linuxbrew:file:directory:~linuxbrew/.linuxbrew/shims"
+    when: "'docker-compose' in linuxbrew.packages"
+    ansible.builtin.file:
+      path: "~linuxbrew/.linuxbrew/shims"
+      state: "directory"
+      owner: "root"
+      group: "root"
+      mode: "0770"
+  - name: "linuxbrew:template:~linuxbrew/.linuxbrew/shims/brew"
+    template:
+      src: "linuxbrew/shims/brew.sh"
+      dest: "~linuxbrew/.linuxbrew/shims/brew"
+      owner: "linuxbrew"
+      group: "linuxbrew"
+      mode: "0750"
+
 - name: "linuxbrew:file:absent:~linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-{core,bundle}"
   # the taps homebrew/homebrew-{core,bundle} are re-downloaded on the fly if absent
   # in order to save ~600M space in a devcontainer these can be removed after installation
-  when: "linuxbrew.remove_taps | bool"
+  # todo: extract from linuxbrew.taps variable
+  when: "linuxbrew.purge_tap_dirs | bool"
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
