@@ -91,6 +91,7 @@
   user:
     name: "linuxbrew"
     create_home: true
+    home: '/home/linuxbrew'
     system: true
     uid: 200
     shell: "/bin/false"
@@ -232,20 +233,23 @@
   become: true
   become_user: "linuxbrew"
   environment:
+    # eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
     PATH: "~linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
+    # Attention: "--global" is not save to use if HOMEBREW_BUNDLE_FILE is set on the remote
+    # > Error: 'HOMEBREW_BUNDLE_FILE' cannot be specified with '--global'
+    HOMEBREW_BUNDLE_FILE: '/home/linuxbrew/.Brewfile'
   block:
     - name: "linuxbrew:command:brew bundle install ~linuxbrew/.Brewfile"
-      command: "~linuxbrew/.linuxbrew/bin/brew bundle install --global"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle install --no-lock"
 
-    - name: "linuxbrew:command:brew bundle cleanup --global --force"
-      command: "~linuxbrew/.linuxbrew/bin/brew bundle cleanup --global --force"
+    - name: "linuxbrew:command:brew bundle cleanup --force"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle cleanup --force"
 
-    - name: "linuxbrew:command:brew bundle dump --global --force"
-      command: "~linuxbrew/.linuxbrew/bin/brew bundle dump --global --force"
+    - name: "linuxbrew:command:brew bundle dump --describe --force"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle dump --describe --force"
 
-    - name: "linuxbrew:command:brew bundle --global"
-      command: "~linuxbrew/.linuxbrew/bin/brew bundle --global"
-# eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+    - name: "linuxbrew:command:brew bundle"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle"
 
 - name: "linuxbrew:file:absent:~linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-{core,bundle}"
   # the taps homebrew/homebrew-{core,bundle} are re-downloaded on the fly if absent
