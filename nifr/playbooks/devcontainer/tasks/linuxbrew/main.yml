@@ -287,7 +287,7 @@
   - name: "linuxbrew:file:directory:/usr/lib/docker/cli-plugins"
     when: "'docker-compose' in linuxbrew.packages"
     ansible.builtin.file:
-      src: "~/linuxbrew/opt/docker-compose/bin/docker-compose"
+      src: "~linuxbrew/.linuxbrew/opt/docker-compose/bin/docker-compose"
       dest: "/usr/lib/docker/cli-plugins/docker-compose"
       state: "link"
       owner: "root"
