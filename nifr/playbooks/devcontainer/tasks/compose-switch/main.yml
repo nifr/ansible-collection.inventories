@@ -1,0 +1,12 @@
+- name: "compose-switch:get_url"
+  become: true
+  ansible.builtin.get_url:
+    url: >-
+      {{
+        "https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-"
+        ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+      }}
+    dest: "/usr/local/bin/compose-switch"
+    owner: root
+    group: root
+    mode: "0755"

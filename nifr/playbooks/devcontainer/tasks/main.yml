@@ -100,9 +100,15 @@
         - "neovim"
 # END [editors]
 
-- import_tasks: "docker/main.yml"
+- name: "[docker]"
   tags:
     - docker
+  block:
+  - import_tasks: "docker/main.yml"
+
+  - import_tasks: "compose-switch/main.yml"
+    tags:
+      - docker[compose-switch]
 
 # [cloud-providers]
 - name: "[cloud-providers]"

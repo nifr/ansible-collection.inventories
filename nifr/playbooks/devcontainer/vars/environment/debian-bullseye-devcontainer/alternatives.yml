@@ -10,3 +10,8 @@ alternatives:
     link: "/usr/bin/vim"
     source: "/home/linuxbrew/.linuxbrew/bin/nvim"
     state: "present"
+  - name: "docker-compose"
+    priority: "80"
+    link: "/usr/bin/docker-compose"
+    source: "/usr/local/bin/compose-switch"
+    state: "present"
