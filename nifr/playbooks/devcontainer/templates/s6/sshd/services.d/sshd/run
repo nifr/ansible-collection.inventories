@@ -5,4 +5,4 @@
 # -e = send output to stderr
 # -D = do not daemonize
 # -4 = only listen on IPv4
-exec sshd -f /etc/ssh/sshd_config -D -4 -e 2>&1
+exec /usr/sbin/sshd -f /etc/ssh/sshd_config -D -4 -e 2>&1
