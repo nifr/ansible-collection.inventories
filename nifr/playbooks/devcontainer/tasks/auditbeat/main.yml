@@ -1,0 +1,16 @@
+- name: '[auditbeat]'
+  become: true
+  block:
+    - name: 'auditbeat:apt:deb'
+      ansible.builtin.apt:
+        state: '{{ auditbeat.state }}'
+        deb: >-
+          {{
+            "https://artifacts.elastic.co/downloads/beats/auditbeat/"
+            ~ 'auditbeat'
+            ~ '-'
+            ~ auditbeat.version
+            ~ '-'
+            ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+            ~ '.deb'
+          }}
