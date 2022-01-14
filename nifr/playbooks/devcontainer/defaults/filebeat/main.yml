@@ -1,0 +1,30 @@
+filebeat:
+  state: present
+  config:
+    filebeat.config:
+      modules:
+        path: ${path.config}/modules.d/*.yml
+        reload.enabled: false
+    processors: []
+    # processors:
+    # - add_cloud_metadata: ~
+    # - add_docker_metadata: ~
+
+    logging.level: 'error'
+    logging.json: true
+    logging.to_stderr: true
+    logging.to_files: false
+
+    filebeat.inputs: []
+    # filebeat.inputs:
+    # - type: 'log'
+    #   enabled: true
+    #   json.keys_under_root: true
+    #   json.add_error_key: true
+    #   paths:
+    #     - '/var/log/proxysql/proxysql.*'
+    output.elasticsearch:
+      enabled: false
+    output.console:
+      enabled: true
+      pretty: false

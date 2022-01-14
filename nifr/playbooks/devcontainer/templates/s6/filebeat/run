@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv sh
+
+# see:
+exec s6-setuidgid filebeat \
+    -c /etc/filebeat/filebeat.yml \
+    --strict.perms=false \
+    2>&1

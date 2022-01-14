@@ -1,0 +1,39 @@
+---
+- name: 'filebeat[package]'
+  # see: https://www.elastic.co/guide/en/beats/filebeat/current/setup-repositories.html
+  become: true
+  tags:
+    - filebeat[package]
+  block:
+    - name: 'filebeat:apt_key'
+      ansible.builtin.apt_key:
+        url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
+        state: '{{ filebeat.state }}'
+    - name: 'filebeat:apt_repository'
+      ansible.builtin.apt_repository:
+        state: '{{ filebeat.state }}'
+        repo: 'deb https://artifacts.elastic.co/packages/7.x/apt stable main'
+        filename: 'elastic-7.x'
+        install_python_apt: false
+        update_cache: true
+    - name: 'filebeat:apt:package'
+      ansible.builtin.apt:
+        state: '{{ filebeat.state }}'
+        name: 'filebeat={{ filebeat.version }}'
+- name: 'filebeat[config]'
+  become: true
+  tags:
+    - filebeat[config]
+  block:
+    - name: 'filebeat:file/directory:config-dir'
+      ansible.builtin.file:
+        path: '/usr/share/filebeat'
+        state: 'directory'
+        user: root
+        group: root
+        mode: 0755
+    - name: 'filebeat:template:config'
+      ansible.builtin.template:
+        src: "filebeat/filebeat.yml.j2"
+        dest: "/etc/filebeat/filebeat.yml"
+        mode: "0644"
