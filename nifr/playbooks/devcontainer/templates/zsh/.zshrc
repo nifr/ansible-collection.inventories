@@ -246,6 +246,8 @@ fi
 
   [ ! -d ~/.local/share/zsh/plugins ] && return 0
 
+  [ -r /usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh ] && source /usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh
+
   local normal_plugins=(
     ~/.local/share/zsh/plugins/***/***.plugin.zsh~*.defer.plugin.zsh(N.)
   )
@@ -258,7 +260,7 @@ fi
     source "${plugin}"
   done
 
-  if [[ $+commands[zsh-defer] ]]; then
+  if type 'zsh-defer' 2>/dev/null | grep -q 'function'; then
     for deferred_plugin in $deferred_plugins; do
       zsh-defer source "${deferred_plugin}"
     done
