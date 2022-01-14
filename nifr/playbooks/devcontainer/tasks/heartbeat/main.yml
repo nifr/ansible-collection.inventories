@@ -1,0 +1,16 @@
+- name: '[heartbeat]'
+  become: true
+  block:
+    - name: 'heartbeat:apt:deb'
+      ansible.builtin.apt:
+        state: '{{ auditbeat.state }}'
+        deb: >-
+          {{
+            "https://artifacts.elastic.co/downloads/beats/heartbeat/"
+            ~ 'heartbeat'
+            ~ '-'
+            ~ heartbeat.version
+            ~ '-'
+            ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+            ~ '.deb'
+          }}

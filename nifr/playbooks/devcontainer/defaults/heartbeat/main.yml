@@ -1,0 +1,3 @@
+heartbeat:
+  state: present
+  version: '7.16.3'
