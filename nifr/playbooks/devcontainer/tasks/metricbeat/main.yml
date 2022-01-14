@@ -1,0 +1,14 @@
+- name: 'metricbeat:deb'
+  become: true
+  ansible.builtin.apt:
+    state: '{{ metricbeat.state }}'
+    deb: >-
+      {{
+        "https://artifacts.elastic.co/downloads/beats/filebeat/"
+        ~ 'filebeat'
+        ~ '-'
+        ~ filebeat.version
+        ~ '-'
+        ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+        ~ '.deb'
+      }}
