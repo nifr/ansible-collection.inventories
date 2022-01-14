@@ -36,6 +36,7 @@ path=(
   ~/.local/lib/cargo/bin
   ~/.local/lib/rustup/bin
   ~/.local/bin
+  ~linuxbrew/.linuxbrew/shims
   ~linuxbrew/.linuxbrew/bin
   ~linuxbrew/.linuxbrew/sbin
   $path
