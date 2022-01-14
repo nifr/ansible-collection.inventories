@@ -1,0 +1,20 @@
+- name: '[packetbeat]'
+  become: true
+  block:
+    - name: 'packetbeat:apt:dependencies'
+      ansible.builtin.apt:
+        pkg:
+        - libpcap2
+    - name: 'packetbeat:apt:deb'
+      ansible.builtin.apt:
+        state: '{{ packetbeat.state }}'
+        deb: >-
+          {{
+            "https://artifacts.elastic.co/downloads/beats/packetbeat/"
+            ~ 'packetbeat'
+            ~ '-'
+            ~ packetbeat.version
+            ~ '-'
+            ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+            ~ '.deb'
+          }}
