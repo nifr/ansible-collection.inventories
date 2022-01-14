@@ -257,6 +257,7 @@
       mode: "2750"
       recurse: false
     loop:
+      - "~linuxbrew/.linuxbrew/share"
       - "~linuxbrew/.linuxbrew/share/zsh"
       - "~linuxbrew/.linuxbrew/share/zsh/site-functions"
   - name: "linuxbrew:file:directory:permissions:zsh-completions"
@@ -270,7 +271,6 @@
       recurse: false
     loop:
       - "~linuxbrew/.linuxbrew/share/zsh-completions"
-  # fix: docker-compsoe v2
 
 - name: "linuxbrew[fix][docker-compose]"
   become: true
