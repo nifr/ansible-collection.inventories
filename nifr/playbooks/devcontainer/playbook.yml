@@ -1,23 +1,16 @@
 ---
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-playbook.json
 - hosts: "all"
   gather_facts: true
   tasks:
-  - name: "playbook:debug:ansible_playbook_python"
-    debug:
-      var: "ansible_playbook_python"
-    tags: "always"
-  # TODO: Add additional debugging capabilities
   # see: https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
-  - name: "playbook:debug:inventory_hostname"
+  - name: "playbook:debug:variables"
+    when: "{{ ansible_debug_vars | bool }}"
     debug:
-      var: inventory_hostname
-  - name: "playbook:debug:ansible_hostname"
-    debug:
-      var: ansible_hostname
-  - name: "playbook:debug:ansible_python_interpreter"
-    debug:
-      var: "ansible_python_interpreter"
-    tags: "always"
+      var: '{{ item }}'
+    loop: '{{ ansible_debug_variables }}'
+    tags:
+      - "always"
   - name: "playbook:include_vars"
     ignore_errors: "{{ ansible_ignore_errors | default(false) | bool }}"
     no_log: false
