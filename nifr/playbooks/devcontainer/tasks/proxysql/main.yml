@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: "proxysql:deb"
+  become: true
+  ansible.builtin.apt:
+    deb: >-
+      {{
+        'https://github.com/sysown/proxysql/releases/download/'
+        ~ '/v' ~ proxysql.version
+        ~ '/
+          ~ proxysql_'
+          ~ proxysql.version
+          ~ '-'
+          ~ (ansible_distribution | lower)
+          ~ (ansible_distribution_major_version | lower)
+          ~ '_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.deb'
+      }}
+    state: '{{ proxysql.state }}'
