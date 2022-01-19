@@ -1,6 +1,10 @@
 - name: "mysql-community-server"
   become: true
   block:
+    - name: mysql-community-server:apt_key
+      ansible.builtin.apt_key:
+        keyserver: gpg.mit.edu
+        id: 3A79BD29
     - name: "mysql-community-server:apt:repository-deb"
       ansible.builtin.apt:
         state: "{{ mysql_community_server.state }}"
