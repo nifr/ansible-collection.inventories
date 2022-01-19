@@ -187,6 +187,10 @@
       tags:
         - "languages[rust]"
         - "rust"
+    - import_tasks: "temurin/main.yml"
+      tags:
+        - "languages[java]"
+        - "java"
 # END [programming-languages]
 
 - name: "[rust]"
@@ -309,6 +313,10 @@
       tags:
         - go[restic]
         - restic
+    - import_tasks: "rest-server/main.yml"
+      tags:
+        - go[rest-server]
+        - rest-server
     - import_tasks: "shfmt/main.yml"
       tags:
         - go[shfmt]
@@ -470,11 +478,42 @@
   tags:
     - databases[*]
   block:
-    - import_tasks: "mysql-community-server/main.yml"
+    - import_tasks: "proxysql/main.yml"
       tags:
-        - databases[mysql]
-        - mysql-community-server
+        - databases[proxysql]
+        - proxysql
+    - tags:
+      - databases[mysql]
+      block:
+        - import_tasks: "mysql-community-server/main.yml"
+          tags:
+            - mysql-community-server
+        - import_tasks: "mysql/main.yml"
+          tags:
+            - mysql
 # END [databases]
+
+# [elastic-beats]
+- name: "[elastic-beats]"
+  tags:
+    - elastic-beats[*]
+  block:
+    - import_tasks: 'auditbeat/main.yml'
+      tags:
+        - 'elastic-beats[auditbeat]'
+        - 'auditbeat'
+    - import_tasks: 'filebeat/main.yml'
+      tags:
+        - 'elastic-beats[filebeat]'
+        - 'filebeat'
+    - import_tasks: 'heartbeat/main.yml'
+      tags:
+        - 'elastic-beats[heartbeat]'
+        - 'heartbeat'
+    - import_tasks: 'metricbeat/main.yml'
+      tags:
+        - 'elastic-beats[metricbeat]'
+        - 'metricbeat'
 
 # [php-tools]
 - name: "[php-tools]"
