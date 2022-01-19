@@ -7,7 +7,7 @@
       ansible.builtin.file:
         path: '{{ mysql.config_file.global | dirname }}'
         state: 'directory'
-        user: root
+        owner: root
         group: root
         mode: '0755'
     - name: 'mysql[config]:template:config'
