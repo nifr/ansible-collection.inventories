@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv sh
 
-# see:
+# see: https://www.elastic.co/guide/en/beats/filebeat/current/command-line-options.html
 exec s6-setuidgid filebeat \
     -c /etc/filebeat/filebeat.yml \
     --strict.perms=false \
