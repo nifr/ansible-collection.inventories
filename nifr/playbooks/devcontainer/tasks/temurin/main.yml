@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+#
+# see: https://adoptium.net/installation.html#x64_linux-jre
+# see: https://blog.adoptium.net/2021/12/eclipse-temurin-linux-installers-available/
+#
+# apt-get install -y wget apt-transport-https gnupg
+# https://packages.adoptium.net/artifactory/api/gpg/key/public
+# echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
+# apt-get update # update if you haven't already
+# apt-get install temurin-17-jdk
+- name: "temurin"
+  become: true
+  block:
+    - name: "temurin:apt_key"
+      ansible.builtin.apt_key:
+        state: "{{ temurin.state }}"
+        url: "https://packages.adoptium.net/artifactory/api/gpg/key/public"
+    - name: "temurin:apt_repository"
+      ansible.builtin.apt_repository:
+        state: "{{ temurin.state }}"
+        repo: "{{ 'deb https://packages.adoptium.net/artifactory/deb ' ~ ansible_distribution_release ~ ' main' }}"
+        install_python_apt: false
+        filename: adoptium
+    - name: "temurin:apt:jdk"
+      ansible.builtin.apt:
+        state: "{{ temurin.state }}"
+        name: "{{ 'temurin-' ~ item ~ '-jdk' }}"
+      loop: "{{ temurin.jdk }}"
+    - name: "temurin:apt:jre"
+      ansible.builtin.apt:
+        state: "{{ temurin.state }}"
+        name: "{{ 'temurin-' ~ item ~ '-jre' }}"
+      loop: "{{ temurin.jre }}"

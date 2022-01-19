@@ -1,0 +1,8 @@
+temurin:
+  state: 'present'
+  jdk:
+    - '8'
+    - '11'
+  jre:
+    - '8'
+    - '11'
