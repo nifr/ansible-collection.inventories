@@ -1,0 +1,25 @@
+code_server:
+  state: present
+  version: '4.0.1'
+  user: code-server
+  uid: 210
+  group: code-server
+  groups: []
+  gid: 210
+  home: /opt/code-server
+  workdir: /workspace
+  # [config-path]
+  # ~/.config/code-server/config.yaml
+  # respects XDG_CONFIG_HOME
+  config_path: /opt/code-server/config/config.yaml
+  config: {}
+  extensions: {}
+  settings:
+    # Default: ~/.local/share/code-server/User
+    # /opt/code-server/user-data/Machine/settings.json
+    machine: {}
+    # Default: ~/.local/share/code-server/User
+    # /opt/code-server/user-data/User/settings.json
+    user: {}
+  keybindings: {}
+    # /opt/code-server/user-data/User/keybindings.json

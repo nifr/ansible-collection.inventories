@@ -1,0 +1,105 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: "code-server:deb"
+  become: true
+  ansible.builtin.apt:
+    deb: >-
+      {{
+        'https://github.com/coder/code-server/releases/download'
+        ~ '/v' ~ code_server.version
+        ~ '/
+          ~ 'code-server'
+          ~ '_'
+          ~ code_server.version
+          ~ '_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.deb'
+      }}
+    state: '{{ code_server.state }}'
+
+- name: 'code-server[config]'
+  become: true
+  tags:
+    - code-server[config]
+  block:
+  - when: 'code_server.state is "present"'
+    block:
+      - name: "code-server:group"
+        ansible.builtin.group:
+          name: '{{ code_server.group }}'
+          gid: '{{ code_server.gid }}'
+          state: '{{ code_server.state }}'
+      - name: "code-server:user"
+        ansible.builtin.user:
+          name: '{{ code_server.user }}'
+          uid: '{{ code_server.uid }}'
+          group: '{{ code_server.group }}'
+          groups: '{{ code_server.groups }}'
+          home: '{{ code_server.home }}'
+          create_home: false
+          state: '{{ code_server.state }}'
+      - name: "code-server:home"
+        ansible.builtin.file:
+          path: '{{ code_server.home }}'
+          state: directory
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
+          mode: '2770'
+      - ansible.builtin.file:
+          path: '{{ code_server.config_path | dirname }}'
+          state: directory
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
+          mode: '0550'
+      - ansible.builtin.template:
+          src: "code-server/config/config.yaml.j2"
+          dest: "{{ code_server.config_path }}"
+          mode: "0440"
+      - ansible.builtin.file:
+          path: '{{ code_server.home ~ "/Machine" }}'
+          state: directory
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
+          mode: '2550'
+      - ansible.builtin.template:
+          src: "code-server/Machine/settings.json.j2"
+          dest: '{{ code_server.home ~ "/Machine/settings.json" }}'
+          mode: "0440"
+      - ansible.builtin.file:
+          path: '{{ code_server.home ~ "/User" }}'
+          state: directory
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
+          mode: '2770'
+      - ansible.builtin.template:
+          src: "code-server/User/settings.json.j2"
+          dest: '{{ code_server.home ~ "/User/settings.json" }}'
+          mode: "0770"
+      - ansible.builtin.template:
+          src: "code-server/User/keybindings.json.j2"
+          dest: '{{ code_server.home ~ "/User/keybindings.json" }}'
+          mode: "0770"
+  - when: 'code_server.state is "absent"'
+    ansible.builtin.file:
+      path: '{{ code_server.home }}'
+      state: absent
+
+- name: 'code-server[extensions]'
+  become: true
+  become_user: '{{ code_server.user }}'
+  tags:
+    - code-server[extensions]
+  block:
+    - name: code-server[extensions]:command
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/code-server
+          - '--config'
+          - '{{ code_server.config_path }}'
+          - '--disable-update-check'
+          - '--disable-telemetry'
+          - '--verbose'
+          - '--install-extension'
+          - '{{ item }}'
+      loop: '{{ code_server.extensions }}'
+      environment:
+        VSCODE_IPC_HOOK_CLI: ''
