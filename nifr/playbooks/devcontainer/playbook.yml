@@ -4,13 +4,6 @@
   gather_facts: true
   tasks:
   # see: https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
-  - name: "playbook:debug:variables"
-    when: "{{ ansible_debug_vars | bool }}"
-    debug:
-      var: '{{ item }}'
-    loop: '{{ ansible_debug_vars_list }}'
-    tags:
-      - "always"
   - name: "playbook:include_vars"
     ignore_errors: "{{ ansible_ignore_errors | default(false) | bool }}"
     no_log: false
@@ -127,6 +120,13 @@
             not in
             playbook_include_vars.message
           )
+  - name: "playbook:debug:variables"
+    when: "{{ ansible_debug_vars | bool }}"
+    debug:
+      var: '{{ item }}'
+    loop: '{{ ansible_debug_vars_list }}'
+    tags:
+      - "always"
   - name: "playbook:import_tasks"
     import_tasks: "tasks/main.yml"
     ignore_errors: "{{ ansible_ignore_errors | bool }}"
