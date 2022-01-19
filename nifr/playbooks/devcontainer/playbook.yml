@@ -8,7 +8,7 @@
     when: "{{ ansible_debug_vars | bool }}"
     debug:
       var: '{{ item }}'
-    loop: '{{ ansible_debug_variables }}'
+    loop: '{{ ansible_debug_vars_list }}'
     tags:
       - "always"
   - name: "playbook:include_vars"
