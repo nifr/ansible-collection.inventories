@@ -1,0 +1,16 @@
+ #!/usr/bin/with-contenv sh
+
+# see: https://github.com/restic/rest-server
+#
+# * the server is expected to be exposed through a proxy (handling the authentication part)
+# * rest-server's "path" is compatible with restic's "local" repository
+#   example: `restic --repo /opt/restic/data backup [..]`
+#   example: `RESTIC_REPOSITORY=/opt/restic/data restic backup [..]`
+# * prometheus variables are available at /metrics
+rest-server \
+    --path '{{ rest_server.data_dir | default("/opt/restic/data") }}' \
+    --listen '{{ rest_server.listen | default("8000") }}' \
+    --log json \
+    --no-auth \
+    --prometheus \
+    --prometheus-no-auth

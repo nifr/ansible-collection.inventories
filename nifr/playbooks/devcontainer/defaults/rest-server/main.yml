@@ -1,0 +1,4 @@
+rest_server:
+  version: '0.10.0'
+  data_dir: /opt/restic/data
+  listen: '8000'

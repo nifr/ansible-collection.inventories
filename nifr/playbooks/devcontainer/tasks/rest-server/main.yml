@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'rest-server:unarchive'
+  become: true
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/restic/rest-server/releases/download'
+        ~ '/v' ~ rest_server.version ~ '/'
+        ~ 'rest-server_'
+        ~ rest_server.version
+        ~ '_linux_'
+        ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+        ~ '.tar.gz'
+      }}
+    include:
+      - rest-server
+    dest: /usr/local/bin
+    remote_src: true
