@@ -1,0 +1,100 @@
+---
+mysql:
+  config_file:
+    global: /etc/mysql/my.cnf
+  config:
+    global:
+    # Defaults: /etc/mysql/mysql.conf.d/mysqld.cnf
+    #
+    # [mysqld]
+    # pid-file        = /var/run/mysqld/mysqld.pid
+    # socket          = /var/run/mysqld/mysqld.sock
+    # datadir         = /var/lib/mysql
+    # log-error       = /var/log/mysql/error.log
+      mysqld:
+        - user: 'mysql'
+        - pid_file: '/var/run/mysqld/mysqld.pid'
+        - datadir: '/opt/mysql/data/datadir/'
+        - log_bin: '/var/run/mysqld/log_bin/'
+        - tmpdir: '/var/run/mysqld/tmpdir/'
+        # If empty, the variable has no effect. This is not a secure setting.
+        # If set to the name of a directory, the server limits import and export operations to work only with files in that directory.
+        # The directory must exist; the server does not create it.
+        # see: https://stackoverflow.com/q/32737478/1832745 (viewed ~750k times as of 2022-01-19)
+        - secure_file_priv: ''
+        - socket: &mysql_socket '/var/run/mysqld/mysql.sock'
+        - bind_address: '0.0.0.0'
+        - port: '3306'
+        - default-authentication-plugin: 'mysql_native_password'
+
+        # --- logging ---
+        - general_log_file: '/var/run/mysqld/log/mysql.general.log'
+        - general_log: '1'
+        - log_error: '/var/run/mysqld/log/mysql.error.log'
+        - log_error_services: 'log_filter_internal,log_sink_internal'
+        - log_timestamps: 'UTC'
+        - slow_query_log: '1'
+        - slow_query_log_file: '/var/run/mysqld/log/mysql.slow-query.log'
+
+        # --- performance ---
+        # performance & ram consumption optimizations for devcontainers
+        # see:
+        - performance_schema: '0'
+        - max_connections: '5'
+        # how many connections to keep open
+        - thread_cache_size: '1'
+        - key_buffer: '8M'
+        - query_cache_size: '8M'
+        - query_cache_limit: '512K'
+        - thread_stack: '128K'
+        # innodb_buffer_pool_size: '256M'
+
+        # thread_handing:
+        #   no-threads                -> single thread to handle 1 connection for DEBUGGING
+        #   one-thread-per-connection -> default
+        #   loaded-dynamically        -> use the thread pool plugin
+        - thread_handling: 'one-thread-per-connection'
+
+        # [innodb]
+        # --innodb-read-only=1
+        # A "slow" shutdown aka. "clean" shutdown does additional InnoDB flushing operations before completion.
+        # the shutdown itself takes longer - that time should be saved on subsequent startup.
+        - innodb_fast_shutdown: '0'
+        # change buffering - an optimization that delays write operations to secondary indexes so that the I/O operations can be performed sequentially
+        - innodb_change_buffering: '0'
+
+        # [thread pooling]
+        # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-installation.html
+        # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-operation.html
+        # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-tuning.html
+        #
+        # plugin-load-add: 'thread_pool=thread_pool.so'
+        # plugin-load-add: 'tp_thread_state=thread_pool.so'
+        # plugin-load-add: 'tp_thread_group_state=thread_pool.so'
+        # plugin-load-add: 'tp_thread_group_stats=thread_pool.so'
+        # thread_handling: 'one-thread-per-connection'
+        #
+        # This variable makes it possible to limit the amount of memory used by sleeping threads.
+        # only used by Enterprise thread plugin
+        # thread_pool_max_unused_threads: '1'
+
+        # Disable use of the internal host cache for faster name-to-IP resolution.
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-options.html#option_mysqld_skip-host-cache
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_host_cache_size
+        - host_cache_size: '0'
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_skip_name_resolve
+        - skip_name_resolve: '0'
+        # If enabled, the server permits only local (non-TCP/IP) connections.
+        # All interaction with mysqld must be made using named pipes or shared memory (on Windows) or Unix socket files (on Unix).
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_skip_networking
+        - skip_networking: '0'
+      # settings in the i.e. [mysqld-8.0] group only apply to MySQL v8.0.x
+      'mysqld-8.0': []
+      client:
+        - socket: *mysql_socket
+        - user: root
+        - password: root
+      mysqladmin:
+        - user: root
+        - password: root
+        - socket: *mysql_socket

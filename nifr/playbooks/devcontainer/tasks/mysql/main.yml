@@ -1,0 +1,17 @@
+- name: 'mysql[config]'
+  become: true
+  tags:
+    - mysql[config]
+  block:
+    - name: 'mysql[config]:file/directory:config-dir'
+      ansible.builtin.file:
+        path: '{{ mysql.config_file.global | dirname }}'
+        state: 'directory'
+        user: root
+        group: root
+        mode: '0755'
+    - name: 'mysql[config]:template:config'
+      ansible.builtin.template:
+        src: "mysql/my.cnf.j2"
+        dest: "{{ mysql.config_file.global }}"
+        mode: "0744"
