@@ -46,6 +46,8 @@
 - name: "python:pipx:package-installation"
   loop: "{{ python.pipx.packages }}"
   shell:
-    cmd: "~/.pyenv/versions/{{ python.pyenv.global_version }}/bin/pipx install {{ item.name }}"
+    cmd: "pipx install {{ item.name }}"
+  environment:
+    PATH: '{{ ansible_env.PATH }}:{{ ansible_env.HOME }}/.pyenv/versions/{{ python.pyenv.global_version }}/bin'
   tags:
     - python[pipx]
