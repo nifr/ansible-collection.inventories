@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://coder.com/docs/code-server/latest/guide
+exec s6-setuidgid {{ code_server.user | default('root') }} \
+  env VSCODE_IPC_HOOK_CLI= \
+    code-server \
+      {{ ( '--config' ~ ' ' ~ "'" ~ code_server.config_path ~ "'" ~ '\') if (code_server.config_path | default(false)) }}
+      --disable-update-check \
+      --disable-telemetry \
+        {{ code_server.workdir | default('/workspace') }}
