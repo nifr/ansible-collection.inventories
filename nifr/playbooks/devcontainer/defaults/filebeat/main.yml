@@ -1,5 +1,6 @@
 filebeat:
   state: present
+  version: '7.16.3'
   config:
     filebeat.config:
       modules:
