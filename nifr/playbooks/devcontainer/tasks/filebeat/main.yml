@@ -7,7 +7,7 @@
   block:
     - name: 'filebeat:apt_key'
       ansible.builtin.apt_key:
-        url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
         state: '{{ filebeat.state }}'
     - name: 'filebeat:apt_repository'
       ansible.builtin.apt_repository:
