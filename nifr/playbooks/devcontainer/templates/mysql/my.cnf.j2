@@ -1,13 +1,9 @@
-# The MySQL database server configuration file.
-#
 # {{ ansible_managed }}
 {% for configGroup in (mysql.config.global | dict2items) %}
 [{{ configGroup.key|string }}]
-{% for settings, valueList in configGroup.value.items() %}
-{% for valuePair in valueList %}
-{% for setting in (valuePair | dict2items) %}
+{% for settings in configGroup.value %}
+{% for setting in settings|dict2items %}
 {{ (setting.key | string) + '=' + (setting.value | string) }}
-{% endfor %}
 {% endfor %}
 {% endfor %}
 {% endfor %}
