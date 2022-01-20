@@ -232,8 +232,8 @@
     - name: "linuxbrew:command:brew bundle cleanup --force"
       command: "~linuxbrew/.linuxbrew/bin/brew bundle cleanup --force"
 
-    - name: "linuxbrew:command:brew bundle dump --describe --force"
-      command: "~linuxbrew/.linuxbrew/bin/brew bundle dump --describe --force"
+    - name: "linuxbrew:command:brew bundle dump --force"
+      command: "~linuxbrew/.linuxbrew/bin/brew bundle dump --force"
 
     - name: "linuxbrew:command:brew bundle"
       command: "~linuxbrew/.linuxbrew/bin/brew bundle"
