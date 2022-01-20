@@ -121,7 +121,7 @@
             playbook_include_vars.message
           )
   - name: "playbook:debug:variables"
-    when: "{{ ansible_debug_vars | bool }}"
+    when: "(ansible_debug_vars | bool)"
     debug:
       var: '{{ item }}'
     loop: '{{ ansible_debug_vars_list }}'
