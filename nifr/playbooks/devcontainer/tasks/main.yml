@@ -520,6 +520,10 @@
   tags:
     - php-tools[*]
   block:
+    - import_tasks: "phpactor/main.yml"
+      tags:
+        - php-tools[phpactor]
+        - phpactor
     - import_tasks: "symfony-cli/main.yml"
       tags:
         - php-tools[symfony-cli]

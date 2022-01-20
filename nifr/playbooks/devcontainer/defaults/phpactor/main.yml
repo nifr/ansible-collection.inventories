@@ -1,0 +1,4 @@
+phpactor:
+  state: present
+  install_dir: /opt/phpactor
+  version: '0.18.0'

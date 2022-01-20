@@ -1,0 +1,39 @@
+- name: 'phpactor:state=present'
+  when: 'phpactor.state is "present"'
+  become: true
+  block:
+    - name: 'phpactor:git:repo'
+      ansible.builtin.git:
+        repo: https://github.com/phpactor/phpactor.git
+        dest: '{{ phpactor.install_dir }}'
+        version: '{{ phpactor.version }}'
+    - name: 'phpactor:command:composer:install'
+      ansible.builtin.command:
+        argv:
+          - composer
+          - install
+        chdir: '{{ phpactor.install_dir }}'
+        creates: '{{ phpactor.install_dir ~ "/vendor" }}'
+    - name: 'phpactor:file:command:mode'
+      ansible.builtin.file:
+        path: '{{ phpactor.install_dir ~ "/bin/phpactor" }}'
+        mode: 0555
+    - name: 'phpactor:file:link:command'
+      ansible.builtin.file:
+        src: '{{ phpactor.install_dir ~ "/bin/phpactor" }}'
+        dest: /usr/local/bin/phpactor
+        owner: root
+        group: root
+        state: link
+- name: 'phpactor:state=absent'
+  when: 'phpactor.state is "absent"'
+  become: true
+  block:
+    - name: 'phpactor:file:directory:absent'
+      ansible.builtin.file:
+        path: '{{ phpactor.install_dir }}'
+        state: absent
+    - name: 'phpactor:file:link:command:absent'
+      ansible.builtin.file:
+        path: /usr/local/bin/phpactor
+        state: absent
