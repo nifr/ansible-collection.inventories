@@ -21,7 +21,7 @@
   tags:
     - code-server[config]
   block:
-  - when: 'code_server.state is "present"'
+  - when: '"present" == code_server.state'
     block:
       - name: "code-server:group"
         ansible.builtin.group:
@@ -78,7 +78,7 @@
           src: "code-server/User/keybindings.json.j2"
           dest: '{{ code_server.home ~ "/User/keybindings.json" }}'
           mode: "0770"
-  - when: 'code_server.state is "absent"'
+  - when: '"absent" == code_server.state'
     ansible.builtin.file:
       path: '{{ code_server.home }}'
       state: absent
