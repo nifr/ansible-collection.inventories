@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://github.com/pyouroboros/ouroboros/wiki/Usage#latest
+exec s6-setuidgid root \
+    env \
+        REPO_USER= \
+        REPO_PASS= \
+        DOCKER_SOCKETS="unix://var/run/docker.sock" \
+        MONITOR="${HOSTNAME}" \
+        INTERVAL=30 \
+        DRY_RUN=true \
+        RUN_ONCE=true \
+        LOG_LEVEL=info \
+        DATA_EXPORT=prometheus \
+        PROMETHEUS_ADDR=0.0.0.0 \
+        PROMETHEUS_PORT=3579 \
+        SKIP_STARTUP_NOTIFICATIONS=true \
+        NOTIFIERS="mailtos://myUsername:myPassword@gmail.com?to=receivingAddress@gmail.com" \
+    ouroboros \
+      --config '/opt/code-server/config.yaml' \
+        /workspace

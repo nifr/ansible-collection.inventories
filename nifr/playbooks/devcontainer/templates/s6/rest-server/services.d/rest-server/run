@@ -7,7 +7,7 @@
 #   example: `restic --repo /opt/restic/data backup [..]`
 #   example: `RESTIC_REPOSITORY=/opt/restic/data restic backup [..]`
 # * prometheus variables are available at /metrics
-rest-server \
+exec rest-server \
     --path '{{ rest_server.data_dir | default("/opt/restic/data") }}' \
     --listen '{{ rest_server.listen | default("8000") }}' \
     --log json \

@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv sh
+
+exec s6-setuidgid www-data \
+  tail \
+    --follow=name \
+    --retry \
+    --silent \
+        "${WORKDIR:-/workspace}/var/log/dev.log" \
+        "${WORKDIR:-/workspace}/var/log/prod.log" \
+        "${WORKDIR:-/workspace}/var/log/test.log"
