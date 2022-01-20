@@ -12,7 +12,18 @@
         ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
         ~ '.tar.gz'
       }}
+    extra_opts:
+      - '--strip-components=1'
     include:
-      - rest-server
+     - >-
+        {{
+          'rest-server_'
+          ~ rest_server.version
+          ~ '_linux_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/rest-server'
+        }}
     dest: /usr/local/bin
+    creates: '/usr/local/bin/rest-server'
+    list_files: true
     remote_src: true
