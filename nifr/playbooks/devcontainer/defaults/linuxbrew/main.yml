@@ -1,7 +1,7 @@
 ---
 linuxbrew:
   state: "present"
-  purge_tap_dirs_after_install: false
+  purge_tap_dirs: false
   taps:
     - "homebrew/bundle"
     - "homebrew/core"
