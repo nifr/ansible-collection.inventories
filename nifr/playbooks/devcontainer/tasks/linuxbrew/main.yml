@@ -271,6 +271,12 @@
       recurse: false
     loop:
       - "~linuxbrew/.linuxbrew/share/zsh-completions"
+  - name: "linuxbrew:file:absent:~linuxbrew/.linuxbrew/share/zsh-completions/_console"
+    # The _console completion function for "console" and "php console" is broken. Remove it.
+    # > console Error in argument 1, char 1: no argument for option -
+    ansible.builtin.file:
+      path: "~linuxbrew/.linuxbrew/share/zsh-completions/_console"
+      state: "absent"
 
 - name: "linuxbrew[fix][docker-compose]"
   become: true
