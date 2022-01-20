@@ -29,7 +29,7 @@
       ansible.builtin.file:
         path: '/usr/share/filebeat'
         state: 'directory'
-        user: root
+        owner: root
         group: root
         mode: 0755
     - name: 'filebeat:template:config'
