@@ -538,6 +538,9 @@
         - local-php-security-checker
 # END [databases]
 
+- import_tasks: 'code-server/main.yml'
+  tags:
+    - code-server
 - import_tasks: "redis/main.yml"
   tags:
     - redis
