@@ -37,6 +37,15 @@ mysql:
         # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_log_error_services
         - log_error_services: 'log_filter_internal,log_sink_internal'
         - log_timestamps: 'UTC'
+        # destination for general_log and slow_query_log
+        # Default: FILE, Options: FILE|TABLE|NONE - can be both: FILE,TABLE
+        # SHOW CREATE TABLE mysql.general_log;
+        # SHOW CREATE TABLE mysql.slow_log;
+        - log_output: 'FILE'
+        # SET GLOBAL general_log = 'OFF';
+        # SET GLOBAL general_log = 'ON';
+        - general_log: '1'
+        - general_log_file: '/var/run/mysqld/log/mysql.general.log'
         - slow_query_log: '1'
         - slow_query_log_file: '/var/run/mysqld/log/mysql.slow-query.log'
 
