@@ -228,6 +228,10 @@
   block:
     - name: "linuxbrew:command:brew bundle install ~linuxbrew/.Brewfile"
       command: "~linuxbrew/.linuxbrew/bin/brew bundle install --no-lock"
+      register: "linuxbrew_bundle_install"
+      until: "linuxbrew_bundle_install is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
 
     - name: "linuxbrew:command:brew bundle cleanup --force"
       command: "~linuxbrew/.linuxbrew/bin/brew bundle cleanup --force"
