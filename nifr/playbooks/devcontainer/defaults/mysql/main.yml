@@ -28,10 +28,13 @@ mysql:
         # default_authentication_plugin is DEPRECATED
         - default_authentication_plugin: 'mysql_native_password'
 
-        # --- logging ---
-        - general_log_file: '/var/run/mysqld/log/mysql.general.log'
-        - general_log: '1'
-        - log_error: '/var/run/mysqld/log/mysql.error.log'
+        # [logging]
+        #
+        # NOT setting "log_error" at all makes mysqld log to stderr
+        # - log_error: '/var/run/mysqld/log/mysql.error.log'
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_log_error_verbosity
+        - log_error_verbosity: '3'
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_log_error_services
         - log_error_services: 'log_filter_internal,log_sink_internal'
         - log_timestamps: 'UTC'
         - slow_query_log: '1'
