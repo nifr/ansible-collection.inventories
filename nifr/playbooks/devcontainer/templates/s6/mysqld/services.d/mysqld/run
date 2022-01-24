@@ -1,11 +1,6 @@
 #!/usr/bin/with-contenv sh
 
-exec mysqld_safe \
-  --defaults-file=/etc/mysql/my.cnf \
-  --pid-file=/var/run/mysqld/mysqld.pid \
-  --bind-address=0.0.0.0 \
-  --port=3306 \
-  --user=root \
-  --socket=/var/run/mysqld/mysqld.sock \
-  --verbose \
+exec s6-setuidgid mysql \
+  mysqld \
+    --defaults-file=/etc/mysql/my.cnf \
   2>&1
