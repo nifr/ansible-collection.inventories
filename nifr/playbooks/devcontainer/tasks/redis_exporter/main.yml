@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'redis_exporter:unarchive'
+  become: true
+  when: '"present" == redis_exporter.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/oliver006/redis_exporter/releases/download'
+        ~ '/v' ~ redis_exporter.version
+        ~ '/
+          ~ 'redis_exporter'
+          ~ '-'
+          ~ 'v' ~ redis_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'redis_exporter'
+          ~ '-'
+          ~ 'v' ~ redis_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/redis_exporter'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/redis_exporter'
+    list_files: true
+    remote_src: true
+- name: 'redis_exporter:file:absent:/usr/local/bin/redis_exporter'
+  become: true
+  when: '"absent" == redis_exporter.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/redis_exporter'
+    state: absent

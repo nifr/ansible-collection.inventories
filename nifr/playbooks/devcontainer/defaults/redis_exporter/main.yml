@@ -1,0 +1,4 @@
+# see: https://github.com/oliver006/redis_exporter/releases
+redis_exporter:
+  state: present
+  version: '1.34.1'

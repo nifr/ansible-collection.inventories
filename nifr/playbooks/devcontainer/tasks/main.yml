@@ -560,6 +560,10 @@
           tags:
             - prometheus[mysqld_exporter]
             - mysqld_exporter
+        - import_tasks: "redis_exporter/main.yml"
+          tags:
+            - prometheus[redis_exporter]
+            - redis_exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'
