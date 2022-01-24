@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'php-fpm_exporter:unarchive'
+  become: true
+  when: '"present" == php_fpm_exporter.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/hipages/php-fpm_exporter/releases/download'
+        ~ '/v' ~ php_fpm_exporter.version
+        ~ '/
+          ~ 'php-fpm_exporter'
+          ~ '_'
+          ~ php-fpm_exporter.version
+          ~ '_linux_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'php-fpm_exporter'
+          ~ '_'
+          ~ php-fpm_exporter.version
+          ~ '_linux_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+          ~ '/php-fpm_exporter'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/php-fpm_exporter'
+    list_files: true
+    remote_src: true
+- name: 'php-fpm_exporter:file:absent:/usr/local/bin/php-fpm_exporter'
+  become: true
+  when: '"absent" == php_fpm_exporter.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/php-fpm_exporter'
+    state: absent

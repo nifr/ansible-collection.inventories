@@ -564,6 +564,10 @@
           tags:
             - prometheus[redis_exporter]
             - redis_exporter
+        - import_tasks: "php-fpm_exporter/main.yml"
+          tags:
+            - prometheus[php-fpm_exporter]
+            - php-fpm_exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'
