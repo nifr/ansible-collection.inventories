@@ -111,6 +111,10 @@ mysql:
         - socket: *mysql_socket
         - user: root
         - password: root
+        # SHOW variables LIKE 'collation%';
+        - default_character_set: 'utf8mb4'
+      mysql:
+        - default_character_set: utf8mb4
       mysqladmin:
         - user: root
         - password: root
