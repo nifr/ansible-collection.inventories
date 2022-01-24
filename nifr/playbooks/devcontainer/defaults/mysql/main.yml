@@ -90,6 +90,21 @@ mysql:
         # All interaction with mysqld must be made using named pipes or shared memory (on Windows) or Unix socket files (on Unix).
         # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_skip_networking
         - skip_networking: '0'
+        # [plugins]
+        # see: https://dev.mysql.com/doc/refman/8.0/en/socket-pluggable-authentication.html
+        #
+        # SELECT plugin_name, plugin_status FROM information_schema.plugins WHERE plugin_name LIKE '%socket%';
+        # INSTALL PLUGIN auth_socket SONAME 'auth_socket.so';
+        # SELECT host,user,plugin,authentication_string FROM mysql.user;
+        #
+        # File: /usr/lib/mysql/plugin/auth_sock.so
+        #
+        # CREATE USER 'schuettflix'@'localhost' IDENTIFIED WITH auth_socket AS 'root';
+        # -> sudo mysql -u schuettflix
+        #
+        - plugin-load-add: 'auth_socket=auth_socket.so'
+        # prevent the "auth_sock" plugin from being removed at runtime
+        - auth_socket: FORCE_PLUS_PERMANENT
       # settings in the i.e. [mysqld-8.0] group only apply to MySQL v8.0.x
       'mysqld-8.0': []
       client:
