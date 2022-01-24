@@ -4,14 +4,15 @@ mysql:
     global: /etc/mysql/my.cnf
   config:
     global:
-    # Defaults: /etc/mysql/mysql.conf.d/mysqld.cnf
-    #
-    # [mysqld]
-    # pid-file        = /var/run/mysqld/mysqld.pid
-    # socket          = /var/run/mysqld/mysqld.sock
-    # datadir         = /var/lib/mysql
-    # log-error       = /var/log/mysql/error.log
       mysqld:
+        # Defaults: /etc/mysql/mysql.conf.d/mysqld.cnf
+        #
+        # [mysqld]
+        # pid-file        = /var/run/mysqld/mysqld.pid
+        # socket          = /var/run/mysqld/mysqld.sock
+        # datadir         = /var/lib/mysql
+        # log-error       = /var/log/mysql/error.log
+        #
         - user: 'mysql'
         - pid_file: '/var/run/mysqld/mysqld.pid'
         - datadir: '/var/lib/mysql'
@@ -65,11 +66,14 @@ mysql:
         # note: "init_connect" is ignored when connecting as "root"
         - init_connect: 'SET NAMES utf8mb4'
         - init_connect: 'SET collation_connection = utf8mb4_0900_ai_ci'
+
+        # [performance]
+        #
         # performance & ram consumption optimizations for devcontainers
         # see:
         - performance_schema: '0'
         - max_connections: '5'
-        # how many connections to keep open
+        # thread_cache_size - how many connections to keep open
         - thread_cache_size: '1'
         # TODO > unknown variable 'key_buffer=8M'
         # - key_buffer: '8M'
@@ -78,14 +82,12 @@ mysql:
         - thread_stack: '128K'
         # innodb_buffer_pool_size: '256M'
 
-        # thread_handing:
-        #   no-threads                -> single thread to handle 1 connection for DEBUGGING
-        #   one-thread-per-connection -> default
-        #   loaded-dynamically        -> use the thread pool plugin
-        - thread_handling: 'one-thread-per-connection'
-
         # [innodb]
         # --innodb-read-only=1
+        # buffer pool size
+        # SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_pages_%';
+        # SHOW variables LIKE 'innodb%'
+        #
         # A "slow" shutdown aka. "clean" shutdown does additional InnoDB flushing operations before completion.
         # the shutdown itself takes longer - that time should be saved on subsequent startup.
         - innodb_fast_shutdown: '0'
@@ -137,8 +139,23 @@ mysql:
         - plugin-load-add: 'auth_socket=auth_socket.so'
         # prevent the "auth_sock" plugin from being removed at runtime
         - auth_socket: FORCE_PLUS_PERMANENT
-      # settings in the i.e. [mysqld-8.0] group only apply to MySQL v8.0.x
-      'mysqld-8.0': []
+        # [components]
+        # components are loaded from "plugin_dir"
+        # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_plugin_dir
+        #
+        # Typically, a sink processes log events into log messages that have a particular format and writes these messages to its associated output, such as a file or the system log.
+        # task.m
+        # SET PERSIST log_error_services = 'log_filter_internal; log_sink_json';
+        #
+        # INSTALL COMPONENT 'file://component_validate_password';
+        #
+        # SELECT * FROM mysql.component;
+      'mysqld-5.7':
+        # settings in the i.e. [mysqld-8.0] group only apply to MySQL v8.0.x
+
+        # see: https://dev.mysql.com/doc/refman/5.7\q/en/innodb-performance-use_sys_malloc.html
+        # variable is DEPRECATED and was removed in v8.0+
+        - innodb_use_sys_malloc: '1'
       client:
         - socket: *mysql_socket
         - user: root
