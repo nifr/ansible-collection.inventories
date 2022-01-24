@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'blackbox_exporter:unarchive'
+  become: true
+  when: '"present" == blackbox_exporter.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/prometheus/blackbox_exporter/releases/download'
+        ~ '/v' ~ blackbox_exporter.version
+        ~ '/
+          ~ 'blackbox_exporter'
+          ~ '-'
+          ~ 'v' ~ blackbox_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'blackbox_exporter'
+          ~ '-'
+          ~ 'v' ~ blackbox_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/blackbox_exporter'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/blackbox_exporter'
+    list_files: true
+    remote_src: true
+- name: 'blackbox_exporter:file:absent:/usr/local/bin/blackbox_exporter'
+  become: true
+  when: '"absent" == blackbox_exporter.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/blackbox_exporter'
+    state: absent

@@ -552,6 +552,10 @@
           tags:
             - prometheus[node_exporter]
             - node_exporter
+        - import_tasks: "blackbox_exporter/main.yml"
+          tags:
+            - prometheus[blackbox_exporter]
+            - blackbox_exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'
