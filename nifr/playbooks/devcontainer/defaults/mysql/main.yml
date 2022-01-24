@@ -55,7 +55,11 @@ mysql:
         # see: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_log_slow_extra
         - log_slow_extra: '1'
 
-        # --- performance ---
+        # [character set & collation]
+        #
+        # SHOW character set;
+        - character_set_server: 'utf8mb4'
+        - collation_server: 'utf8mb4_0900_ai_ci'
         # performance & ram consumption optimizations for devcontainers
         # see:
         - performance_schema: '0'
