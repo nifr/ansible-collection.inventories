@@ -514,6 +514,7 @@
       tags:
         - 'elastic-beats[metricbeat]'
         - 'metricbeat'
+# END [elastic-beats]
 
 # [php-tools]
 - name: "[php-tools]"
@@ -536,7 +537,15 @@
       tags:
         - php-tools[local-php-security-checker]
         - local-php-security-checker
-# END [databases]
+# END [php-tools]
+
+# [prometheus]
+- name: "[prometheus]"
+  block:
+    - import_tasks: 'prometheus/main.yml'
+      tags:
+        - prometheus
+# END [prometheus]
 
 - import_tasks: 'traefik/main.yml'
   tags:

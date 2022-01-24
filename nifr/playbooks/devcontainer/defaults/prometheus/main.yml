@@ -1,0 +1,4 @@
+# see: https://github.com/prometheus/prometheus/releases
+prometheus:
+  state: present
+  version: '2.32.1'

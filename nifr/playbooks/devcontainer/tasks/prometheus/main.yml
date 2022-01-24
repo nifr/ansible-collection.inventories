@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'prometheus:unarchive'
+  become: true
+  when: '"present" == prometheus.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/prometheus/prometheus/releases/download'
+        ~ '/v' ~ prometheus.version
+        ~ '/
+          ~ 'prometheus'
+          ~ '-'
+          ~ 'v' ~ prometheus.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'prometheus'
+          ~ '-'
+          ~ 'v' ~ prometheus.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/prometheus'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/prometheus'
+    list_files: true
+    remote_src: true
+- name: 'prometheus:file:absent:/usr/local/bin/prometheus'
+  become: true
+  when: '"absent" == prometheus.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/prometheus'
+    state: absent
