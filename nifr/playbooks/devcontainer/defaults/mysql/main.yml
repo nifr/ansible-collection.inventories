@@ -116,6 +116,7 @@ mysql:
       mysql:
         - default_character_set: utf8mb4
       mysqladmin:
+        - socket: *mysql_socket
         - user: root
         - password: root
       mysqlpump:
