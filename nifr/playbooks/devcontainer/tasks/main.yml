@@ -545,6 +545,13 @@
     - import_tasks: 'prometheus/main.yml'
       tags:
         - prometheus
+    - tags:
+        - prometheus[*]
+      block:
+        - import_tasks: "node_exporter/main.yml"
+          tags:
+            - prometheus[node_exporter]
+            - node_exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'

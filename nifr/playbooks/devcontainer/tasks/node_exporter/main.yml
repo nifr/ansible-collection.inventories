@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'node_exporter:unarchive'
+  become: true
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/prometheus/node_exporter/releases/download'
+        ~ '/v' ~ node_exporter.version
+        ~ '/'
+          ~ 'node_exporter-'
+          ~ node_exporter.version
+          ~ '.linux-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          'node_exporter-'
+          ~ node_exporter.version
+          ~ '.linux-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/node_exporter'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/node_exporter'
+    list_files: true
+    remote_src: true
+- name: 'node_exporter:file:absent:/usr/local/bin/node_exporter'
+  become: true
+  when: '"absent" == node_exporter.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/node_exporter'
+    state: absent
