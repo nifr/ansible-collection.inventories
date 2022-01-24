@@ -556,6 +556,10 @@
           tags:
             - prometheus[blackbox_exporter]
             - blackbox_exporter
+        - import_tasks: "mysqld_exporter/main.yml"
+          tags:
+            - prometheus[mysqld_exporter]
+            - mysqld_exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'

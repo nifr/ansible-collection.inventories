@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'mysqld_exporter:unarchive'
+  become: true
+  when: '"present" == mysqld_exporter.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/prometheus/mysqld_exporter/releases/download'
+        ~ '/v' ~ mysqld_exporter.version
+        ~ '/
+          ~ 'mysqld_exporter'
+          ~ '-'
+          ~ mysqld_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'mysqld_exporter'
+          ~ '-'
+          ~ mysqld_exporter.version
+          ~ '.linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/mysqld_exporter'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/mysqld_exporter'
+    list_files: true
+    remote_src: true
+- name: 'mysqld_exporter:file:absent:/usr/local/bin/mysqld_exporter'
+  become: true
+  when: '"absent" == mysqld_exporter.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/mysqld_exporter'
+    state: absent
