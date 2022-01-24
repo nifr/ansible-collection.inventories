@@ -65,7 +65,12 @@ mysql:
         # change buffering - an optimization that delays write operations to secondary indexes so that the I/O operations can be performed sequentially
         - innodb_change_buffering: '0'
 
-        # [thread pooling]
+        # [thread handling / pooling]
+        # thread_handing:
+        #   no-threads                -> single thread to handle 1 connection for DEBUGGING
+        #   one-thread-per-connection -> default
+        #   loaded-dynamically        -> use the thread pool plugin
+        - thread_handling: 'one-thread-per-connection'
         # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-installation.html
         # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-operation.html
         # see: https://dev.mysql.com/doc/refman/8.0/en/thread-pool-tuning.html
@@ -74,7 +79,7 @@ mysql:
         # plugin-load-add: 'tp_thread_state=thread_pool.so'
         # plugin-load-add: 'tp_thread_group_state=thread_pool.so'
         # plugin-load-add: 'tp_thread_group_stats=thread_pool.so'
-        # thread_handling: 'one-thread-per-connection'
+        # thread_handling: 'loaded-dynamically'
         #
         # This variable makes it possible to limit the amount of memory used by sleeping threads.
         # only used by Enterprise thread plugin
