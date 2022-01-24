@@ -8,8 +8,8 @@ filebeat:
         reload.enabled: false
     processors: []
     # processors:
-    # - add_cloud_metadata: ~
-    # - add_docker_metadata: ~
+    #   - add_cloud_metadata: ~
+    #   - add_docker_metadata: ~
 
     logging.level: 'error'
     logging.json: true
@@ -18,12 +18,13 @@ filebeat:
 
     filebeat.inputs: []
     # filebeat.inputs:
-    # - type: 'log'
-    #   enabled: true
-    #   json.keys_under_root: true
-    #   json.add_error_key: true
-    #   paths:
-    #     - '/var/log/proxysql/proxysql.*'
+    #   - type: 'log'
+    #     enabled: true
+    #     json.keys_under_root: true
+    #     json.add_error_key: true
+    #     paths:
+    #       - '/var/log/proxysql/proxysql.*'
+
     output.elasticsearch:
       enabled: false
     output.console:
