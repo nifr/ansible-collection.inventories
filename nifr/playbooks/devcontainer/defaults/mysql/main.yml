@@ -60,6 +60,9 @@ mysql:
         # SHOW character set;
         - character_set_server: 'utf8mb4'
         - collation_server: 'utf8mb4_0900_ai_ci'
+        # note: "init_connect" is ignored when connecting as "root"
+        - init_connect: 'SET NAMES utf8mb4'
+        - init_connect: 'SET collation_connection = utf8mb4_0900_ai_ci'
         # performance & ram consumption optimizations for devcontainers
         # see:
         - performance_schema: '0'
