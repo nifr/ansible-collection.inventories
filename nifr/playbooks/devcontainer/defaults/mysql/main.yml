@@ -118,4 +118,13 @@ mysql:
       mysqladmin:
         - user: root
         - password: root
+      mysqlpump:
+        # see: https://dev.mysql.com/doc/refman/8.0/en/mysqlpump.html
         - socket: *mysql_socket
+        - user: root
+        - password: root
+      mysql_dump:
+        # see: https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html
+        - socket: *mysql_socket
+        - user: root
+        - password: root
