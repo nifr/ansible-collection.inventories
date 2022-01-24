@@ -538,6 +538,9 @@
         - local-php-security-checker
 # END [databases]
 
+- import_tasks: 'traefik/main.yml'
+  tags:
+    - traefik
 - import_tasks: 'code-server/main.yml'
   tags:
     - code-server

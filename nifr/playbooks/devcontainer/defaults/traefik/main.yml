@@ -1,0 +1,4 @@
+# see: https://github.com/traefik/traefik/releases
+traefik:
+  state: present
+  version: '2.5.7'

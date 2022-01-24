@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'traefik:unarchive'
+  become: true
+  when: '"present" == traefik.state'
+  ansible.builtin.unarchive:
+    src: >-
+      {{
+        'https://github.com/traefik/traefik/releases/download'
+        ~ '/v' ~ traefik.version
+        ~ '/
+          ~ 'traefik'
+          ~ '_'
+          ~ 'v' ~ traefik.version
+          ~ '_'
+          ~ 'linux'
+          ~ '_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          ~ 'traefik'
+          ~ '_'
+          ~ 'v' ~ traefik.version
+          ~ '_'
+          ~ 'linux'
+          ~ '_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/traefik'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/traefik'
+    list_files: true
+    remote_src: true
+- name: 'traefik:file:absent:/usr/local/bin/traefik'
+  become: true
+  when: '"absent" == traefik.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/traefik'
+    state: absent
