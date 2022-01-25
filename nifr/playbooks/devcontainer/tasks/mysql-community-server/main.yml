@@ -3,12 +3,12 @@
   block:
     - name: mysql-community-server:apt_key
       ansible.builtin.apt_key:
-        keyserver: gpg.mit.edu
+        keyserver: pgp.mit.edu
         id: 3A79BD29
     - name: "mysql-community-server:apt:repository-deb"
       ansible.builtin.apt:
         state: "{{ mysql_community_server.state }}"
-        deb: https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
+        deb: https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
       register: "mysql_community_server_repo_installed"
     - name: "mysql-community-server:apt:update_cache"
       when: mysql_community_server_repo_installed.changed
