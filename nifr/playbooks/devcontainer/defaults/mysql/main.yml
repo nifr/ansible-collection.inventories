@@ -29,7 +29,8 @@ mysql:
         # the default value of the "default_authentication_plugin" system variable changed in
         # mysql v8.0 from "mysql_native_password" to "caching_sha2_password"
         # see: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html
-        - default_authentication_plugin: 'auth_socket'
+        # TODO: [ERROR] [MY-010177] [Server] Can't start server: Invalid value for --default-authentication-plugin
+        # - default_authentication_plugin: 'auth_socket'
 
         # [logging]
         #
