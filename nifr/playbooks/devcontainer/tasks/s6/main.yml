@@ -11,7 +11,7 @@
 - name: "s6:copy:/etc/services.d/{{ item }}/log/run"
   become: true
   ansible.builtin.copy:
-    src: '{{ "templates/s6/" ~ item ~ "/services.d/log/run" }}'
+    src: '{{ "templates/s6/" ~ item ~ "/services.d/" ~ item ~ "/log/run" }}'
     dest: '{{ "/etc/services.d/" ~ item ~ "/log/run" }}'
     owner: root
     group: root
