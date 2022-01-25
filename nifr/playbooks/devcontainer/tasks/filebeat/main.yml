@@ -9,6 +9,10 @@
       ansible.builtin.apt_key:
         url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
         state: '{{ filebeat.state }}'
+      register: "filebeat_apt_key"
+      until: "filebeat_apt_key is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
     - name: 'filebeat:apt_repository'
       ansible.builtin.apt_repository:
         state: '{{ filebeat.state }}'
@@ -16,14 +20,18 @@
         filename: 'elastic-7.x'
         install_python_apt: false
         update_cache: true
+      register: "filebeat_apt_repository"
+      until: "filebeat_apt_repository is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
     - name: 'filebeat:apt:package'
       ansible.builtin.apt:
         state: '{{ filebeat.state }}'
         name: 'filebeat={{ filebeat.version }}'
-  register: "filebeat_install"
-  until: "filebeat_install is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
+      register: "filebeat_apt_package"
+      until: "filebeat_apt_package is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
 - name: 'filebeat[config]'
   become: true
   tags:

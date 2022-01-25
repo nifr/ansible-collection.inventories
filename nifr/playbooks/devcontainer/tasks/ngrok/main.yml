@@ -12,8 +12,8 @@
     dest: "{{ ngrok_tmp_dir.path }}"
   register: "ngrok_unarchive"
   until: "ngrok_unarchive is succeeded"
-  retries: 5
-  delay: 60
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 
 - name: "ngrok:copy"
   copy:

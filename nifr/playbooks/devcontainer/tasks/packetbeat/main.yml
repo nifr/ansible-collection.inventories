@@ -5,6 +5,10 @@
       ansible.builtin.apt:
         pkg:
         - libpcap2
+      register: "packetbeat_apt_dependencies"
+      until: "packetbeat_apt_dependencies is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
     - name: 'packetbeat:apt:deb'
       ansible.builtin.apt:
         state: '{{ packetbeat.state }}'
@@ -18,7 +22,7 @@
             ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
             ~ '.deb'
           }}
-  register: "packetbeat_install"
-  until: "packetbeat_install is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
+      register: "packetbeat_deb_package"
+      until: "packetbeat_deb_package is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

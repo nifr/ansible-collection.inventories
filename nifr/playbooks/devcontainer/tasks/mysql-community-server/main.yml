@@ -6,6 +6,10 @@
       ansible.builtin.apt_key:
         keyserver: keyserver.ubuntu.com
         id: '859BE8D7C586F538430B19C2467B942D3A79BD29'
+      register: "mysql_community_server_apt_key"
+      until: "mysql_community_server_apt_key is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
     - name: "mysql-community-server:apt:repository-deb"
       # warning:  mysql-apt-config pre-depends on "lsb-release"
       # causes a possibly undesired installation of python packages
@@ -41,6 +45,10 @@
         - 'mysql-8.0'
         - 'mysql-tools'
         # - mysql-apt-config
+      register: "mysql_community_server_apt_repository"
+      until: "mysql_community_server_apt_repository is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
     - name: "mysql-community-server:debconf:root-pass"
       ansible.builtin.debconf:
         name: mysql-community-server
@@ -64,3 +72,7 @@
         # would break with every new release.
         # versions have the form  mysql-comumunity-server=8.0.28-1debian11
         # name: "mysql-community-server={{ mysql_community_server.version }}"
+      register: "mysql_community_server_apt_package"
+      until: "mysql_community_server_apt_package is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

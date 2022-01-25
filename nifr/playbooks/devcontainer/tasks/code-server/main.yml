@@ -107,3 +107,7 @@
       loop: '{{ code_server.extensions }}'
       environment:
         VSCODE_IPC_HOOK_CLI: ''
+      register: "code_server_extensions_play"
+      until: "code_server_extensions_play is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"

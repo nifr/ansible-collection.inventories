@@ -14,7 +14,7 @@
             ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
             ~ '.deb'
           }}
-  register: "auditbeat_download"
-  until: "auditbeat_download is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
+      register: "auditbeat_download"
+      until: "auditbeat_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
