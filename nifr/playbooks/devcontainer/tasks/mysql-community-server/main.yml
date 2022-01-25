@@ -2,19 +2,44 @@
   become: true
   block:
     - name: mysql-community-server:apt_key
+      # gpg --keyserver pgp.mit.edu --recv-keys 3A79BD29
       ansible.builtin.apt_key:
         keyserver: pgp.mit.edu
         id: 3A79BD29
     - name: "mysql-community-server:apt:repository-deb"
+      # warning:  mysql-apt-config pre-depends on "lsb-release"
+      # causes a possibly undesired installation of python packages
+      # therefore we disable/skip this play
+      when: false
       ansible.builtin.apt:
         state: "{{ mysql_community_server.state }}"
         deb: https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
       register: "mysql_community_server_repo_installed"
     - name: "mysql-community-server:apt:update_cache"
-      when: mysql_community_server_repo_installed.changed
+      # when: mysql_community_server_repo_installed.changed
+      when: false
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 0
+    - name: "mysql-community-server:apt:repository-deb"
+      # warning:  mysql-apt-config pre-depends on "lsb-release"
+      # causes a possibly undesired installation of python packages
+      # therefore we disable/skip this play
+      when: false
+      ansible.builtin.apt_repository:
+        repo: >-
+          {{
+            "deb http://repo.mysql.com/apt/" ~ (ansible_distribution | lower) ~ "/"
+            ~ " "
+            ~ (ansible_distribution_release | lower)
+            ~ " "
+            ~ item
+          }}
+        state: "{{ mysql_community_server.state }}"
+        update_cache: true
+      loop:
+        - 'mysql-8.0'
+        - 'mysql-tools'
     - name: "mysql-community-server:debconf:root-pass"
       ansible.builtin.debconf:
         name: mysql-community-server
@@ -32,4 +57,9 @@
     - name: "mysql-community-server:apt:package"
       ansible.builtin.apt:
         state: "{{ mysql_community_server.state }}"
-        name: "mysql-community-server={{ mysql_community_server.version }}"
+        name: "mysql-community-server"
+        # newer versions REPLACE older versions in the MySQL apt repository.
+        # therefore it is not reasonable to pin a concrete version as the role
+        # would break with every new release.
+        # versions have the form  mysql-comumunity-server=8.0.28-1debian11
+        # name: "mysql-community-server={{ mysql_community_server.version }}"
