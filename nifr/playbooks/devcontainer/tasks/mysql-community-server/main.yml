@@ -26,10 +26,6 @@
         update_cache: true
         cache_valid_time: 0
     - name: "mysql-community-server:apt:repository-deb"
-      # warning:  mysql-apt-config pre-depends on "lsb-release"
-      # causes a possibly undesired installation of python packages
-      # therefore we disable/skip this play
-      when: false
       ansible.builtin.apt_repository:
         repo: >-
           {{
