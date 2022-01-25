@@ -33,6 +33,10 @@
     creates: '/usr/local/bin/redis_exporter'
     list_files: true
     remote_src: true
+  register: "redis_exporter_download"
+  until: "redis_exporter_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 - name: 'redis_exporter:file:absent:/usr/local/bin/redis_exporter'
   become: true
   when: '"absent" == redis_exporter.state'

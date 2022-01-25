@@ -33,6 +33,10 @@
     creates: '/usr/local/bin/mysqld_exporter'
     list_files: true
     remote_src: true
+  register: "mysqld_exporter_download"
+  until: "mysqld_exporter_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 - name: 'mysqld_exporter:file:absent:/usr/local/bin/mysqld_exporter'
   become: true
   when: '"absent" == mysqld_exporter.state'

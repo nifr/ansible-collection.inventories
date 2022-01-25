@@ -32,6 +32,10 @@
     creates: '/usr/local/bin/php-fpm_exporter'
     list_files: true
     remote_src: true
+  register: "php_fpm_exporter_download"
+  until: "php_fpm_exporter_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 - name: 'php-fpm_exporter:file:absent:/usr/local/bin/php-fpm_exporter'
   become: true
   when: '"absent" == php_fpm_exporter.state'

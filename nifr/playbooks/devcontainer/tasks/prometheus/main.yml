@@ -33,6 +33,10 @@
     creates: '/usr/local/bin/prometheus'
     list_files: true
     remote_src: true
+  register: "prometheus_download"
+  until: "prometheus_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 - name: 'prometheus:file:absent:/usr/local/bin/prometheus'
   become: true
   when: '"absent" == prometheus.state'

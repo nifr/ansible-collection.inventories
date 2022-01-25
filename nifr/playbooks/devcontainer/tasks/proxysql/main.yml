@@ -17,3 +17,7 @@
           ~ '.deb'
       }}
     state: '{{ proxysql.state }}'
+  register: "proxysql_download"
+  until: "proxysql_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

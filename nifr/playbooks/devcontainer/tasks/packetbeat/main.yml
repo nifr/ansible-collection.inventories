@@ -18,3 +18,7 @@
             ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
             ~ '.deb'
           }}
+  register: "packetbeat_install"
+  until: "packetbeat_install is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

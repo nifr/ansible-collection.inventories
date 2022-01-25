@@ -15,6 +15,10 @@
           ~ '.deb'
       }}
     state: '{{ code_server.state }}'
+  register: "code_server_download"
+  until: "code_server_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 
 - name: 'code-server[config]'
   become: true

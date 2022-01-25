@@ -27,3 +27,7 @@
     creates: '/usr/local/bin/rest-server'
     list_files: true
     remote_src: true
+  register: "rest_server_download"
+  until: "rest_server_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
