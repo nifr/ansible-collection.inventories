@@ -5,7 +5,7 @@
       # gpg --keyserver pgp.mit.edu --recv-keys 3A79BD29
       ansible.builtin.apt_key:
         keyserver: pgp.mit.edu
-        id: 3A79BD29
+        id: '859BE8D7C586F538430B19C2467B942D3A79BD29'
     - name: "mysql-community-server:apt:repository-deb"
       # warning:  mysql-apt-config pre-depends on "lsb-release"
       # causes a possibly undesired installation of python packages
@@ -40,6 +40,7 @@
       loop:
         - 'mysql-8.0'
         - 'mysql-tools'
+        # - mysql-apt-config
     - name: "mysql-community-server:debconf:root-pass"
       ansible.builtin.debconf:
         name: mysql-community-server
