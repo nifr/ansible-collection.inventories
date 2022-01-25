@@ -1,11 +1,31 @@
-- name: "s6:copy"
+- name: "s6:file:directory:/etc/services.d/{{ item }}"
   become: true
-  ansible.builtin.copy:
-    src: templates/s6/{{ item }}/services.d
-    dest: /etc
+  ansible.builtin.file:
+    path: '{{ "/etc/services.d/" ~ item }}'
+    state: directory
     owner: root
     group: root
-    mode: '755'
+    mode: '550'
+  loop: "{{ s6.services }}"
+
+- name: "s6:copy:/etc/services.d/{{ item }}/log/run"
+  become: true
+  ansible.builtin.copy:
+    src: '{{ "templates/s6/" ~ item ~ "/services.d/log/run" }}'
+    dest: '{{ "/etc/services.d/" ~ item ~ "/log/run" }}'
+    owner: root
+    group: root
+    mode: '550'
     backup: false
     remote_src: true
+  loop: "{{ s6.services }}"
+
+- name: "s6:template:/etc/services.d/{{ item }}/run"
+  become: true
+  ansible.builtin.template:
+    src: '{{ "s6/" ~ item ~ "/services.d/" ~ item ~ "/run" }}'
+    dest: '{{ "/etc/services.d/" ~ item ~ "/run" }}'
+    owner: root
+    group: root
+    mode: '550'
   loop: "{{ s6.services }}"
