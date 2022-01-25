@@ -12,6 +12,10 @@
     update_cache: true
     cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
     state: "{{ linuxbrew.state }}"
+  register: "apt_package_install"
+  until: "apt_package_install is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
 
 - name: "sudoers:lineinfile:/etc/sudoers.d/*:user-linuxbrew"
   become: true
@@ -143,6 +147,10 @@
           command: "{{ linuxbrew_tmp_dir.path ~ '/linuxbrew.sh' }}"
           environment:
             CI: 1
+          register: "linuxbrew_install_script"
+          until: "linuxbrew_install_script is succeeded"
+          retries: "{{ ansible_retry_count | int }}"
+          delay: "{{ ansible_retry_delay | int }}"
     - when: "ansible_architecture == 'aarch64'"
       # The official requirements list states a "64-bit x86_64 CPU" is required
       # see: https://github.com/Homebrew/brew/blob/master/docs/Homebrew-on-Linux.md#requirements
