@@ -4,7 +4,7 @@
     - name: mysql-community-server:apt_key
       # gpg --keyserver pgp.mit.edu --recv-keys 3A79BD29
       ansible.builtin.apt_key:
-        keyserver: pgp.mit.edu
+        keyserver: keyserver.ubuntu.com
         id: '859BE8D7C586F538430B19C2467B942D3A79BD29'
     - name: "mysql-community-server:apt:repository-deb"
       # warning:  mysql-apt-config pre-depends on "lsb-release"
