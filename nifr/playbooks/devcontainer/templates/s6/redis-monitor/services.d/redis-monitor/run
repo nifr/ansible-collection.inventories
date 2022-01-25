@@ -1,6 +1,5 @@
  #!/usr/bin/with-contenv sh
 
-# timeout 10s sh -c 'until redis-cli ping >/dev/null 2>&1; do sleep 1; done' && echo 'Connected to redis.' || (echo 'Error: Failed to connect to redis!'; exit 1)
-
-s6-setuidgid redis \
-  exec sh -c 'redis-cli --csv -h "${REDIS_HOST:-127.0.0.1}" -p "${REDIS_PORT:-6379}" -n "${REDIS_DB:-0}" monitor 2>&1 | grep -ve ping 2>&1'
+exec 2>&1
+exec s6-setuidgid 'redis' \
+  sh -c 'redis-cli --csv -h "${REDIS_HOST:-127.0.0.1}" -p "${REDIS_PORT:-6379}" -n "${REDIS_DB:-0}" monitor 2>&1 | grep -ve ping'
