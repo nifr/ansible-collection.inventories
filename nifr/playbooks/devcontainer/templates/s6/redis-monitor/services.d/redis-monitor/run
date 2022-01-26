@@ -1,5 +1,5 @@
- #!/usr/bin/with-contenv sh
+#!/usr/bin/env sh
 
-exec 2>&1
-exec s6-setuidgid 'redis' \
-  sh -c 'redis-cli --csv -h "${REDIS_HOST:-127.0.0.1}" -p "${REDIS_PORT:-6379}" -n "${REDIS_DB:-0}" monitor 2>&1 | grep -ve ping'
+exec s6-setuidgid redis \
+  redis-cli --csv monitor \
+  2>&1
