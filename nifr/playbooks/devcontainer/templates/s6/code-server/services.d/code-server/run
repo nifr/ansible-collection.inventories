@@ -1,7 +1,9 @@
 #!/usr/bin/with-contenv sh
 
 # see: https://coder.com/docs/code-server/latest/guide
-exec s6-setuidgid {{ code_server.user | default('root') }} \
+
+cd /opt/code-server
+exec s6-setuidgid {{ code_server.user | default('root') }}:{{ code_server.group | default('root') }} \
   env VSCODE_IPC_HOOK_CLI= \
     code-server \
       {{ ( "--config=" ~ "'" ~ code_server.config_path ~ "'") if (code_server.config_path | default(false)) }} \
