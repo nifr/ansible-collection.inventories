@@ -21,7 +21,7 @@
     include:
      - >-
         {{
-          ~ 'blackbox_exporter'
+          'blackbox_exporter'
           ~ '-'
           ~ 'v' ~ blackbox_exporter.version
           ~ '.linux'

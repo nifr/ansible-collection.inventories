@@ -21,7 +21,7 @@
     include:
      - >-
         {{
-          ~ 'prometheus'
+          'prometheus'
           ~ '-'
           ~ 'v' ~ prometheus.version
           ~ '.linux'

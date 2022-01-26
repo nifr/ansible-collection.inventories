@@ -20,7 +20,7 @@
     include:
      - >-
         {{
-          ~ 'php-fpm_exporter'
+          'php-fpm_exporter'
           ~ '_'
           ~ php-fpm_exporter.version
           ~ '_linux_'

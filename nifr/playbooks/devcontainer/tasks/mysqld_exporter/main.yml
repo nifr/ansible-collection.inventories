@@ -21,7 +21,7 @@
     include:
      - >-
         {{
-          ~ 'mysqld_exporter'
+          'mysqld_exporter'
           ~ '-'
           ~ mysqld_exporter.version
           ~ '.linux'

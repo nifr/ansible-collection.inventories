@@ -21,7 +21,7 @@
     include:
      - >-
         {{
-          ~ 'redis_exporter'
+          'redis_exporter'
           ~ '-'
           ~ 'v' ~ redis_exporter.version
           ~ '.linux'
