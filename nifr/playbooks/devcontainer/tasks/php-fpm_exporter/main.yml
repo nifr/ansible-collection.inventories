@@ -2,8 +2,8 @@
 - name: 'php-fpm_exporter:unarchive'
   become: true
   when: '"present" == php_fpm_exporter.state'
-  ansible.builtin.unarchive:
-    src: >-
+  ansible.builtin.get_url:
+    url: >-
       {{
         'https://github.com/hipages/php-fpm_exporter/releases/download'
         ~ '/v' ~ php_fpm_exporter.version
@@ -13,24 +13,11 @@
           ~ php_fpm_exporter.version
           ~ '_linux_'
           ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '.tar.gz'
       }}
-    extra_opts:
-      - '--strip-components=1'
-    include:
-     - >-
-        {{
-          'php-fpm_exporter'
-          ~ '_'
-          ~ php_fpm_exporter.version
-          ~ '_linux_'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '/php-fpm_exporter'
-        }}
-    dest: /usr/local/bin
-    creates: '/usr/local/bin/php-fpm_exporter'
-    list_files: true
-    remote_src: true
+    dest: '/usr/local/bin/php-fpm_exporter'
+    owner: root
+    group: root
+    mode: '755'
   register: "php_fpm_exporter_download"
   until: "php_fpm_exporter_download is succeeded"
   retries: "{{ ansible_retry_count | int }}"
