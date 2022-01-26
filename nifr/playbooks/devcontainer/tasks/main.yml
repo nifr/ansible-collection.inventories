@@ -517,6 +517,17 @@
 # END [elastic-beats]
 
 # [php-tools]
+- name: "[php-extensions]"
+  tags:
+    - php-extensions[*]
+  block:
+    - import_tasks: "blackfire/main.yml"
+      tags:
+        - php-extensions[blackfire]
+        - blackfire
+# [php-extensions]
+
+# [php-tools]
 - name: "[php-tools]"
   tags:
     - php-tools[*]

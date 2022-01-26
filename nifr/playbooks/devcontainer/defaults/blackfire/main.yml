@@ -1,0 +1,5 @@
+blackfire:
+  state: present
+  apt_packages:
+    - blackfire-php
+    - blackfire-agent

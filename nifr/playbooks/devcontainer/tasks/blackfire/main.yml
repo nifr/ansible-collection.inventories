@@ -1,0 +1,20 @@
+- name: '[blackfire]'
+  become: true
+  block:
+    - name: 'blackfire:apt_key'
+      become: true
+      ansible.builtin.apt_key:
+        url: 'https://packages.blackfire.io/gpg.key'
+        state: '{{ blackfire.state }}'
+    - name: 'blackfire:apt_repository'
+      ansible.builtin.apt_repository:
+        repo: 'deb http://packages.blackfire.io/debian any main'
+        state: '{{ blackfire.state }}'
+        install_python_apt: false
+        update_cache: true
+        filename: blackfire
+    - name: 'blackfire:apt'
+      ansible.builtin.apt:
+        name: '{{ item }}'
+        state: '{{ blackfire.state }}'
+      loop: '{{ blackfire.apt_packages }}'
