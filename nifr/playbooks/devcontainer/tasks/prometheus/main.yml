@@ -7,7 +7,7 @@
       {{
         'https://github.com/prometheus/prometheus/releases/download'
         ~ '/v' ~ prometheus.version
-        ~ '/
+        ~ '/'
           ~ 'prometheus'
           ~ '-'
           ~ 'v' ~ prometheus.version

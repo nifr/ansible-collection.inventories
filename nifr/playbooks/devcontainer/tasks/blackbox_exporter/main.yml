@@ -7,7 +7,7 @@
       {{
         'https://github.com/prometheus/blackbox_exporter/releases/download'
         ~ '/v' ~ blackbox_exporter.version
-        ~ '/
+        ~ '/'
           ~ 'blackbox_exporter'
           ~ '-'
           ~ 'v' ~ blackbox_exporter.version

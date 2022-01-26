@@ -7,7 +7,7 @@
       {{
         'https://github.com/hipages/php-fpm_exporter/releases/download'
         ~ '/v' ~ php_fpm_exporter.version
-        ~ '/
+        ~ '/'
           ~ 'php-fpm_exporter'
           ~ '_'
           ~ php-fpm_exporter.version
