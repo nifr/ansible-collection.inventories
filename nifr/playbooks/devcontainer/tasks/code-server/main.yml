@@ -4,14 +4,14 @@
   ansible.builtin.apt:
     deb: >-
       {{
-        'https://github.com/coder/code-server/releases/download'
-        ~ '/v' ~ code_server.version
-        ~ '/
-          ~ 'code-server'
-          ~ '_'
+        "https://github.com/coder/code-server/releases/download"
+        ~ "/v" ~ code_server.version
+        ~ "/"
+          ~ "code-server"
+          ~ "_"
           ~ code_server.version
-          ~ '_'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ "_"
+          ~ ("amd64" if (ansible_architecture == "x86_64") else "arm64")
           ~ '.deb'
       }}
     state: '{{ code_server.state }}'
@@ -57,6 +57,8 @@
       - ansible.builtin.template:
           src: "code-server/config/config.yaml.j2"
           dest: "{{ code_server.config_path }}"
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
           mode: "0440"
       - ansible.builtin.file:
           path: '{{ code_server.home ~ "/Machine" }}'
@@ -67,6 +69,8 @@
       - ansible.builtin.template:
           src: "code-server/Machine/settings.json.j2"
           dest: '{{ code_server.home ~ "/Machine/settings.json" }}'
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
           mode: "0440"
       - ansible.builtin.file:
           path: '{{ code_server.home ~ "/User" }}'
@@ -77,10 +81,14 @@
       - ansible.builtin.template:
           src: "code-server/User/settings.json.j2"
           dest: '{{ code_server.home ~ "/User/settings.json" }}'
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
           mode: "0770"
       - ansible.builtin.template:
           src: "code-server/User/keybindings.json.j2"
           dest: '{{ code_server.home ~ "/User/keybindings.json" }}'
+          owner: '{{ code_server.user }}'
+          group: '{{ code_server.group }}'
           mode: "0770"
   - when: '"absent" == code_server.state'
     ansible.builtin.file:
