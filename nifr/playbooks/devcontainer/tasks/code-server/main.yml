@@ -96,7 +96,7 @@
     - name: code-server[extensions]:command
       ansible.builtin.command:
         argv:
-          - /usr/bin/code-server
+          - code-server
           - '--config'
           - '{{ code_server.config_path }}'
           - '--disable-update-check'
