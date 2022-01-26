@@ -10,7 +10,7 @@
         ~ '/'
           ~ 'php-fpm_exporter'
           ~ '_'
-          ~ php-fpm_exporter.version
+          ~ php_fpm_exporter.version
           ~ '_linux_'
           ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
           ~ '.tar.gz'
@@ -22,7 +22,7 @@
         {{
           'php-fpm_exporter'
           ~ '_'
-          ~ php-fpm_exporter.version
+          ~ php_fpm_exporter.version
           ~ '_linux_'
           ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
           ~ '.tar.gz'
