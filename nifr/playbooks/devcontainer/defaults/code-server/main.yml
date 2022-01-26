@@ -2,6 +2,7 @@ code_server:
   state: present
   version: '4.0.1'
   user: code-server
+  s6_user: root
   uid: 210
   group: code-server
   groups: []

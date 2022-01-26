@@ -2,11 +2,20 @@
 
 # see: https://coder.com/docs/code-server/latest/guide
 
-cd /opt/code-server
-exec s6-setuidgid {{ code_server.user | default('root') }}:{{ code_server.group | default('root') }} \
-  env VSCODE_IPC_HOOK_CLI= \
-    code-server \
-      {{ ( "--config=" ~ "'" ~ code_server.config_path ~ "'") if (code_server.config_path | default(false)) }} \
-      --disable-update-check \
-      --disable-telemetry \
-        {{ code_server.workdir | default('/workspace') }}
+HOME="{{ code_server.home }}"
+# code-server tries to create ~/.config/code-server/config.yaml for i.e. code-server --version
+#
+# XDG_CONFIG_HOME=/var/run code-server --version
+# [2022-01-26T11:59:32.191Z] info  Wrote default config file to /var/run/code-server/config.yaml
+XDG_CONFIG_HOME="/var/run"
+# code-server writes it's log files to $XDG_DATA_HOME/code-server/coder-logs/code-server-{stdout,stderr}.log
+XDG_DATA_HOME="/var/run"
+VSCODE_IPC_HOOK_CLI=
+
+cd "${HOME}"
+exec s6-setuidgid {{ code_server.s6_user | default('root') }} \
+  code-server \
+    {{ ( "--config=" ~ "'" ~ code_server.config_path ~ "'") if (code_server.config_path | default(false)) }} \
+    --disable-update-check \
+    --disable-telemetry \
+      {{ code_server.workdir | default('/workspace') }}
