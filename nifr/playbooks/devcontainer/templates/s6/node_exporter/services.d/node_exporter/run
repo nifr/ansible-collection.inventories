@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://github.com/prometheus/mysqld_exporter#collector-flags
+# see: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+#
+# mariadb - enable "userstat=1" in my.cnf
+# oracle  - exporter.log_slow_filter (ignore slow logs from metrics NOT supported)
+
+exec s6-setuidgid root \
+  node_exporter \
+    --collector.disable-defaults \
+    --path.procfs="/proc" \
+    --path.sysfs="/sys" \
+    --path.rootfs="/" \
+    --collector.cpu \
+    --collector.loadavg \
+    --collector.meminfo \
+    --collector.diskstats \
+    --collector.netdev \
+    --collector.processes \
+    --collector.filesystem \
+    --web.listen-address=":9100" \
+    --web.telemetry-path="/metrics" \
+    --web.disable-exporter-metrics \
+    --log.level=debug \
+    --log.format=json \
+    2>&1
