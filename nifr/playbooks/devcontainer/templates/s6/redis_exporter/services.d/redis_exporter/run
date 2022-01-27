@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://github.com/oliver006/redis_exporter#command-line-flags
+# example: --redis.addr=unix:///var/run/redis/redis.sock
+
+cd /opt/redis
+exec s6-setuidgid redis \
+  redis_exporter \
+    --redis.addr='redis://localhost:6379' \
+    --web.listen-address='0.0.0.0:9121' \
+    --web.telemetry-path='/metrics' \
+    --log-format=json \
+    --debug=true \
+    --redis-only-metrics=true \
+    2>&1
