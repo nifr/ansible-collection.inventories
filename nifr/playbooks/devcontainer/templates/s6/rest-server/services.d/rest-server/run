@@ -13,4 +13,5 @@ exec rest-server \
     --log json \
     --no-auth \
     --prometheus \
-    --prometheus-no-auth
+    --prometheus-no-auth \
+    2>&1

@@ -1,0 +1,25 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://github.com/prometheus/mysqld_exporter#collector-flags
+# see: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+#
+# mariadb - enable "userstat=1" in my.cnf
+# oracle  - exporter.log_slow_filter (ignore slow logs from metrics NOT supported)
+
+cd /var/lib/mysql
+exec s6-setuidgid mysql \
+  mysqld_exporter \
+    --config.my-cnf=/etc/mysql/my.cnf \
+    --web.listen-address=":9306" \
+    --web.telemetry-path="/metrics" \
+    --log.level=debug \
+    --collect.global_status \
+    --collect.global_variables \
+    --collect.mysql.user \
+    --collect.binlog_size \
+    --collect.engine_innodb_status \
+    --collect.info_schema.processlist \
+    --collect.info_schema.innodb_metrics \
+    --collect.info_schema.tables \
+    --collect.info_schema.tables.databases='*' \
+    2>&1

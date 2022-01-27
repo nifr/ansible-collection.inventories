@@ -1,6 +1,5 @@
 #!/usr/bin/with-contenv sh
 
-# see:
 cd /opt/minio
 exec s6-setuidgid minio \
   minio server /opt/minio/data \
