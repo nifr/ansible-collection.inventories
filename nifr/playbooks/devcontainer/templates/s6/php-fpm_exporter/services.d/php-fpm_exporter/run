@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+exec s6-setuidgid php-fpm \
+  php-fpm_exporter server \
+    --web.listen-address "${PHP_FPM_WEB_LISTEN_ADDRESS:-:9253}" \
+    --web.telemetry-path "${PHP_FPM_WEB_TELEMETRY_PATH:-/metrics}" \
+    --phpfpm.scrape-uri "${PHP_FPM_SCRAPE_URI:-unix:///var/run/php-fpm.development.sock;/status,unix:///var/run/php-fpm.debug.sock;/status,unix:///var/run/php-fpm.debug.sock;/status}" \
+    --phpfpm.fix-process-count "${PHP_FPM_FIX_PROCESS_COUNT:-true}" \
+    --log.level "${PHP_FPM_LOG_LEVEL:-info}" \
+  2>&1
