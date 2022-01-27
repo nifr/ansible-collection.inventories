@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv sh
+
+# --collector="https://blackfire.io": Sets the URL of Blackfire's data collector
+# --config="/etc/blackfire/agent": Sets the path to the configuration file
+# -d: Prints the current configuration
+# --http-proxy="": Sets the HTTP proxy to use
+# --https-proxy="": Sets the HTTPS proxy to use
+# --log-file="stderr": Sets the path of the log file. Use stderr to log to stderr
+# --log-level="1": log verbosity level (4: debug, 3: info, 2: warning, 1: error)
+# --memory-limit="500": Sets the maximum allowed RAM usage (megabytes). Use 0 to disable
+# --register: Helps you with registering the agent
+# --server-id="": Sets the server id used to authenticate with Blackfire API
+# --server-token="": Sets the server token used to authenticate with Blackfire API. It is unsafe to set this from the command line
+# --socket="unix:///var/run/blackfire/agent.sock": Sets the socket the agent should read traces from. Possible value can be a unix socket or a TCP address. ie: unix:///var/run/blackfire/agent.sock or tcp://127.0.0.1:8307
+# --statsd="": Sets the statsd server to send agent's statistics to. ie: udp://host:port. Leave empty to disable.
+# --statsd-prefix="blackfire": Sets the statsd prefix to use when sending data
+# --test: Tests the configuration
+# -v: Prints the version number
+
+exec s6-setuidgid blackfire \
+  blackfire-agent \
+  2>&1
