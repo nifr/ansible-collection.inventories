@@ -576,6 +576,9 @@
     - import_tasks: 'prometheus/main.yml'
       tags:
         - prometheus
+    - import_tasks: 'grafana-agent/main.yml'
+      tags:
+        - grafana-agent
     - tags:
         - prometheus[*]
       block:

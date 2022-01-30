@@ -1,0 +1,121 @@
+grafana_agent:
+  state: present
+  # see: https://github.com/grafana/agent/releases
+  version: '0.22.0'
+  # default config path: /etc/agent/agent.yaml
+  config_file: /etc/grafana-agent.yaml
+  user: grafana-agent
+  group: grafana-agent
+  # default home (installation from .deb) is "/var/lib/grafana-agent"
+  home: '/opt/grafana-agent'
+  # install method can be either 'deb' or 'archive'
+  install_method: 'deb'
+  components:
+    - agent # size: ~105 MB
+    - agentctl # size: ~107MB
+  config:
+  # see:https://grafana.com/docs/agent/latest/configuration/
+  # "config" can also be a URL string
+  #
+  # example:
+  # config: 'http://127.0.0.1/config/grafana-agent.yaml'
+  #
+  # start grafana-agent with flags:
+  # -enable-features=remote-configs
+  # -config.url.basic-auth-user <user>
+  # -config.url.basic-auth-password-file <file>
+    server:
+    # see: https://grafana.com/docs/agent/latest/configuration/server-config/
+      log_level: info
+      http_listen_address: 0.0.0.0
+      http_listen_port: 9400
+      grpc_listen_address: 127.0.0.1
+      grpc_listen_port: 9095
+    metrics:
+    # see: https://grafana.com/docs/agent/latest/configuration/metrics-config/
+      # "wal_directory"
+      # The Grafana Agent assumes that all folders within wal_directory are managed by
+      # the agent itself.
+      #
+      # This means if you are using a PVC or docker volume mount, you must point
+      # wal_directory to a subdirectory of the mount point
+      wal_directory: /var/run/grafana-agent/metrics/wal
+      global:
+        scrape_interval: ${GRAFANA_AGENT_PROMETHEUS_GLOBAL_SCRAPE_INTERVAL}
+        scrape_timeout: ${GRAFANA_AGENT_PROMETHEUS_GLOBAL_SCRAPE_TIMEOUT}
+        remote_write:
+          - url: ${GRAFANA_AGENT_PROMETHEUS_REMOTE_WRITE_URL}
+            basic_auth:
+              username: ${GRAFANA_AGENT_PROMETHEUS_REMOTE_WRITE_USERNAME}
+              password: ${GRAFANA_AGENT_PROMETHEUS_REMOTE_WRITE_PASSWORD}
+      configs:
+        # this is essentially the same config as for prometheus
+        # see also: defaults/prometheus/main.yml
+        - name: prometheus
+          scrape_configs:
+          # see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config
+            - job_name: grafana-agent
+              # scrapes the agent's own metrics, see "config.server.http_listen_port" above
+              scrape_interval: 1m
+              scrape_timeout: 10s
+              metrics_path: '/metrics'
+              scheme: http
+              static_configs:
+              # see: https://grafana.com/docs/loki/latest/clients/promtail/configuration/#static_configs
+                - targets: ['127.0.0.1:9400']
+            - job_name: php-fpm_exporter
+              static_configs:
+                - targets: ['127.0.0.1:9253']
+            - job_name: mysqld_exporter
+              static_configs:
+                - targets: ['127.0.0.1:9306']
+            - job_name: redis_exporter
+              static_configs:
+                - targets: ['127.0.0.1:9121']
+            - job_name: nginx-prometheus-exporter
+              static_configs:
+                - targets: ['127.0.0.1:9113']
+            - job_name: blackbox_exporter
+              static_configs:
+                - targets: ['127.0.0.1:9115']
+    logs:
+    # see: https://grafana.com/docs/agent/latest/configuration/logs-config/
+      # "positions_diretory"
+      # This directory will be automatically created if it doesn't exist.
+      # positions file pattern: <positions_directory>/<logs_instance_config.name>.yml
+      positions_directory: '/var/run/grafana-agent/logs/positions'
+      configs:
+      # see: https://grafana.com/docs/agent/latest/configuration/logs-config/#logs_instance_config
+        - name: default
+          positions:
+            filename: /var/run/grafana-agent/logs/positions/default.positions.yaml
+          scrape_configs:
+          # promtail scrape conf
+          # see: https://grafana.com/docs/loki/latest/clients/promtail/scraping/
+          # see: https://grafana.com/docs/loki/latest/clients/promtail/configuration/#scrape_configs
+            - job_name: varlogs
+              static_configs:
+                - targets: [localhost]
+                  labels:
+                    job: varlogs
+                    __path__: /var/log/*log
+          clients:
+            - url: ${GRAFANA_AGENT_PROMTAIL_CLIENT_URL}
+              basic_auth:
+                username: ${GRAFANA_AGENT_PROMTAIL_CLIENT_USERNAME}
+                password: ${GRAFANA_AGENT_PROMTAIL_CLIENT_PASSWORD}
+    integrations:
+    # see: https://grafana.com/docs/agent/latest/configuration/integrations/
+      agent:
+        enabled: false
+      node_exporter:
+        # see: https://grafana.com/docs/agent/latest/configuration/integrations/node-exporter-config/
+        enabled: false
+        rootfs_path: /
+        sysfs_path: /sys
+        procfs_path: /proc
+      mysqld_exporter:
+        # see: https://grafana.com/docs/agent/latest/configuration/integrations/mysqld-exporter-config/
+        enabled: false
+        # set MYSQL_ALLOW_EMPTY_PASSWORD if password is empty
+        data_source_name: "root:root@(127.0.0.1:3306)/"

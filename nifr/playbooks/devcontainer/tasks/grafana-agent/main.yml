@@ -1,0 +1,113 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+#
+# see: https://grafana.com/blog/2020/03/18/introducing-grafana-cloud-agent-a-remote_write-focused-grafana_agent-agent-that-can-save-40-on-memory-usage/
+#
+- name: 'grafana-agent:deb'
+  become: true
+  when: 'grafana.install_method == "deb"'
+  ansible.builtin.apt:
+    state: '{{ grafana_agent.state }}'
+    # example url: https://github.com/grafana/agent/releases/download/v0.22.0/grafana-agent-0.22.0-1.amd64.deb
+    deb: >-
+      {{
+        "https://github.com/grafana/agent/releases/download"
+        ~ '/v' ~  grafana_agent.version
+        ~ '/'
+          ~ 'grafana-agent'
+          ~ '-'
+          ~ grafana_agent.version
+          ~ '-1'
+          ~ '.'
+          ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          ~ '.deb'
+      }}
+  register: "grafana_agent_download"
+  until: "grafana_agent_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+- name: "grafana-agent:group"
+  ansible.builtin.group:
+    name: '{{ grafana_agent.group }}'
+    gid: '{{ grafana_agent.gid }}'
+    state: '{{ grafana_agent.state }}'
+- name: "grafana-agent:user"
+  ansible.builtin.user:
+    name: '{{ grafana_agent.user }}'
+    uid: '{{ grafana_agent.uid }}'
+    group: '{{ grafana_agent.group }}'
+    groups: '{{ grafana_agent.groups }}'
+    home: '{{ grafana_agent.home }}'
+    create_home: false
+    state: '{{ grafana_agent.state }}'
+- name: "grafana-agent:home"
+  ansible.builtin.file:
+    path: '{{ grafana_agent.home }}'
+    state: directory
+    owner: '{{ grafana_agent.user }}'
+    group: '{{ grafana_agent.group }}'
+    mode: '2770'
+- name: 'grafana-agent:install_method:archive'
+  become: true
+  when: 'grafana.install_method == "archive"'
+  block:
+    - name: 'grafana-agent:unarchive'
+      ansible.builtin.unarchive:
+        # example url (agent): https://github.com/grafana/agent/releases/download/v0.22.0/agent-linux-amd64.zip
+        # example url (agentctl): https://github.com/grafana/agent/releases/download/v0.22.0/agentctl-linux-amd64.zip
+        remote_src: true
+        src: >-
+          {{
+            "https://github.com/grafana/agent/releases/download"
+            ~ '/v' ~  grafana_agent.version
+            ~ '/'
+              ~ item
+              ~ '-'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
+              ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+              ~ '.zip'
+          }}
+        dest: '{{ grafana_agent.home }}'
+        creates: >-
+          {{
+              grafana_agent.home
+            ~ '/'
+              ~ item
+              ~ '-'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
+              ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          }}
+      loop: '{{ grafana_agent.components }}'
+      register: "grafana_agent_download"
+      until: "grafana_agent_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: 'grafana-agent:file:link:binaries'
+      ansible.builtin.file:
+        state: link
+        src: >-
+          {{
+              grafana_agent.home
+            ~ '/'
+              ~ item
+              ~ '-'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
+              ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          }}
+        dest: '{{ "/usr/local/bin/grafana-" ~ item }}'
+        owner: 'root'
+        group: '{{ grafana_agent.group }}'
+      loop: '{{ grafana_agent.components }}'
+- name: 'grafana-agent:template:config'
+  become: true
+  when: 'grafana.config is mapping'
+  ansible.builtin.template:
+    src: 'grafana-agent/agent.yaml.j2'
+    dest: '{{ grafa_agent.config_file }}'
+    owner: 'root'
+    group: '{{ grafana_agent.group }}'
+    mode: '640'
+  tags:
+    - grafana-agent[config]
