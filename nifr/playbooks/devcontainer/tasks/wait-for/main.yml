@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[wait-for]'
+  when: '"present" == wait_for.state'
+  become: true
+  block:
+    - name: 'wait-for:apt'
+      ansible.builtin.apt:
+        name: 'netcat'
+        state: present
+    - name: 'wait-for:get_url'
+      ansible.builtin.get_url:
+        # example url: https://github.com/eficode/wait-for/releases/download/v2.2.2/wait-for
+        url: >-
+          {{
+            'https://github.com/eficode/wait-for/releases/download'
+            ~ '/v' ~ wait_for.version
+            ~ '/wait-for'
+          }}
+        dest: /usr/local/bin/wait-for
+        owner: root
+        group: root
+        mode: '755'
+      register: "wait_for_download"
+      until: "wait_for_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'wait-for:file:absent:/usr/local/bin/wait-for'
+  become: true
+  when: '"absent" == wait_for.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/wait-for'
+    state: absent

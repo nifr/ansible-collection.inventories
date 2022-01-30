@@ -1,0 +1,4 @@
+wait_for:
+  state: present
+  # see: https://github.com/eficode/wait-for/releases
+  version: '2.2.2'

@@ -608,6 +608,9 @@
             - nginx-prometheus-exporter
 # END [prometheus]
 
+- import_tasks: 'wait-for/main.yml'
+  tags:
+    - wait-for
 - import_tasks: 'traefik/main.yml'
   tags:
     - traefik
