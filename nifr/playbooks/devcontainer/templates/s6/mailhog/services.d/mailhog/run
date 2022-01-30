@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# see: https://github.com/mailhog/MailHog/blob/master/docs/CONFIG.md#configuring-mailhog
+
+# see:
+# -I loose. If dir does not exist, exec into prog without modifying the environment first.
+
+cd '{{ mailhog.home }}'
+exec \
+  s6-envdir -I /etc/services.d/mailhog/env \
+  s6-setuidgid '{{ mailhog.user }}' \
+  mailhog \
+    -smtp-bind-addr "${MH_SMTP_BIND_ADDR:-0.0.0.0:1025}" \
+    -api-bind-addr "${MH_API_BIND_ADDR:-0.0.0.0:8025}" \
+    -ui-bind-addr "${MH_UI_BIND_ADDR:-0.0.0.0:8025}" \
+    -cors-origin "${MH_CORS_ORIGIN:-*}" \
+    -storage "${MH_STORAGE:-memory}" \
+  2>&1
