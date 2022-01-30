@@ -1,0 +1,4 @@
+nginx_prometheus_exporter:
+  state: present
+  # https://github.com/nginxinc/nginx-prometheus-exporter/releases
+  version: '0.10.0'

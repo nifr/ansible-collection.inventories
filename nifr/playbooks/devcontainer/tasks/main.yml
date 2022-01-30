@@ -602,6 +602,10 @@
           tags:
             - prometheus[php-fpm_exporter]
             - php-fpm_exporter
+        - import_tasks: "nginx-prometheus-exporter/main.yml"
+          tags:
+            - prometheus[nginx-prometheus-exporter]
+            - nginx-prometheus-exporter
 # END [prometheus]
 
 - import_tasks: 'traefik/main.yml'
