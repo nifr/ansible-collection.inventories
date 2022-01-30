@@ -1,0 +1,36 @@
+- name: 'symfony-console-autocomplete:state:present'
+  become: true
+  when: 'symfony_console_autocomplete.state == "present"'
+  block:
+    - name: 'symfony-console-autocomplete:command:composer:create-project'
+      ansible.builtin.command:
+        argv:
+          - 'composer'
+          - 'create-project'
+          - 'bamarni/symfony-console-autocomplete'
+          - '--no-cache'
+          - '--remove-vcs'
+          - '--no-scripts'
+          - '--no-dev'
+          - '--no-progress'
+          - '--no-ansi'
+          - '{{ symfony_console_autocomplete.install_dir }}'
+          - '{{ symfony_console_autocomplete.version }}'
+        creates: '{{ symfony_console_autocomplete.install_dir }}'
+    - name: 'symfony-console-autocomplete:file:link:/usr/local/bin/symfony-autocomplete'
+      ansible.builtin.file:
+        state: link
+        src: '{{ symfony_console_autocomplete.install_dir ~ "/bin/symfony-autocomplete" }}'
+        dest: '/usr/local/bin/symfony-autocomplete'
+- name: 'symfony-console-autocomplete:state:absent'
+  become: true
+  when: 'symfony_console_autocomplete.state == "absent"'
+  block:
+    - name: 'symfony-console-autocomplete:command:composer:create-project'
+      ansible.builtin.file:
+        path: '{{ symfony_console_autocomplete.install_dir }}'
+        state: absent
+    - name: 'symfony-console-autocomplete:file:link:/usr/local/bin/symfony-autocomplete'
+      ansible.builtin.file:
+        path: '{{ symfony_console_autocomplete.install_dir ~ "/bin/symfony-autocomplete" }}'
+        state: absent

@@ -564,6 +564,10 @@
       tags:
         - php-tools[cachetool]
         - cachetool
+    - import_tasks: "symfony-console-autocomplete/main.yml"
+      tags:
+        - php-tools[symfony-console-autocomplete]
+        - symfony-console-autocomplete
 # END [php-tools]
 
 # [prometheus]

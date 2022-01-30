@@ -1,0 +1,5 @@
+symfony_console_autocomplete:
+  state: present
+  install_dir: /opt/symfony-console-autocomplete
+  # see: https://github.com/bamarni/symfony-console-autocomplete/releases
+  version: '1.5.3'
