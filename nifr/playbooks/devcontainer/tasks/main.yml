@@ -623,6 +623,9 @@
 - import_tasks: "minio/main.yml"
   tags:
     - minio
+- import_tasks: "mailhog/main.yml"
+  tags:
+    - mailhog
 - import_tasks: "s6/main.yml"
   tags:
     - s6

@@ -1,0 +1,8 @@
+mailhog:
+  state: present
+  version: '1.0.1'
+  user: mailhog
+  uid: 206
+  group: mailhog
+  gid: 206
+  home: /opt/mailhog

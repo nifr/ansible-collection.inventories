@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+
+- name: "mailhog:group"
+  ansible.builtin.group:
+    name: '{{ mailhog.group }}'
+    gid: '{{ mailhog.gid }}'
+    state: '{{ mailhog.state }}'
+- name: "mailhog:user"
+  ansible.builtin.user:
+    name: '{{ mailhog.user }}'
+    uid: '{{ mailhog.uid }}'
+    group: '{{ mailhog.group }}'
+    groups: '{{ mailhog.groups }}'
+    home: '{{ mailhog.home }}'
+    create_home: false
+    state: '{{ mailhog.state }}'
+- name: "mailhog:home"
+  ansible.builtin.file:
+    path: '{{ mailhog.home }}'
+    state: directory
+    owner: '{{ mailhog.user }}'
+    group: '{{ mailhog.group }}'
+    mode: '2770'
+- name: '[mailhog]'
+  when: '"present" == mailhog.state'
+  become: true
+  block:
+    - name: 'mailhog:get_url'
+      ansible.builtin.get_url:
+        # example url: https://github.com/mailhog/MailHog/releases/download/v1.0.1/MailHog_linux_amd64
+        # note: the v1.0.1 release only has a "Mailhog_linux_arm" binary (not clear if 64bit)
+        url: >-
+          {{
+            'https://github.com/mailhog/MailHog/releases/download'
+            ~ '/v' ~ mailhog.version
+            ~ '/'
+              ~ 'Mailhog'
+              ~ '_'
+              ~ 'linux'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm')
+          }}
+        dest: /usr/local/bin/mailhog
+        owner: root
+        group: root
+        mode: '755'
+      register: "mailhog_download"
+      until: "mailhog_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'mailhog:file:absent:/usr/local/bin/mailhog'
+  become: true
+  when: '"absent" == mailhog.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/mailhog'
+    state: absent
