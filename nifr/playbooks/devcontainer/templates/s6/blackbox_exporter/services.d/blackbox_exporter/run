@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv sh
+
+# see: https://github.com/oliver006/redis_exporter#command-line-flags
+#
+# defaults:
+# port 9115
+#
+# example:
+# HTTP GET http://localhost:9115/probe?target=google.com&module=http_2xx
+# -> will return metrics for a HTTP probe against google.com
+#
+# a configuration reload is triggered by signal SIGHUP or HTTP POST to /-/reload
+
+exec s6-setuidgid '{{ blackbox_exporter.user }}' \
+  blackbox_exporter \
+    --config.file='{{ blackbox_exporter.config_file }}' \
+    2>&1
