@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# see: https://github.com/nginxinc/nginx-prometheus-exporter#command-line-arguments
+# grafana dashboard: https://github.com/nginxinc/nginx-prometheus-exporter/tree/master/grafana
+
+exec s6-setuidgid root \
+  nginx-prometheus-exporter \
+    -web.listen-address 9113
+    -web.telemetry-path /metrics \
+    -nginx.scrape-uri http://127.0.0.1:8080/stub_status \
+    -nginx.timeout 5s \
+    -nginx.retries 0 \
+    2>&1
