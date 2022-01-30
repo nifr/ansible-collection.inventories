@@ -1,45 +1,104 @@
 # yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
-- name: 'blackbox_exporter:unarchive'
+- name: "blackbox_exporter:group"
+  ansible.builtin.group:
+    name: '{{ blackbox_exporter.group }}'
+    gid: '{{ blackbox_exporter.gid }}'
+    state: '{{ blackbox_exporter.state }}'
+  tags:
+    - 'blackbox_exporter[group]'
+- name: "blackbox_exporter:user"
+  ansible.builtin.user:
+    name: '{{ blackbox_exporter.user }}'
+    uid: '{{ blackbox_exporter.uid }}'
+    group: '{{ blackbox_exporter.group }}'
+    groups: '{{ blackbox_exporter.groups }}'
+    home: '{{ blackbox_exporter.home }}'
+    create_home: false
+    state: '{{ blackbox_exporter.state }}'
+  tags:
+    - 'blackbox_exporter[user]'
+
+- name: '[blackbox_exporter:state:present]'
   become: true
   when: '"present" == blackbox_exporter.state'
-  ansible.builtin.unarchive:
-    src: >-
-      {{
-        'https://github.com/prometheus/blackbox_exporter/releases/download'
-        ~ '/v' ~ blackbox_exporter.version
-        ~ '/'
-          ~ 'blackbox_exporter'
-          ~ '-'
-          ~ 'v' ~ blackbox_exporter.version
-          ~ '.linux'
-          ~ '-'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '.tar.gz'
-      }}
-    extra_opts:
-      - '--strip-components=1'
-    include:
-     - >-
-        {{
-          'blackbox_exporter'
-          ~ '-'
-          ~ 'v' ~ blackbox_exporter.version
-          ~ '.linux'
-          ~ '-'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '/blackbox_exporter'
-        }}
-    dest: /usr/local/bin
-    creates: '/usr/local/bin/blackbox_exporter'
-    list_files: true
-    remote_src: true
-  register: "blackbox_exporter_download"
-  until: "blackbox_exporter_download is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
-- name: 'blackbox_exporter:file:absent:/usr/local/bin/blackbox_exporter'
-  become: true
+  block:
+    - name: "blackbox_exporter:home"
+      ansible.builtin.file:
+        state: directory
+        path: '{{ blackbox_exporter.home }}'
+        owner: '{{ blackbox_exporter.user }}'
+        group: '{{ blackbox_exporter.group }}'
+        mode: '2770'
+      tags:
+        - 'blackbox_exporter[home]'
+    - name: 'blackbox_exporter:unarchive'
+      when: '"present" == blackbox_exporter.state'
+      ansible.builtin.unarchive:
+        # example url: https://github.com/prometheus/blackbox_exporter/releases/download/v0.19.0/blackbox_exporter-0.19.0.linux-amd64.tar.gz
+        src: >-
+          {{
+            'https://github.com/prometheus/blackbox_exporter/releases/download'
+            ~ '/v' ~ blackbox_exporter.version
+            ~ '/'
+              ~ 'blackbox_exporter'
+              ~ '-'
+              ~ 'v' ~ blackbox_exporter.version
+              ~ '.linux'
+              ~ '-'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '.tar.gz'
+          }}
+        extra_opts:
+          - '--strip-components=1'
+        include:
+        - >-
+            {{
+              'blackbox_exporter'
+              ~ '-'
+              ~ 'v' ~ blackbox_exporter.version
+              ~ '.linux'
+              ~ '-'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '/blackbox_exporter'
+            }}
+        dest: '{{ blackbox_exporter.home }}'
+        creates: '{{ blackbox_exporter.home ~ "/blackbox_exporter" }}'
+        list_files: true
+        remote_src: true
+      register: "blackbox_exporter_download"
+      until: "blackbox_exporter_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+      tags:
+        - 'blackbox_exporter[binary]'
+    - name: 'blackbox_exporter:template:config-file'
+      ansible.builtin.template:
+        src: blackbox_exporter/blackbox_exporter.yaml.j2
+        dest: '{{ blackbox_exporter.config_file }}'
+        owner: '{{ blackbox_exporter.user }}'
+        group: '{{ blackbox_exporter.group }}'
+        mode: '0640'
+      tags:
+        - 'blackbox_exporter[config]'
+    - name: 'blackbox_exporter:file:link:bin_dir'
+      ansible.builtin.file:
+        state: link
+        src: '{{ blackbox_exporter.home ~ "/blackbox_exporter" }}'
+        dest: '{{ blackbox_exporter.bin_dir ~ "/blackbox_exporter" }}'
+        owner: '{{ blackbox_exporter.user }}'
+        group: '{{ blackbox_exporter.group }}'
+      tags:
+        - 'blackbox_exporter[binary]'
+
+- name: '[blackbox_exporter:state:absent]'
   when: '"absent" == blackbox_exporter.state'
-  ansible.builtin.file:
-    path: '/usr/local/bin/blackbox_exporter'
-    state: absent
+  become: true
+  block:
+    - name: "blackbox_exporter:file:home_dir:absent"
+      ansible.builtin.file:
+        path: '{{ blackbox_exporter.home }}'
+        state: absent
+    - name: 'blackbox_exporter:file:absent'
+      ansible.builtin.file:
+        path: '{{ blackbox_exporter.bin_dir ~ "/blackbox_exporter" }}'
+        state: absent

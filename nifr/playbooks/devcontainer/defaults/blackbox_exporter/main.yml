@@ -1,4 +1,39 @@
-# see: https://github.com/prometheus/blackbox_exporter/releases
 blackbox_exporter:
   state: present
+  # see: https://github.com/prometheus/blackbox_exporter/releases
   version: '0.19.0'
+  user: 'blackbox_exporter'
+  uid: 505
+  group: 'blackbox_exporter'
+  gid: 505
+  home: '/opt/blackbox_exporter'
+  bin_dir: '/usr/local/bin'
+  config_file: /opt/blackbox_exporter/blackbox_exporter.yaml
+  config:
+    # example config: https://github.com/prometheus/blackbox_exporter/blob/master/example.yml
+    modules:
+      http_2xx:
+        prober: http
+        timeout: 5s
+        http:
+          method: GET
+          fail_if_not_ssl: false
+          tls_config:
+            insecure_skip_verify: true
+          preferred_ip_protocol: ip4
+          ip_protocoll_fallback: false
+      tcp_connect:
+        prober: tcp
+        timeout: 5s
+        tcp:
+          preferred_ip_protocol: ip4
+          ip_protocoll_fallback: false
+          tls: false
+      tcp_connect_tls:
+        prober: tcp
+        timeout: 5s
+        tcp:
+          tls: true
+          tls_config:
+            insecure_skip_verify: false
+            # server_name: sni-hostname
