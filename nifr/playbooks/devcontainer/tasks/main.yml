@@ -516,7 +516,7 @@
         - 'metricbeat'
 # END [elastic-beats]
 
-# [php-tools]
+# [php-extensions]
 - name: "[php-extensions]"
   tags:
     - php-extensions[*]
@@ -548,6 +548,10 @@
       tags:
         - php-tools[local-php-security-checker]
         - local-php-security-checker
+    - import_tasks: "cachetool/main.yml"
+      tags:
+        - php-tools[cachetool]
+        - cachetool
 # END [php-tools]
 
 # [prometheus]
