@@ -1,45 +1,75 @@
 # yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
-- name: 'prometheus:unarchive'
+
+- name: "prometheus:group"
+  ansible.builtin.group:
+    name: '{{ prometheus.group }}'
+    gid: '{{ prometheus.gid }}'
+    state: '{{ prometheus.state }}'
+- name: "prometheus:user"
+  ansible.builtin.user:
+    name: '{{ prometheus.user }}'
+    uid: '{{ prometheus.uid }}'
+    group: '{{ prometheus.group }}'
+    groups: '{{ prometheus.groups }}'
+    home: '{{ prometheus.home }}'
+    create_home: false
+    state: '{{ prometheus.state }}'
+- name: "prometheus:home"
+  ansible.builtin.file:
+    path: '{{ prometheus.home }}'
+    state: directory
+    owner: '{{ prometheus.user }}'
+    group: '{{ prometheus.group }}'
+    mode: '2770'
+- name: 'prometheus:state:present'
   become: true
   when: '"present" == prometheus.state'
-  ansible.builtin.unarchive:
-    src: >-
-      {{
-        'https://github.com/prometheus/prometheus/releases/download'
-        ~ '/v' ~ prometheus.version
-        ~ '/'
-          ~ 'prometheus'
-          ~ '-'
-          ~ prometheus.version
-          ~ '.linux'
-          ~ '-'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '.tar.gz'
-      }}
-    extra_opts:
-      - '--strip-components=1'
-    include:
-     - >-
-        {{
-          'prometheus'
-          ~ '-'
-          ~ prometheus.version
-          ~ '.linux'
-          ~ '-'
-          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
-          ~ '/prometheus'
-        }}
-    dest: /usr/local/bin
-    creates: '/usr/local/bin/prometheus'
-    list_files: true
-    remote_src: true
-  register: "prometheus_download"
-  until: "prometheus_download is succeeded"
-  retries: "{{ ansible_retry_count | int }}"
-  delay: "{{ ansible_retry_delay | int }}"
+  block:
+    - name: 'prometheus:unarchive:prometheus'
+      ansible.builtin.unarchive:
+        src: >-
+          {{
+            'https://github.com/prometheus/prometheus/releases/download'
+            ~ '/v' ~ prometheus.version
+            ~ '/'
+              ~ 'prometheus'
+              ~ '-'
+              ~ prometheus.version
+              ~ '.linux'
+              ~ '-'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '.tar.gz'
+          }}
+        extra_opts:
+          - '--strip-components=1'
+        include:
+          - >-
+              {{
+                'prometheus'
+                ~ '-'
+                ~ prometheus.version
+                ~ '.linux'
+                ~ '-'
+                ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+                ~ '/' ~ item
+              }}
+        dest: '{{ prometheus.home }}'
+        creates: '{{ prometheus.home ~ "/" ~ item }}'
+        list_files: true
+        remote_src: true
+      loop: '{{ prometheus.components }}'
+      register: "prometheus_download"
+      until: "prometheus_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: 'prometheus:template:config'
+      ansible.builtin.template:
+        src: 'prometheus/prometheus.yml.j2'
+        dest: '{{ prometheus.config_file }}'
+        # validate: 'promtool check config {{ prometheus.config_file }}'
 - name: 'prometheus:file:absent:/usr/local/bin/prometheus'
-  become: true
   when: '"absent" == prometheus.state'
+  become: true
   ansible.builtin.file:
     path: '/usr/local/bin/prometheus'
     state: absent

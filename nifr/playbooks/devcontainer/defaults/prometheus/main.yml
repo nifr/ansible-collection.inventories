@@ -2,3 +2,88 @@
 prometheus:
   state: present
   version: '2.32.1'
+  user: prometheus
+  uid: 300
+  group: prometheus
+  gid: 300
+  home: /opt/prometheus
+  config_file: /opt/prometheus/prometheus.yml
+  components:
+    - prometheus
+    - promtool
+    - consoles
+    - console_libraries
+  config:
+    # see: https://prometheus.io/docs/guides/file-sd/#installing-configuring-and-running-prometheus
+    #
+    # attention: environment variables are NOT expanded in prometheus configuration in general
+    # see: https://github.com/prometheus/prometheus/issues/2357#issuecomment-571581267
+    #
+    # if prometheus is started with -enable-feature=expand-external-labels
+    # env vars of the form ${VARIABLE} and $VARIABLE are replaced in config.external_labels
+    global:
+      scrape_interval: ${PROMETHEUS_GLOBAL_SCRAPE_INTERVAL}
+      scrape_timeout: ${PROMETHEUS_GLOBAL_SCRAPE_TIMEOUT}
+      evaluation_interval: 30s
+    external_labels:
+      # note: HOST / HOSTNAME are not part of POSIX default vars and can NOT be assumed to exists
+      # see: https://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html
+      hostname: ${PROMETHEUS_LABEL_HOSTNAME}
+      developer: ${PROMETEHEUS_LABEL_DEVELOPER}
+    remote_write:
+      - url: ${PROMETHEUS_REMOTE_WRITE_URL}
+        basic_auth:
+          username: ${PROMETHEUS_REMOTE_WRITE_USERNAME}
+          # "password" and "password_file" are mututally exclusive
+          password: ${PROMETHEUS_REMOTE_WRITE_PASSWORD}
+          # password_file: /run/secrets/PROMETHEUS_REMOTE_WRITE_PASSWORD
+    scrape_configs:
+      - job_name: php-fpm_exporter
+        static_configs:
+          - targets: ['127.0.0.1:9253']
+      - job_name: mysqld_exporter
+        static_configs:
+          - targets: ['127.0.0.1:9306']
+      - job_name: redis_exporter
+        static_configs:
+          - targets: ['127.0.0.1:9121']
+      - job_name: nginx-prometheus-exporter
+        static_configs:
+          - targets: ['127.0.0.1:9113']
+      - job_name: blackbox_exporter
+        static_configs:
+          - targets: ['127.0.0.1:9115']
+      - job_name: 'blackbox-http'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+            - http://prometheus.io
+            - https://prometheus.io
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 127.0.0.1:9115
+      - job_name: 'blackbox-tcp'
+        scrape_timeout: 15s
+        scrape_interval: 15s
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]
+        static_configs:
+          - targets:
+              # mysql - http://127.0.0.1:9115/probe?target=127.0.0.1:3306&module=tcp_connect
+              - 127.0.0.1:3306
+              # redis - http://127.0.0.1:9115/probe?target=127.0.0.1:6379&module=tcp_connect
+              - 127.0.0.1:6379
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 127.0.0.1:9115
