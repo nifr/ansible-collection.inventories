@@ -1,0 +1,4 @@
+promcolor:
+  status: present
+  # see: https://github.com/fhemberger/promcolor/releases
+  version: '1.0.3'

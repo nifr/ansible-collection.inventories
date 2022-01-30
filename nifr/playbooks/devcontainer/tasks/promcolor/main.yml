@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[promcolor]'
+  become: true
+  when: '"present" == promcolor.state'
+  block:
+    - name: 'promcolor:unarchive'
+      ansible.builtin.unarchive:
+        # example url: https://github.com/fhemberger/promcolor/releases/download/v1.0.3/promcolor_1.0.3_darwin_amd64.tar.gz
+        src: >-
+          {{
+            'https://github.com/fhemberger/promcolor/promcolor/releases/download'
+            ~ '/v' ~ promcolor.version
+            ~ '/'
+              ~ 'promcolor'
+              ~ '-'
+              ~ promcolor.version
+              ~ '-'
+              ~ '('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '.tar.gz'
+          }}
+        extra_opts:
+          - '--strip-components=1'
+        include:
+          - >-
+              {{
+                  'promcolor'
+                ~ '-'
+                ~ promcolor.version
+                ~ '-'
+                ~ '('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+                ~ '-'
+                ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+                ~ '/'
+                  ~ 'promcolor'
+              }}
+        dest: /usr/local/bin
+        creates: '/usr/local/bin/promcolor'
+        list_files: true
+        remote_src: true
+      register: "promcolor_download"
+      until: "promcolor_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'promcolor:file:absent:/usr/local/bin/promcolor'
+  become: true
+  when: '"absent" == promcolor.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/promcolor'
+    state: absent

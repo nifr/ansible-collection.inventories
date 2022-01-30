@@ -337,6 +337,10 @@
       tags:
         - go[envsubst]
         - envsubst
+    - import_tasks: "promcolor/main.yml"
+      tags:
+        - go[promcolor]
+        - promcolor
 # END [go]
 
 # [haskell]
