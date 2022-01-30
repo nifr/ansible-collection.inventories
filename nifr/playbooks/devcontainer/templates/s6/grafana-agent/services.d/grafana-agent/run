@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+cd '{{ grafana_agent.home }}'
+
+exec s6-setuidgid '{{ grafana_agent.user }}' \
+  grafana-agent \
+    -config.file '{{ grafana_agent.config_file }}' \
+    -config.expand-env \
+    2>&1
