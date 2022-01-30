@@ -1,0 +1,12 @@
+# envsubst (go) is an alternative to envsubst (GNU)
+# it allows for env var expansion with support for default values i.e. ${VAR:-default_value}
+# GNU envsubst does not support default values
+#
+# see: https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html
+#
+# alternative go module by drone CI (supports more expansions): https://github.com/drone/envsubst
+# alternative envsub (rust, no binary releases on GitHub): https://github.com/stephenc/envsub
+envsubst:
+  state: present
+  # see: https://github.com/a8m/envsubst/releases
+  version: '1.2.0'

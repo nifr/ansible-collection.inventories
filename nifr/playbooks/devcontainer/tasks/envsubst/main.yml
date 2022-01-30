@@ -1,0 +1,35 @@
+
+- name: '[envsubst]'
+  when: '"present" == envsubst.state'
+  become: true
+  block:
+    - name: 'envsubst:get_url'
+      ansible.builtin.get_url:
+        # example url:  https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-Linux-arm64
+        # os_family:    Linux|Darwin
+        # architecture: x86_64|arm64
+        url: >-
+          {{
+            'https://github.com/a8m/envsubst/releases/download'
+            ~ '/v' ~ envsubst.version
+            ~ '/'
+              ~ 'envsubst'
+              ~ '-'
+              ~ ('Darwin' if (ansible_os_family == 'Darwin') else 'Linux')
+              ~ '-'
+              ~ ansible_architecture
+          }}
+        dest: /usr/local/bin/envsubst
+        owner: root
+        group: root
+        mode: '755'
+      register: "envsubst_download"
+      until: "envsubst_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'envsubst:file:absent:/usr/local/bin/envsubst'
+  become: true
+  when: '"absent" == envsubst.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/envsubst'
+    state: absent
