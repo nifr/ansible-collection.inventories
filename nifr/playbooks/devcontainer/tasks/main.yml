@@ -341,6 +341,10 @@
       tags:
         - go[promcolor]
         - promcolor
+    - import_tasks: "k6/main.yml"
+      tags:
+        - go[k6]
+        - k6
 # END [go]
 
 # [haskell]

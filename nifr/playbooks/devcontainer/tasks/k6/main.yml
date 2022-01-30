@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'k6:unarchive'
+  become: true
+  ansible.builtin.unarchive:
+    # example url: https://github.com/grafana/k6/releases/download/v0.36.0/k6-v0.36.0-linux-amd64.deb
+    # we use the .tar.gz because as of v0.36.0 / 2022-01 no arm64 .deb releases are available
+    src: >-
+      {{
+        'https://github.com/grafana/k6/releases/download'
+        ~ '/v' ~ k6.version
+        ~ '/'
+          ~ 'k6'
+          ~ '-'
+          ~ 'v' ~ k6.version
+          ~ '-'
+          ~ 'linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.tar.gz'
+      }}
+    extra_opts:
+      - '--strip-components=1'
+    include:
+     - >-
+        {{
+          'k6'
+          ~ '-'
+          ~ 'v' ~ k6.version
+          ~ '-'
+          ~ 'linux'
+          ~ '-'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '/k6'
+        }}
+    dest: /usr/local/bin
+    creates: '/usr/local/bin/k6'
+    list_files: true
+    remote_src: true
+  register: "k6_download"
+  until: "k6_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+- name: 'k6:file:absent:/usr/local/bin/nginx-prometheus-exporter'
+  become: true
+  when: '"absent" == k6.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/k6'
+    state: absent
