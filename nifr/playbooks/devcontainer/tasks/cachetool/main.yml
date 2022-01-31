@@ -1,6 +1,6 @@
 - name: 'cachetool:get_url'
   become: true
-  ansible_builtin.get_url:
+  ansible.builtin.get_url:
     # example url: https://github.com/gordalina/cachetool/releases/download/8.3.0/cachetool.phar
     url: >-
       {{
