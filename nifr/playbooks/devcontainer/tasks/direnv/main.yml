@@ -1,11 +1,13 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
 ---
+# always installs the latest version of direnv from GitHub releases by default
 - name: "direnv:set_fact:direnv_release"
   block:
     - name: "direnv:sect_fact:direnv_release:from:github"
       when: "direnv_release is not defined"
       block:
         - name: "direnv:get/latest-release"
-          github_release:
+          community.general.github_release:
             user: "{{ direnv.github.user }}"
             repo: "{{ direnv.github.repo }}"
             action: "latest_release"
@@ -16,37 +18,64 @@
           delay: "{{ ansible_retry_delay | int }}"
           failed_when: "not direnv_release.tag"
         - name: "direnv:cache_fact:direnv_release.tag"
-          set_fact:
+          ansible.builtin.set_fact:
             direnv_release: '{"tag": "{{ direnv_release.tag }}"}'
             cacheable: true
   rescue:
     - name: "direnv:set_fact:direnv_release:from:defaults"
-      set_fact:
+      ansible.builtin.set_fact:
         direnv_release: '{"tag": "{{ direnv.github.tag }}"}'
         cacheable: false
-
 - name: "direnv:command:direnv --version"
-  command: "~/.local/bin/direnv --version"
+  become: '{{ direnv.become | bool }}'
+  ansible.builtin.command:
+    argv:
+      - '{{ direnv.dest }}'
+      - '--version'
   register: "direnv_local_version"
   failed_when: false
   changed_when: false
-
 - when: '(direnv_local_version.rc != 0) or (direnv_local_version.stdout|regex_search("(\d+(\.\d+){2,})") is version(direnv_release.tag[1:], operator="lt", strict=true))'
+  become: '{{ direnv.become | bool }}'
   block:
     - name: "direnv:download"
-      get_url:
-        dest: "~/.local/bin/direnv"
+      ansible.builtin.get_url:
         force: true
-        mode: "750"
-        url: "https://github.com/{{ direnv.github.user }}/{{ direnv.github.repo }}/releases/download/{{ direnv_release.tag }}/direnv.linux-amd64"
+        dest: "{{ direnv.dest }}"
+        owner: '{{ direnv.owner }}'
+        group: '{{ direnv.group }}'
+        mode: '{{ direnv.mode }}'
+        url: >-
+          {{
+            "https://github.com/" ~ direnv.github.user ~ "/" ~ direnv.github.repo ~ "/releases/download"
+            ~ "/" ~ direnv_release.tag
+            ~ "/"
+              ~ "direnv"
+              ~ "."
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ "-"
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          }}
       register: "direnv_download"
       until: "direnv_download is succeeded"
       retries: "{{ ansible_retry_count | int }}"
       delay: "{{ ansible_retry_delay | int }}"
   rescue:
     - name: "direnv:download"
-      get_url:
-        dest: "~/.local/bin/direnv"
-        force: true
-        mode: "750"
-        url: "https://github.com/{{ direnv.github.user }}/{{ direnv.github.repo }}/releases/download/{{ direnv.github.tag }}/direnv.linux-amd64"
+      ansible.builtin.get_url:
+        dest: "{{ direnv.dest }}"
+        owner: '{{ direnv.owner }}'
+        group: '{{ direnv.group }}'
+        mode: '{{ direnv.mode }}'
+        # fallback to defaults (variable: direnv.github.tag)
+        url: >-
+          {{
+            "https://github.com/" ~ direnv.github.user ~ "/" ~ direnv.github.repo ~ "/releases/download"
+            ~ "/" ~ direnv.github.tag
+            ~ "/"
+              ~ "direnv"
+              ~ "."
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ "-"
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          }}

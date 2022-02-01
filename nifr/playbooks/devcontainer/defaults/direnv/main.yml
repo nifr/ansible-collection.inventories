@@ -1,5 +1,10 @@
 ---
 direnv:
+  become: true
+  owner: root
+  group: root
+  mode: 755
+  dest: '/usr/local/bin/direnv'
   github:
     tag: "v2.30.3"
     repo: "direnv"
