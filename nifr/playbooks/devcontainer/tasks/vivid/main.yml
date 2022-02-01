@@ -5,7 +5,7 @@
       when: "vivid_release is not defined"
       block:
         - name: "vivid:get/latest-release"
-          github_release:
+          community.general.github_release:
             user: "{{ vivid.github.user }}"
             repo: "{{ vivid.github.repo }}"
             action: "latest_release"
@@ -16,20 +16,20 @@
           delay: "{{ ansible_retry_delay | int }}"
           failed_when: "not vivid_release.tag"
         - name: "vivid:cache_fact:vivid_release.tag"
-          set_fact:
+          ansible.builtin.set_fact:
             vivid_release: '{"tag": "{{ vivid_release.tag }}"}'
             cacheable: true
   rescue:
     - name: "vivid:set_fact:vivid_release:from:defaults"
-      set_fact:
+      ansible.builtin.set_fact:
         vivid_release: '{"tag": "{{ vivid.github.tag }}"}'
         cacheable: false
 
 - name: "vivid:set_fact:download:filename"
-  set_fact:
+  ansible.builtin.set_fact:
     vivid_download_filename: >-
       {{
-          'vivid
+          'vivid'
         + '_'
         + vivid_release.tag[1:]
         + '_'
@@ -37,7 +37,7 @@
         + '.deb'
       }}
 - name: "vivid:set_fact:download:url|cache_path"
-  set_fact:
+  ansible.builtin.set_fact:
     vivid_download_url: >-
       {{
         'https://github.com/'
@@ -54,7 +54,7 @@
   when: "(ansible_use_download_cache | bool)"
   block:
     - name: "vivid:set_fact:cache:path"
-      set_fact:
+      ansible.builtin.set_fact:
         vivid_download_cache_path: >-
           {{
             ansible_download_cache_path
@@ -62,19 +62,19 @@
             + vivid_download_filename
           }}
     - name: "vivid:stat:cache:path"
-      stat:
+      ansible.builtin.stat:
         path: "{{ vivid_download_cache_path }}"
       register: "vivid_download_cache_file"
     - name: "vivid:cache:update"
       when: "not vivid_download_cache_file.stat.exists"
       block:
         - name: "vivid:file:cache:directory"
-          file:
+          ansible.builtin.file:
             state: "directory"
             path: "{{ ansible_download_cache_path }}"
             mode: "750"
         - name: "vivid:get_url:cache:download"
-          get_url:
+          ansible.builtin.get_url:
             url: "{{ vivid_download_url }}"
             dest: "{{ vivid_download_cache_path }}"
             mode: "750"
@@ -85,7 +85,7 @@
           delay: "{{ ansible_retry_delay | int }}"
 - name: "vivid:apt:deb:install"
   become: true
-  apt:
+  ansible.builtin.apt:
     deb: >-
       {{
         (ansible_use_download_cache | bool)
