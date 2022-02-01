@@ -27,4 +27,6 @@ exec \
     --storage.tsdb.retention.size='256MB' \
     --storage.tsdb.wal-compression \
     --enable-feature=expand-external-labels \
+    --log.format=json \
+    --log.level='debug' \
   2>&1
