@@ -17,7 +17,7 @@
               ~ ctop.version
               ~ '-'
               ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
-              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm')
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
           }}
         dest: /usr/local/bin/ctop
         owner: root
