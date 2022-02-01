@@ -31,7 +31,9 @@
       {{
         'fd_'
         + fd_release.tag[1:]
-        + '_amd64.deb'
+        + '_'
+        + ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+        + '.deb'
       }}
 - name: "fd:set_fact:download:url|cache_path"
   set_fact:
