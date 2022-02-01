@@ -1,6 +1,6 @@
 ---
 direnv:
   github:
-    tag: "v2.20.0"
+    tag: "v2.30.3"
     repo: "direnv"
     user: "direnv"
