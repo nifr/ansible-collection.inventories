@@ -27,6 +27,7 @@
   block:
     - name: 'prometheus:unarchive:prometheus'
       ansible.builtin.unarchive:
+        remote_src: true
         src: >-
           {{
             'https://github.com/prometheus/prometheus/releases/download'
@@ -54,9 +55,11 @@
                 ~ '/' ~ item
               }}
         dest: '{{ prometheus.home }}'
+        owner: '{{ prometheus.user }}'
+        group: '{{ prometheus.group }}'
+        mode: '550'
         creates: '{{ prometheus.home ~ "/" ~ item }}'
         list_files: true
-        remote_src: true
       loop: '{{ prometheus.components }}'
       register: "prometheus_download"
       until: "prometheus_download is succeeded"
@@ -66,6 +69,9 @@
       ansible.builtin.template:
         src: 'prometheus/prometheus.yml.j2'
         dest: '{{ prometheus.config_file }}'
+        owner: '{{ prometheus.user }}'
+        group: '{{ prometheus.group }}'
+        mode: '440'
         # validate: 'promtool check config {{ prometheus.config_file }}'
 - name: 'prometheus:file:absent:/usr/local/bin/prometheus'
   when: '"absent" == prometheus.state'
