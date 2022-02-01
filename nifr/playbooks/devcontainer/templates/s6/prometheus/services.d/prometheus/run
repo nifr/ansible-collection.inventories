@@ -13,7 +13,7 @@
 
 cd '{{ prometheus.home }}'
 exec \
-  s6-envdir -I /etc/services.d/mailhog/env \
+  s6-envdir -I /etc/services.d/prometheus/env \
   s6-setuidgid '{{ prometheus.user }}' \
   prometheus \
     --config.file='{{ prometheus.config_file }}' \
