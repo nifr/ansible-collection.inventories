@@ -9,7 +9,7 @@
         # note: as of v0.7.6 tag the repo does not provide darwin+arm64 (M1) binary releases
         url: >-
           {{
-            'https://github.com/bcien/ctop/releases/download'
+            'https://github.com/bcicen/ctop/releases/download'
             ~ '/' ~ ctop.version
             ~ '/'
               ~ 'ctop'
@@ -17,6 +17,7 @@
               ~ ctop.version
               ~ '-'
               ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
               ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
           }}
         dest: /usr/local/bin/ctop
