@@ -29,9 +29,12 @@
   set_fact:
     bat_download_filename: >-
       {{
-        'bat_'
+          'bat'
+        + '_'
         + bat_release.tag[1:]
-        + '_amd64.deb'
+        + '_'
+        + ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+        + '.deb'
       }}
 - name: "bat:set_fact:download:url|cache_path"
   set_fact:
