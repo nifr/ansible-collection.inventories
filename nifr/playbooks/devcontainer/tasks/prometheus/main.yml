@@ -73,9 +73,15 @@
         group: '{{ prometheus.group }}'
         mode: '440'
         # validate: 'promtool check config {{ prometheus.config_file }}'
-- name: 'prometheus:file:absent:/usr/local/bin/prometheus'
+- name: '[prometheus:state:absent]'
   when: '"absent" == prometheus.state'
   become: true
-  ansible.builtin.file:
-    path: '/usr/local/bin/prometheus'
-    state: absent
+  block:
+    - name: 'prometheus:file:absent:/usr/local/bin/prometheus'
+      ansible.builtin.file:
+        path: '/usr/local/bin/prometheus'
+        state: absent
+    - name: 'prometheus:file:absent:home'
+      ansible.builtin.file:
+        path: '{{ prometheus.home }}'
+        state: absent
