@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[ctop]'
+  when: '"present" == ctop.state'
+  become: true
+  block:
+    - name: 'ctop:get_url'
+      ansible.builtin.get_url:
+        # example url: https://github.com/bcicen/ctop/releases/download/0.7.6/ctop-0.7.6-linux-amd64
+        # note: as of v0.7.6 tag the repo does not provide darwin+arm64 (M1) binary releases
+        url: >-
+          {{
+            'https://github.com/bcien/ctop/releases/download'
+            ~ '/' ~ ctop.version
+            ~ '/'
+              ~ 'ctop'
+              ~ '-'
+              ~ ctop.version
+              ~ '-'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm')
+          }}
+        dest: /usr/local/bin/ctop
+        owner: root
+        group: root
+        mode: '755'
+      register: "ctop_download"
+      until: "ctop_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'ctop:file:absent:/usr/local/bin/ctop'
+  become: true
+  when: '"absent" == ctop.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/ctop'
+    state: absent

@@ -345,6 +345,10 @@
       tags:
         - go[k6]
         - k6
+    - import_tasks: "ctop/main.yml"
+      tags:
+        - go[ctop]
+        - ctop
 # END [go]
 
 # [haskell]
