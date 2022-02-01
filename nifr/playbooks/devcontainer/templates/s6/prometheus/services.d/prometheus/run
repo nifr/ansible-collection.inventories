@@ -17,7 +17,7 @@ exec \
   s6-setuidgid '{{ prometheus.user }}' \
   prometheus \
     --config.file='{{ prometheus.config_file }}' \
-    --web.console.libraries='{{ prometheus.home }}/console_libraries'
+    --web.console.libraries='{{ prometheus.home }}/console_libraries' \
     --web.console.templates='{{ prometheus.home }}/consoles' \
     --web.listen-address='0.0.0.0:9090' \
     --web.telemetry-path='/metrics' \
