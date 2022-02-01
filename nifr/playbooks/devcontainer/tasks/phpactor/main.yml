@@ -1,6 +1,6 @@
 # composer create-project phpactor/phpactor --remove-vcs --no-scripts --no-dev --no-progress ./phpactor 0.18.0
 - name: 'phpactor:state=present'
-  when: 'phpactor.state is "present"'
+  when: 'phpactor.state == "present"'
   become: true
   block:
     - name: 'phpactor:git:repo'
@@ -32,7 +32,7 @@
         group: root
         state: link
 - name: 'phpactor:state=absent'
-  when: 'phpactor.state is "absent"'
+  when: 'phpactor.state == "absent"'
   become: true
   block:
     - name: 'phpactor:file:directory:absent'
