@@ -5,6 +5,7 @@ prometheus:
   user: prometheus
   uid: 300
   group: prometheus
+  groups: []
   gid: 300
   home: /opt/prometheus
   config_file: /opt/prometheus/prometheus.yml
