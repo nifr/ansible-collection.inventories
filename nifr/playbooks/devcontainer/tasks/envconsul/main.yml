@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[envconsul]'
+  when: '"present" == envconsul.state'
+  become: true
+  block:
+    - name: 'envconsul:unarchive'
+      ansible.builtin.unarchive:
+        # example url:  https://releases.hashicorp.com/envconsul/0.12.1/envconsul_0.12.1_linux_amd64.zip
+        # os_family:    Linux|Darwin
+        # architecture: x86_64|arm64 (only linux)
+        remote_src:
+        src: >-
+          {{
+            'https://releases.hashicorp.com/envconsul'
+            ~ '/' ~ envconsul.version
+            ~ '/'
+              ~ 'envconsul'
+              ~ '_'
+              ~ envconsul.version
+              ~ '_'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '_'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '.zip'
+          }}
+        include:
+          - 'envconsul'
+        dest: /usr/local/bin/
+        owner: root
+        group: root
+        mode: '755'
+      register: "envconsul_download"
+      until: "envconsul_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+- name: 'envconsul:file:absent:/usr/local/bin/envconsul'
+  become: true
+  when: '"absent" == envconsul.state'
+  ansible.builtin.file:
+    path: '/usr/local/bin/envconsul'
+    state: absent

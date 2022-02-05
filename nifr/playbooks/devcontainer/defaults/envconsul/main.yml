@@ -1,0 +1,5 @@
+envconsul:
+  state: present
+  # see: https://github.com/hashicorp/envconsul/tags
+  # see: https://releases.hashicorp.com/envconsul
+  version: '0.12.1'

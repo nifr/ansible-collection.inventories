@@ -353,6 +353,10 @@
       tags:
         - go[ctop]
         - ctop
+    - import_tasks: "envconsul/main.yml"
+      tags:
+        - go[envconsul]
+        - envconsul
 # END [go]
 
 # [haskell]
