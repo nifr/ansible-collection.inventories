@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'delta:deb'
+  become: true
+  ansible.builtin.apt:
+  # # example url: https://github.com/dandavison/delta/releases/download/0.11.3/git-delta_0.11.3_amd64.deb
+    state: '{{ delta.state }}'
+    deb: >-
+      {{
+          "https://github.com"
+        ~ '/' ~ delta.github.user
+        ~ '/' ~ delta.github.repo
+        ~ '/releases'
+        ~ '/download'
+        ~ '/' ~ delta.version
+        ~ '/'
+          ~ 'git-delta'
+          ~ '_'
+          ~ delta.version
+          ~ '_'
+          ~ ("amd64" if (ansible_architecture == "x86_64") else 'arm64')
+          ~ '.deb'
+      }}
+  register: "delta_download"
+  until: "delta_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"

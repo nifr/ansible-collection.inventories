@@ -239,6 +239,10 @@
           tags:
             - "rust[watchexec]"
             - "watchexec"
+        - import_tasks: "delta/main.yml"
+          tags:
+            - "rust[delta]"
+            - "delta"
     - name: "[rust] binary-only releases"
       tags:
         - "binary[*]"

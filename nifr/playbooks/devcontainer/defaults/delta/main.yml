@@ -1,0 +1,10 @@
+delta:
+  state: present
+  # see: https://github.com/dandavison/delta/releases
+  version: '0.11.3'
+  release:
+    channel: github-releases
+    type: deb
+  github:
+    user: dandavison
+    repo: delta
