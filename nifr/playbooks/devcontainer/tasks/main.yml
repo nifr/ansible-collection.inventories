@@ -580,6 +580,10 @@
       tags:
         - php-tools[symfony-console-autocomplete]
         - symfony-console-autocomplete
+    - import_tasks: "phpmetrics/main.yml"
+      tags:
+        - php-tools[phpmetrics]
+        - phpmetrics
 # END [php-tools]
 
 # [php-info]

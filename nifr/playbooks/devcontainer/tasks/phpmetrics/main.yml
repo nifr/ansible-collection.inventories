@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'phpmetrics:state:present'
+  become: true
+  when: 'phpmetrics.state == "present"'
+  block:
+    - name: 'phpmetrics:command:composer:create-project'
+      ansible.builtin.command:
+        argv:
+          - 'composer'
+          - 'create-project'
+          - '--no-cache'
+          - '--prefer-dist'
+          - '--remove-vcs'
+          - '--no-scripts'
+          - '--no-dev'
+          - '--no-progress'
+          - '--no-ansi'
+          - 'phpmetrics/phpmetrics'
+          - '{{ phpmetrics.install_dir }}'
+          - '{{ phpmetrics.version }}'
+        creates: '{{ phpmetrics.install_dir }}'
+    - name: 'phpmetrics:file:mode:dir'
+      ansible.builtin.file:
+        state: directory
+        path: '{{ phpmetrics.install_dir }}'
+        owner: '{{ phpmetrics.owner }}'
+        group: '{{ phpmetrics.group }}'
+        mode: '{{ phpmetrics.mode.dir }}'
+        recurse: true
+    # note: this is a not an idempotant operation if
+    # dir mode (recurse=true) is i.e. u=rwX and executable mode is u=rwx
+    - name: 'phpmetrics:file:mode:executable'
+      ansible.builtin.file:
+        state: file
+        path: '{{ phpmetrics.install_dir ~ "/bin/phpmetrics" }}'
+        mode: '{{ phpmetrics.mode.executable }}'
+    - name: 'phpmetrics:file:link:link_target'
+      ansible.builtin.file:
+        state: link
+        src: '{{ phpmetrics.install_dir ~ "/bin/phpmetrics" }}'
+        dest: '{{ phpmetrics.link_target }}'
+        owner: '{{ phpmetrics.owner }}'
+        group: '{{ phpmetrics.group }}'
+- name: 'phpmetrics:state:absent'
+  become: true
+  when: 'phpmetrics.state == "absent"'
+  block:
+    - name: 'phpmetrics:file:absent:install_dir'
+      ansible.builtin.file:
+        path: '{{ phpmetrics.install_dir }}'
+        state: absent
+    - name: 'phpmetrics:file:absent:link_target'
+      ansible.builtin.file:
+        path: '{{ phpmetrics.link_target }}'
+        state: absent

@@ -1,0 +1,14 @@
+phpmetrics:
+  state: present
+  # note: latest phpmetrics v2.7.4 does not have a .phar release (last is v2.7.3)
+  # the commit history suggests v2.7.3 is broken
+  # see: https://github.com/phpmetrics/PhpMetrics/tags
+  version: '2.7.4'
+  install_dir: /opt/phpmetrics
+  target: /usr/local/bin/phpmetrics
+  become: true
+  owner: root
+  group: root
+  mode:
+    dir: 'u=rwX,g=rX,o=rX'
+    executable: 'u+x,g+x,o+x'
