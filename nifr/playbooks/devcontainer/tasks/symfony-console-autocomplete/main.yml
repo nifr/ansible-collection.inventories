@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
 - name: 'symfony-console-autocomplete:state:present'
   become: true
   when: 'symfony_console_autocomplete.state == "present"'
@@ -7,30 +8,31 @@
         argv:
           - 'composer'
           - 'create-project'
-          - 'bamarni/symfony-console-autocomplete'
           - '--no-cache'
+          - '--prefer-dist'
           - '--remove-vcs'
           - '--no-scripts'
           - '--no-dev'
           - '--no-progress'
           - '--no-ansi'
+          - 'bamarni/symfony-console-autocomplete'
           - '{{ symfony_console_autocomplete.install_dir }}'
           - '{{ symfony_console_autocomplete.version }}'
         creates: '{{ symfony_console_autocomplete.install_dir }}'
-    - name: 'symfony-console-autocomplete:file:link:/usr/local/bin/symfony-autocomplete'
+    - name: 'symfony-console-autocomplete:file:link:link_target'
       ansible.builtin.file:
         state: link
         src: '{{ symfony_console_autocomplete.install_dir ~ "/bin/symfony-autocomplete" }}'
-        dest: '/usr/local/bin/symfony-autocomplete'
+        dest: '{{ symfony_console_autocomplete.link_target }}'
 - name: 'symfony-console-autocomplete:state:absent'
   become: true
   when: 'symfony_console_autocomplete.state == "absent"'
   block:
-    - name: 'symfony-console-autocomplete:command:composer:create-project'
+    - name: 'symfony-console-autocomplete:file:absent:install_dir'
       ansible.builtin.file:
         path: '{{ symfony_console_autocomplete.install_dir }}'
         state: absent
-    - name: 'symfony-console-autocomplete:file:link:/usr/local/bin/symfony-autocomplete'
+    - name: 'symfony-console-autocomplete:file:absent:link_target'
       ansible.builtin.file:
-        path: '{{ symfony_console_autocomplete.install_dir ~ "/bin/symfony-autocomplete" }}'
+        path: '{{ symfony_console_autocomplete.link_target }}'
         state: absent
