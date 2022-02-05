@@ -2,6 +2,14 @@
 
 cd '{{ grafana_agent.home }}'
 
+# see: https://grafana.com/docs/agent/latest/configuration/
+#
+# ## remote config (beta)
+# -enable-features=remote-configs \
+# -config.file=https://example.com/config.yml \
+# -config.url.basic-auth-user=<user> \
+# -config.url.basic-auth-password-file=<file>
+#
 exec s6-setuidgid '{{ grafana_agent.user }}' \
   grafana-agent \
     -config.file '{{ grafana_agent.config_file }}' \
