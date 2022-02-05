@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[phpinfo:state=present]'
+  when: '"present" == phpinfo.state'
+  become: true
+  block:
+    - name: 'phpinfo:file:install_dir'
+      ansible.builtin.file:
+        state: 'directory'
+        path: '{{ phpinfo.install_dir }}'
+        owner: '{{ phpinfo.owner }}'
+        group: '{{ phpinfo.group }}'
+        mode: '{{ phpinfo.mode }}'
+    - name: 'phpinfo:template:script'
+      ansible.builtin.lineinfile:
+        create: true
+        state: present
+        regexp: '^<\?php'
+        line: '<?php phpinfo();'
+        dest: '{{ phpinfo.install_dir ~ "/index.php" }}'
+        owner: '{{ phpinfo.owner }}'
+        group: '{{ phpinfo.group }}'
+        mode: '{{ phpinfo.mode }}'
+- name: '[phpinfo:state=present]'
+  when: '"absent" == phpinfo.state'
+  become: true
+  ansible.builtin.file:
+    path: '{{ phpinfo.install_dir }}'
+    state: 'absent'

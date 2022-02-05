@@ -1,0 +1,6 @@
+phpinfo:
+  state: present
+  owner: root
+  group: www-data
+  install_dir: '/opt/phpinfo'
+  mode: 'u=rwX,g=rX,o='
