@@ -599,6 +599,10 @@
       tags:
         - php-info[apcu-gui]
         - apcu-gui
+    - import_tasks: "xdebug_info/main.yml"
+      tags:
+        - php-info[xdebug_info]
+        - xdebug_info
     - import_tasks: "phpinfo/main.yml"
       tags:
         - php-info[phpinfo]

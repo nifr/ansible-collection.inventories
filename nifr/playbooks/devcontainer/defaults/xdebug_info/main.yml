@@ -1,0 +1,6 @@
+xdebug_info:
+  state: present
+  owner: root
+  group: www-data
+  install_dir: '/opt/xdebug_info'
+  mode: 'u=rwX,g=rX,o='
