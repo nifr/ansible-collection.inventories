@@ -1,0 +1,38 @@
+# composer create-project --no-cache --no-scripts --no-interaction --no-dev --prefer-dist --ignore-platform-reqs --remove-vcs amnuts/opcache-gui /opt/opcache-gui 3.3.1
+- name: 'opcache-gui:state:present'
+  become: true
+  when: 'opcache_gui.state == "present"'
+  block:
+    - name: 'opcache-gui:command:composer:create-project'
+      ansible.builtin.command:
+        argv:
+          - 'composer'
+          - 'create-project'
+          - '--no-cache'
+          - '--prefer-dist'
+          - '--remove-vcs'
+          - '--no-scripts'
+          - '--no-dev'
+          - '--no-progress'
+          - '--no-ansi'
+          # note: installation fails if opcache extension is NOT loaded for CLI SAPI
+          - '--ignore-platform-reqs'
+          - 'amnuts/opcache-gui'
+          - '{{ opcache_gui.install_dir }}'
+          - '{{ opcache_gui.version }}'
+        creates: '{{ opcache_gui.install_dir }}'
+    - name: 'opcache-gui:file:permissions'
+      ansible.builtin.file:
+        path: '{{ opcache_gui.install_dir }}'
+        mode: '{{ opcache_gui.mode }}'
+        owner: '{{ opcache_gui.owner }}'
+        group: '{{ opcache_gui.group }}'
+        recurse: true
+- name: 'opcache-gui:state:absent'
+  become: true
+  when: 'opcache_gui.state == "absent"'
+  block:
+    - name: 'opcache-gui:file:absent:install_dir'
+      ansible.builtin.file:
+        path: '{{ opcache_gui.install_dir }}'
+        state: absent

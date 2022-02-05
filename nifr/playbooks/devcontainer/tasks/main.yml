@@ -582,6 +582,17 @@
         - symfony-console-autocomplete
 # END [php-tools]
 
+# [php-info]
+- name: "[php-info]"
+  tags:
+    - php-info[*]
+  block:
+    - import_tasks: "opcache-gui/main.yml"
+      tags:
+        - php-info[opcache-gui]
+        - opcache-gui
+# END [php-info]
+
 # [prometheus]
 - name: "[prometheus]"
   block:

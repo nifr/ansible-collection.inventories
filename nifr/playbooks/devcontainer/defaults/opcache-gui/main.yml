@@ -1,0 +1,6 @@
+opcache_gui:
+  install_dir: /opt/opcache-gui
+  version: '3.3.1'
+  owner: root
+  group: www-data
+  mode: 'u=rwX,g=rX,o='
