@@ -1,0 +1,11 @@
+apcu_gui:
+  state: present
+  # see: https://github.com/krakjoe/apcu/releases
+  version: '5.1.21'
+  github:
+    user: krakjoe
+    repo: apcu
+  install_dir: /opt/apcu-gui
+  owner: root
+  group: www-data
+  mode: 'u=rwX,g=rX,o='

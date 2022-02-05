@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[apcu-gui:state=present]'
+  when: '"present" == apcu_gui.state'
+  become: true
+  block:
+    - name: 'apcu-gui:file:install_dir'
+      ansible.builtin.file:
+        state: 'directory'
+        path: '{{ apcu_gui.install_dir }}'
+        owner: '{{ apcu_gui.owner }}'
+        group: '{{ apcu_gui.group }}'
+        mode: '{{ apcu_gui.mode }}'
+    - name: 'apcu-gui:template:script'
+      ansible.builtin.get_url:
+        src: >-
+          {{
+            'https://raw.githubusercontent.com/krakjoe/apcu'
+            ~ '/v' apcu_gui.version
+            ~ '/apc.php'
+          }}
+        dest: '{{ apcu_gui.install_dir ~ "/index.php" }}'
+        owner: '{{ apcu_gui.owner }}'
+        group: '{{ apcu_gui.group }}'
+        mode: '{{ apcu_gui.mode }}'
+    # TODO: create optional apc.conf.php
+- name: '[apcu-gui:state=present]'
+  when: '"absent" == apcu_gui.state'
+  become: true
+  ansible.builtin.file:
+    path: '{{ apcu_gui.install_dir }}'
+    state: 'absent'

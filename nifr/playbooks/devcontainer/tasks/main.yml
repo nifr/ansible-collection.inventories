@@ -595,6 +595,10 @@
       tags:
         - php-info[opcache-gui]
         - opcache-gui
+    - import_tasks: "apcu-gui/main.yml"
+      tags:
+        - php-info[apcu-gui]
+        - apcu-gui
 # END [php-info]
 
 # [prometheus]
