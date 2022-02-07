@@ -1,0 +1,5 @@
+#!/usr/bin/execlineb -P
+
+# s6-setuidgid openresty
+fdmove -c 2 1
+openresty
