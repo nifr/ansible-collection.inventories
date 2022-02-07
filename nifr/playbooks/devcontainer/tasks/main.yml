@@ -625,6 +625,10 @@
           tags:
             - prometheus[node_exporter]
             - node_exporter
+        - import_tasks: "process-exporter/main.yml"
+          tags:
+            - prometheus[process-exporter]
+            - process-exporter
         - import_tasks: "blackbox_exporter/main.yml"
           tags:
             - prometheus[blackbox_exporter]

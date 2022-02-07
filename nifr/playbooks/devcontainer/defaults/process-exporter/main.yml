@@ -1,0 +1,38 @@
+# see: https://github.com/ncabatoff/process-exporter/releases
+# example dashboard: https://grafana.net/dashboards/249
+process_exporter:
+  state: present
+  version: '0.7.10'
+  github:
+    user: ncabatoff
+    repo: process-exporter
+  owner: root
+  group: root
+  mode:
+    ## unused with .deb installation
+    install_dir: u=rX,g=rX,o=
+    executable: u+x,g+x
+    config:
+      file: u=r,g=r
+      dir: u=rx,g=rx
+  ## unused with .deb installation
+  release:
+    channel: 'github-releases'
+    type: 'archive'
+    format: 'tar.gz'
+  install_dir: /opt/process-exporter
+  config:
+  # this is the process matching config
+  # there's also a web config given with --web.config.file
+  # see: https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
+    file: /opt/process-exporter/process-exporter.yml
+    content: {}
+#   content:
+#     process_names:
+#     # see: https://github.com/ncabatoff/process-exporter#using-a-config-file-group-name
+#        - name: "{{.Comm}}"
+#         cmdline:
+#            - '.+'
+#       - comm:
+#           - mysqld
+#           - redis-server

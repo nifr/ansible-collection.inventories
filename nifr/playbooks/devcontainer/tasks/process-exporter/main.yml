@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: 'process-exporter:apt:deb'
+  become: true
+  ansible.builtin.apt:
+    state: '{{ process_exporter.state }}'
+    # example url: https://github.com/ncabatoff/process-exporter/releases/download/v0.7.10/process-exporter_0.7.10_linux_amd64.deb
+    # os: linux (only)
+    # architectures: amd64|arm64|armv7|[..]
+    deb: >-
+      {{
+        'https://github.com'
+        ~ '/' ~ process_exporter.github.user
+        ~ '/' ~ process_exporter.github.repo
+        ~ '/releases'
+        ~ '/download'
+        ~ '/v' ~ process_exporter.version
+        ~ '/'
+          ~ 'process-exporter'
+          ~ '_'
+          ~ process_exporter.version
+          ~ '_'
+          ~ 'linux'
+          ~ '_'
+          ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+          ~ '.deb'
+      }}
+  register: "process_exporter_download"
+  until: "process_exporter_download is succeeded"
+  retries: "{{ ansible_retry_count | int }}"
+  delay: "{{ ansible_retry_delay | int }}"
+- name: 'process-exporter:file:directory:config_dir'
+  ansible.builtin.file:
+    state: 'directory'
+    path: '{{ process_exporter.config.file | dirname }}'
+    owner: '{{ process_exporter.owner }}'
+    group: '{{ process_exporter.group }}'
+    mode: '{{ process_exporter.mode.config.dir }}'
+- name: 'process-exporter:template:config_file'
+  ansible.builtin.template:
+    src: 'process-exporter/process-exporter.yml.j2'
+    dest: '{{ process_exporter.config.file }}'
+    owner: '{{ process_exporter.owner }}'
+    group: '{{ process_exporter.group }}'
+    mode: '{{ process_exporter.mode.config.file }}'
