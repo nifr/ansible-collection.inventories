@@ -1,6 +1,10 @@
 filebeat:
   state: present
   version: '7.16.3'
+  github:
+    user: elastic
+    repo: beats
+    path: filebeat/
   config:
     filebeat.config:
       modules:

@@ -3,3 +3,6 @@ cachetool:
   # see: https://github.com/gordalina/cachetool/releases
   # attention: cachetool v8.0+ is compatible only with PHP v8.0+
   version: '8.3.0'
+  github:
+    user: gordalina
+    repo: cachetool

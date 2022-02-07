@@ -2,6 +2,9 @@ grafana_agent:
   state: present
   # see: https://github.com/grafana/agent/releases
   version: '0.22.0'
+  github:
+    user: grafana
+    repo: agent
   # default config path: /etc/agent/agent.yaml
   config_file: /etc/grafana-agent.yaml
   user: grafana-agent

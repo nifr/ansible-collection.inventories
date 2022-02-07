@@ -1,2 +1,5 @@
 composer_require_checker:
   version: '3.6.0'
+  github:
+    repo: maglnet
+    user: ComposerRequireChecker

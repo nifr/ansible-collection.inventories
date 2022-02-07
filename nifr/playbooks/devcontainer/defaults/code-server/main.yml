@@ -1,6 +1,9 @@
 code_server:
   state: present
   version: '4.0.1'
+  github:
+    user: coder
+    repo: code-server
   user: code-server
   s6_user: root
   uid: 210
