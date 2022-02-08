@@ -107,6 +107,97 @@ grafana_agent:
               basic_auth:
                 username: ${GRAFANA_AGENT_PROMTAIL_CLIENT_USERNAME}
                 password: ${GRAFANA_AGENT_PROMTAIL_CLIENT_PASSWORD}
+    traces:
+    # grafana/tempo integration
+      configs:
+        - name: default
+          remote_write:
+            # the remote write endpoint can either be Grafana Cloud or a (local) tempo instance
+            # the Agent only exports in OTLP gRPC and HTTP format
+            # OTLP default ports are 4317 for gRPC and 4318 for HTTP
+            - endpoint:  ${GRAFANA_AGENT_TEMPO_REMOTE_WRITE_ENDPOINT}
+              basic_auth:
+                username: ${GRAFANA_AGENT_TEMPO_REMOTE_WRITE_USERNAME}
+                password: ${GRAFANA_AGENT_TEMPO_REMOTE_WRITE_PASSWORD}
+          receivers:
+          # > for a production deployment (or to save resources) you should only enable the receivers you need!
+          # only jaeger is enabled because it is supported by:
+          # * auxmoney/opentracing-bundle - https://github.com/auxmoney/OpentracingBundle-core#choose-tracer-implementation
+          # * nginx opentracing plugin - https://github.com/opentracing-contrib/nginx-opentracing#dependencies
+          # * spring (boot) opentracing - https://github.com/opentracing-contrib/java-spring-jaeger
+            jaeger:
+              protocols:
+                # most Jaeger Clients use Thrift’s compact encoding
+                # see: https://www.jaegertracing.io/docs/1.31/apis/#thrift-over-udp-stable
+                # 6831/UDP - jaeger-agent - jaeger.thrift over compact thrift protocol
+                thrift_compact:
+                # some client libraries do not support it (notably, Node.js) and use Thrift’s binary encoding
+                # (because thriftrw npm package does not support compact protocol)
+                # see: https://www.jaegertracing.io/docs/1.31/apis/#thrift-over-udp-stable
+                # 6832/UDP - jaeger-agent - jaeger.thrift over binary thrift protocol
+                thrift_binary:
+                # Since Jaeger version 1.11 the official and recommended protocol between Agents and Collectors is gRPC with Protobuf
+                # see: https://www.jaegertracing.io/docs/1.31/apis/#protobuf-via-grpc-stable
+                # see: https://www.jaegertracing.io/docs/1.31/deployment/#collector
+                # 14250/gRPC - jaeger-collector - can be used by jaeger-agent to send spans in model.proto format
+                # grpc:
+                # https://www.jaegertracing.io/docs/1.31/apis/#thrift-over-http-stable
+                # usually not used but useful with i.e. AWS lambda function where the agent is not on the same host
+                #thrift_http:
+            # zipkin:
+            # otlp:
+            # # see: https://github.com/open-telemetry/opentelemetry-collector/blob/main/receiver/otlpreceiver/README.md
+            #   protocols:
+            #     http:
+            #       endpoint: 0.0.0.0:4318
+            #       tls:
+            #         insecure: true
+            #         ca_file: server.crt
+            #         cert_file: client.crt
+            #         key_file: client.key
+            #         min_version: "1.1"
+            #         max_version: "1.2"
+            #       cors:
+            #         allowed_origins:
+            #           - '*'
+            #           - '*.example.com'
+            #         allowed_headers:
+            #           - Example-Header
+            #         max_age: 7200
+            #     grpc:
+            #       endpoint: 0.0.0.0:4317
+            # opencensus:
+          # attributes:
+          #   actions:
+          #     - action: upsert
+          #       key: env
+          #       value: prod
+          # batch:
+          #   timeout: 5s
+          #   send_batch_size: 100
+
+          # This processor writes a well formatted log line to a logs instance for each span, root, or process
+          # that passes through the Agent. This allows for automatically building a mechanism for trace
+          # discovery and building metrics from traces using Loki. It should be considered experimental.
+          automatic_logging:
+            # backend is either "stdout" or "logs_instance"
+            backend: stdout
+            # "logs_instance_name" is required if backend is "logs_instance"
+            # this is a logs instance inside this config (configured above - see: logs.configs[].name)
+            #logs_instance_name: default
+            spans: true
+            processes: true
+            roots: true
+          spanmetrics:
+          # This is an experimental feature of Opentelemetry-Collector and the behavior
+          # may change in the future.
+            # handler_endpoint is a prometheus metrics endpoint
+            handler_endpoint: 0.0.0.0:8889
+            # metrics_instance is a Grafana agent prometheus instance
+            # see above: metrics.configs[].name
+            #metrics_instance: prometheus
+          # service_graphs:
+          #   enabled: true
     integrations:
     # see: https://grafana.com/docs/agent/latest/configuration/integrations/
       agent:
