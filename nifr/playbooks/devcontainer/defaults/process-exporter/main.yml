@@ -26,13 +26,12 @@ process_exporter:
   # there's also a web config given with --web.config.file
   # see: https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
     file: /opt/process-exporter/process-exporter.yml
-    content: {}
-#   content:
-#     process_names:
-#     # see: https://github.com/ncabatoff/process-exporter#using-a-config-file-group-name
-#        - name: "{{.Comm}}"
-#         cmdline:
-#            - '.+'
+    content:
+      process_names:
+      # see: https://github.com/ncabatoff/process-exporter#using-a-config-file-group-name
+        - name: !unsafe '{{.Comm}}$'
+          cmdline:
+            - '.+'
 #       - comm:
 #           - mysqld
 #           - redis-server
