@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+# see: https://github.com/ncabatoff/process-exporter#running
+
+cd '{{ process_exporter.install_dir }}'
+exec \
+  s6-envdir -I /etc/services.d/process-exporter/env \
+  s6-setuidgid 'root' \
+  ./process-exporter \
+    -config.file='{{ process_exporter.config_file }}' \
+    -children=true \
+    -threads=true \
+    -recheck=false \
+  2>&1
