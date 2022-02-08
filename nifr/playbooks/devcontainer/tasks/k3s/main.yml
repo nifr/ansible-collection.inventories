@@ -77,7 +77,7 @@
           retries: "{{ ansible_retry_count | int }}"
           delay: "{{ ansible_retry_delay | int }}"
 
-- name: "k3:sysctl:enable-ipv4/ipv6-forwarding"
+- name: "k3s:sysctl:enable-ipv4/ipv6-forwarding"
   become: true
   sysctl:
     name: "{{ item }}"
