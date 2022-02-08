@@ -1,5 +1,4 @@
 # yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
-
 - name: "prometheus:group"
   ansible.builtin.group:
     name: '{{ prometheus.group }}'
