@@ -1,0 +1,4 @@
+#!/usr/bin/with-contenv sh
+
+exec s6-setuidgid mysql \
+  echo 'I am just running once!'
