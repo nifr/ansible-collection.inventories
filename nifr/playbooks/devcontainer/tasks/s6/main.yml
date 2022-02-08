@@ -1,19 +1,172 @@
-- name: "s6:file:directory:/etc/services.d/${service}/{log,env}"
+- name: '[s6:state=present]'
   become: true
-  ansible.builtin.file:
-    path: '{{ "/etc/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
-    state: directory
-    owner: root
-    group: root
-    mode: '550'
-  loop: '{{ s6.services | product(["log", "env"]) | list }}'
-
-- name: "s6:template:/etc/services.d/${service}/*"
-  become: true
-  ansible.builtin.template:
-    src: '{{ "s6/" ~ item[0] ~ "/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
-    dest: '{{ "/etc/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
-    owner: root
-    group: root
-    mode: '550'
-  loop: '{{ s6.services | product(["run", "log/run"]) | list }}'
+  block:
+    - name: "s6:file:directory:/etc/services.d/${service_name}"
+      # creates the service directories /etc/services.d/<service_name>
+      ansible.builtin.file:
+        path: '{{ "/etc/services.d/" ~ service_name }}'
+        state: directory
+        owner: root
+        group: root
+        mode: '550'
+      loop: '{{ s6.services | map(attribute="name") | list }}'
+      loop_control:
+        loop_var: service_name
+    - name: "s6:copy:/etc/services.d/${service}/type"
+      # sets the service type in file /etc/services.d/<service_name>/type
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ type.0 ~ "/type" }}'
+        content: "{{ type.1 }}"
+      loop: >-
+        {{
+          s6.services
+          | map(attribute="name")
+          | zip(
+            s6.services
+            | map(attribute="type", default="longrun")
+          )
+          | list
+        }}
+      loop_control:
+        loop_var: type
+    - name: "s6:copy:/etc/services.d/${service}/contents"
+      # if the service is a bundle:
+      # set it's "contents" (services) in /etc/services.d/<service_name>/contents
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ bundle.name ~ "/contents" }}'
+        content: |-
+          {% for service_name in bundle.contents -%}
+          {{ service_name }}
+          {% endfor %}
+      loop: >-
+        {{
+          s6.services
+          | selectattr("type", "defined")
+          | selectattr("type", "eq", "bundle")
+          | rejectattr("contents", "undefined")
+          | selectattr('contents', 'iterable')
+          | rejectattr('contents', 'string')
+          | rejectattr('contents', 'mapping')
+          | list
+        }}
+      loop_control:
+        loop_var: bundle
+        label: '{{ bundle.name }}'
+    - name: "s6:file:directory:/etc/services.d/${service}/{log,env}"
+      # only if the service is not a bundle:
+      # create a log/ and env/ directory in /etc/services.d/<service_name>
+      ansible.builtin.file:
+        path: '{{ "/etc/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
+        state: directory
+        owner: root
+        group: root
+        mode: '550'
+      loop: >-
+        {{
+          s6.services
+          | rejectattr("type", "equalto", "bundle")
+          | map(attribute="name")
+          | product(["log", "env"])
+          | list
+        }}
+    - name: "s6:copy:/etc/services.d/<service_name>/env/<env_var>"
+      # if the service is a bundle:
+      # create the env var files in s6's envdir in /etc/services.d/<service_name>/env/<env_var>
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ item.0.name ~ "/env/" ~ item.1.name }}'
+        content: |-
+          {{ item.1.value }}
+      loop: >-
+        {{
+          q(
+            "subelements",
+            s6.services,
+            "env_vars",
+            {
+              'skip_missing': True
+            }
+          )
+        }}
+      loop_control:
+        loop_var: item
+        label: '{{ item.0.name }}'
+    - name: "s6:template:/etc/services.d/${service}/*"
+      ansible.builtin.template:
+        src: '{{ "s6/" ~ item[0] ~ "/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
+        dest: '{{ "/etc/services.d/" ~ item[0] ~ "/" ~ item[1] }}'
+        owner: root
+        group: root
+        mode: '550'
+      loop: >-
+        {{
+          s6.services
+          | rejectattr("type", "equalto", "bundle")
+          | map(attribute="name")
+          | product(["run", "log/run"])
+          | list
+        }}'
+    - name: 's6:copy:service:type'
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ service.name ~ "/type" }}'
+        content: '{{ service.type | default("longrun") }}'
+      loop: '{{ s6.services }}'
+      loop_control:
+        loop_var: 'service'
+        label: '{{ service.name }}'
+    - name: 's6:copy:service:timeout-kill'
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ service.name ~ "/timeout-kill" }}'
+        content: '{{ service.type | default(0) | string }}'
+      loop: '{{ s6.services }}'
+      loop_control:
+        loop_var: 'service'
+        label: '{{ service.name }}'
+    - name: 's6:copy:service:timeout-finish'
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ service.name ~ "/timeout-finish" }}'
+        content: '{{ service.type | default(5000) | string }}'
+      loop: '{{ s6.services }}'
+      loop_control:
+        loop_var: 'service'
+        label: '{{ service.name }}'
+    - name: 's6:copy:service:dependencies'
+      ansible.builtin.copy:
+        dest: '{{ "/etc/services.d/" ~ service.name ~ "/dependencies" }}'
+        content: |-
+          {% for dependency in service.dependencies -%}
+          {{ dependency }}
+          {% endfor %}
+      loop: >-
+        {{
+          s6.services
+          | rejectattr('dependencies', 'undefined')
+          | selectattr('dependencies', 'iterable')
+          | rejectattr('dependencies', 'string')
+          | rejectattr('dependencies', 'mapping')
+          | list
+        }}
+      loop_control:
+        loop_var: 'service'
+        label: '{{ service.name }}'
+    - name: '[s6:cleanup]'
+      when: s6.cleanup
+      block:
+        - name: 's6:find:unmanaged-service-directories'
+          ansible.builtin.find:
+            paths: /etc/services.d
+            recurse: no
+            file_type: directory
+            excludes: >-
+              {{
+                s6.services
+                | map(attribute="name")
+                | list
+                | join(",")
+              }}
+          changed_when: false
+          register: s6_unmanaged_service_directories
+        - name: 's6:file:absent:unmanaged-service-directories'
+          ansible.builtin.file:
+            state: absent
+            path: '{{ item.path }}'
+          loop: '{{ s6_unmanaged_service_directories }}'

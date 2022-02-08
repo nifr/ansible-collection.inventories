@@ -1,0 +1,84 @@
+s6:
+  cleanup: false
+  services:
+    - name: mysql
+      type: bundle
+      contents:
+        - mysqld
+        - mysql-import
+        - mysqld_exporter
+    - name: mysqld
+      down-signal: SIGQUIT
+      # type is longrun|oneshot|bundle
+      type: longrun
+    - name: mysql-import
+      type: oneshot
+      dependencies:
+        - mysqld
+    - name: redis-server
+      type: longrun
+      # on "down" if the service is still not dead after t milliseconds, then it is sent a SIGKILL
+      timeout-kill: 1000
+      # number of milliseconds after which the ./finish script will be killed with a SIGKILL
+      # default: 5000
+      timeout-finish: 5000
+    - name: minio
+      type: longrun
+    - name: mailhog
+      type: longrun
+    - name: sshd
+      type: longrun
+    - name: php-fpm
+      type: longrun
+      dependencies:
+        - redis-server
+        - minio
+        - mysql
+        - blackfire-agent
+      env_vars:
+        - name: PHP_INI_SCAN_DIR
+          value: '/usr/local/etc/php/php-fpm.php.ini.d'
+    - name: openresty
+      dependencies:
+        - php-fpm
+    - name: code-server
+      down: true
+    - name: blackfire-agent
+      down: true
+    - name: rest-server
+      down: true
+    - name: prometheus
+      down: true
+    - name: alertmanager
+      down: true
+      dependencies:
+        - prometheus
+    - name: grafana-agent
+      down: true
+    - name: node_exporter
+      down: true
+    - name: redis_exporter
+      down: true
+      dependencies:
+        - redis
+    - name: mysqld_exporter
+      down: true
+        - mysqld
+    - name: php-fpm_exporter
+      down: true
+        - php-fpm
+    - name: 'nginx-prometheus-exporter'
+      down: true
+        - openresty
+    - name: 'blackbox_exporter'
+      down: true
+    - name: prometheus-exporters
+      type: bundle
+      down: true
+      contents:
+        - node_exporter
+        - redis_exporter
+        - mysqld_exporter
+        - php-fpm_exporter
+        - nginx-prometheus-exporter
+        - blackbox_exporter
