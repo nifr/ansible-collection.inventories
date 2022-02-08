@@ -79,7 +79,7 @@
 
 - name: "k3s:sysctl:enable-ipv4/ipv6-forwarding"
   become: true
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item }}"
     value: "1"
     state: "present"
