@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv sh
+
+# disable high availability / clustering:
+# --cluster.listen-address=
+
+cd '{{ alertmanager.user.home }}'
+exec s6-setuidgid '{{ alertmanager.user.name }}' \
+    alertmanager \
+        --config.file='{{ alertmanager.config_file }}' \
+        --cluster.listen-address='' \
+    2>&1

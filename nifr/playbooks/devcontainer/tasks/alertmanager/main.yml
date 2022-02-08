@@ -1,0 +1,104 @@
+
+# yaml-language-server: $schema=https://github.com/ansible-community/schemas/raw/main/f/ansible-tasks.json
+- name: '[alertmanager:user]'
+  when: 'alertmanager.user is mapping'
+  become: true
+  block:
+    - name: "alertmanager:group"
+      ansible.builtin.group:
+        name: '{{ alertmanager.user.group.name }}'
+        gid: '{{ alertmanager.user.group.gid }}'
+        state: '{{ alertmanager.state }}'
+    - name: "alertmanager:user"
+      ansible.builtin.user:
+        name: '{{ alertmanager.user.name }}'
+        uid: '{{ alertmanager.user.uid }}'
+        group: '{{ alertmanager.group.name }}'
+        groups: '{{ alertmanager.user.groups }}'
+        home: '{{ alertmanager.user.home.path }}'
+        shell: '{{ alertmanager.user.shell }}'
+        create_home: false
+        system: '{{ alertmanager.user.system }}'
+        state: '{{ alertmanager.state }}'
+    - name: "alertmanager:home"
+      ansible.builtin.file:
+        path: '{{ alertmanager.user.home.path }}'
+        state: directory
+        owner: '{{ alertmanager.user.home.owner }}'
+        group: '{{ alertmanager.user.home.group }}'
+        mode: '{{ alertmanager.user.home.mode}}'
+- name: 'alertmanager:state:present'
+  when: '"present" == alertmanager.state'
+  become: true
+  block:
+    - name: 'alertmanager:unarchive:alertmanager'
+      ansible.builtin.unarchive:
+      # example url: https://github.com/prometheus/alertmanager/releases/download/v0.23.0/alertmanager-0.23.0.linux-amd64.tar.gz
+        remote_src: true
+        src: >-
+          {{
+            'https://github.com/prometheus/alertmanager/releases/download'
+            ~ '/v' ~ alertmanager.version
+            ~ '/'
+              ~ 'alertmanager'
+              ~ '-'
+              ~ alertmanager.version
+              ~ '.'
+              ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+              ~ '-'
+              ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+              ~ '.tar.gz'
+          }}
+        extra_opts:
+          - '--strip-components=1'
+        include:
+          - >-
+              {{
+                'alertmanager'
+                ~ '-'
+                ~ alertmanager.version
+                ~ '.'
+                ~ ('darwin' if (ansible_os_family == 'Darwin') else 'linux')
+                ~ '-'
+                ~ ('amd64' if (ansible_architecture == 'x86_64') else 'arm64')
+                ~ '/' ~ item
+              }}
+        dest: '{{ alertmanager.installation.directory }}'
+        owner: '{{ alertmanager.user.name }}'
+        group: '{{ alertmanager.user.group.name }}'
+        mode: '{{ alertmanager.installation.mode.binary }}'
+        creates: '{{ alertmanager.home ~ "/" ~ item }}'
+        list_files: true
+      loop: '{{ alertmanager.components }}'
+      register: "alertmanager_download"
+      until: "alertmanager_download is succeeded"
+      retries: "{{ ansible_retry_count | int }}"
+      delay: "{{ ansible_retry_delay | int }}"
+    - name: 'alertmanager:template:config'
+      ansible.builtin.template:
+        src: 'alertmanager/alertmanager.yml.j2'
+        dest: '{{ alertmanager.config_file }}'
+        owner: '{{ alertmanager.user.name }}'
+        group: '{{ alertmanager.user.group.name }}'
+        mode: '{{ alertmanager.installation.mode.config }}'
+        # validate: 'promtool check config {{ alertmanager.config_file }}'
+    - name: 'alertmanager:file:link:binaries'
+      ansible.builtin.file:
+        state: link
+        src: '{{ alertmanager.installation.directory ~ "/" ~ item }}'
+        dest: '{{ alertmanager.installation.link.directory ~ "/" ~ item }}'
+        owner: '{{ alertmanager.installation.link.owner }}'
+        group: '{{ alertmanager.installation.link.group }}'
+      loop: '{{ alertmanager.components }}'
+- name: '[alertmanager:state:absent]'
+  when: '"absent" == alertmanager.state'
+  become: true
+  block:
+    - name: 'alertmanager:file:absent:/usr/local/bin/alertmanager'
+      ansible.builtin.file:
+        path: '/usr/local/bin/alertmanager'
+        state: absent
+    - name: 'alertmanager:file:absent:home'
+      ansible.builtin.file:
+        path: '{{ alertmanager.home }}'
+        state: absent
