@@ -77,6 +77,8 @@ prometheus:
           module: [tcp_connect]
         static_configs:
           - targets:
+              # mailhog - http://127.0.0.1:9115/probe?target=127.0.0.1:1025&module=tcp_connect
+              - 127.0.0.1:1025
               # mysql - http://127.0.0.1:9115/probe?target=127.0.0.1:3306&module=tcp_connect
               - 127.0.0.1:3306
               # redis - http://127.0.0.1:9115/probe?target=127.0.0.1:6379&module=tcp_connect
