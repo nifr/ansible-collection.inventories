@@ -5,4 +5,5 @@ mailhog:
   uid: 206
   group: mailhog
   gid: 206
+  groups: []
   home: /opt/mailhog
