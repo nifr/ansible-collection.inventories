@@ -203,13 +203,28 @@ grafana_agent:
       agent:
         enabled: false
       node_exporter:
-        # see: https://grafana.com/docs/agent/latest/configuration/integrations/node-exporter-config/
+      # see: https://grafana.com/docs/agent/latest/configuration/integrations/node-exporter-config/
         enabled: false
         rootfs_path: /
         sysfs_path: /sys
         procfs_path: /proc
       mysqld_exporter:
-        # see: https://grafana.com/docs/agent/latest/configuration/integrations/mysqld-exporter-config/
+      # see: https://grafana.com/docs/agent/latest/configuration/integrations/mysqld-exporter-config/
         enabled: false
         # set MYSQL_ALLOW_EMPTY_PASSWORD if password is empty
         data_source_name: "root:root@(127.0.0.1:3306)/"
+      redis_exporter:
+      # see: https://grafana.com/docs/agent/latest/configuration/integrations/redis-exporter-config/
+        enabled: false
+        redis_addr: "127.0.0.1:6379"
+        relabel_configs:
+        - source_labels: [__address__]
+          target_label: instance
+          replacement: redis
+      process_exporter:
+      # see: https://grafana.com/docs/agent/latest/configuration/integrations/process-exporter-config/
+        enabled: false
+        process_names:
+        - name: "{{.Comm}}"
+          cmdline:
+          - '.+'
